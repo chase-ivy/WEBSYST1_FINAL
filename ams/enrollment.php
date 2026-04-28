@@ -64,21 +64,14 @@
 						<option value="Grade 5">Grade 5</option>
 						<option value="Grade 6">Grade 6</option>
 					</select><br><br>
-					
-					<table>
-						<tr>
-							<td>
-								<span style="padding-right: 100px;">1. With LRN?</span><br>
-								<input type="radio" name="with_lrn" value="Yes" onchange=""> Yes
-								<input type="radio" name="with_lrn" value="No" onchange=""> No
-							</td>
-							<td>
-								<span>2. Returning(Babalik?)</span><br>
-								<input type="radio" name="returning" value="Yes" onchange=""> Yes
-								<input type="radio" name="returning" value="No" onchange=""> No
-							</td>
-						</tr>
-					</table>
+
+						<span style="padding-right: 100px;">1. With LRN?</span><br>
+						<input type="radio" name="with_lrn" value="Yes" onchange=""> Yes
+						<input type="radio" name="with_lrn" value="No" onchange=""> No
+					<br><br>
+						<span>2. Returning(Babalik?)</span><br>
+						<input type="radio" name="returning" value="Yes" onchange=""> Yes
+						<input type="radio" name="returning" value="No" onchange=""> No
 					<br><br>
 					
 					<span>PSA Birth Certificate No.(if available upon registration)</span><br>
@@ -286,7 +279,10 @@
 					<input type="text" name="Last_School_Attended"><br><br>
 
 					<span>Last School Year Completed</span><br>
-					<input type="text" name="Last_School_Year_Completed"><br><br>
+					<input type="number" name="Last_School_Year_Completed"><br><br>
+
+					<span>School ID</span><br>
+					<input type="number" name="school_ID"><br><br>
 				</div>
 
 			</form>
