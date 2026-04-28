@@ -214,7 +214,16 @@ form input,form select,form textarea {
     width: 16px;
     height: 16px;
 }
+.check .toggle {
+    position: static;
+    transform: none;
+}
 
+input[type="checkbox"] {
+    width: auto;
+    padding: 0;
+    margin-right: 5px;
+}
 
 /*SCRAP
 .button-1:disabled{
