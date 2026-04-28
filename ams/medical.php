@@ -10,6 +10,13 @@
   <h2>Medical Form - AMS</h2>
 <!-- Can someone put a pic logo ng school -->
   <img src="logo.png" alt="Logo" class="logo">
+  <style>		
+  		input[type="radio"]{
+			width: auto;
+			padding: 0;
+			margin-right: 5px;
+		}
+	</style>
 </header>
 <body>
 	<center><h1>Medical Form</h1></center>
@@ -37,12 +44,10 @@
 			<label>Age:</label>
 			<input type="number" name="age">
 
-			<label>Sex:</label>
-			<select style="width: 100%">
-				<option disabled selected>Choose</option>
-				<option value="Male">Male</option>
-				<option value="Female">Female</option>
-			</select>
+			<label>Sex</label><br>
+			<label><input type="radio" name="sex" value="Male" onchange=""> Male</label>
+			<label><input type="radio" name="sex" value="Female" onchange=""> Female</label>
+			<br><br>
 			<hr>
 
 			<label>Name of Parent/Guardian:</label>
@@ -55,7 +60,7 @@
 			<h4>1. Does your child/ward have any allergies?</h4>	
 
 					<select id="field" onchange="showField()" style="width:100%;">
-						<option disabled selected>Choose</option>
+						<option hidden selected>Choose</option>
 						<option value="Yes">Yes</option>
 						<option value="No">No</option>
 					</select>
@@ -64,7 +69,7 @@
 
 			<h4>2. Does your child/ward have any ongoing medical condition?</h4>
 					<select id="Q2" onchange="showQ2()" style="width:100%;">
-						<option disabled selected>Choose</option>
+						<option hidden selected>Choose</option>
 						<option value="Yes">Yes</option>
 						<option value="No">No</option>
 					</select>
@@ -74,7 +79,7 @@
 
 			<h4>3. Did your child/ward ever have surgery / hospitalization?</h4>
 					<select id="Q3" onchange="showQ3()" style="width:100%;">
-						<option disabled selected>Choose</option>
+						<option hidden selected>Choose</option>
 						<option value="Yes">Yes</option>
 						<option value="No">No</option>
 					</select>
@@ -83,7 +88,7 @@
 
 			<h4>4. Is your  child currently taking treatment / medicines?</h4>
 					<select id="Q4" onchange="showQ4()" style="width:100%;">
-						<option disabled selected>Choose</option>
+						<option hidden selected>Choose</option>
 						<option value="Yes">Yes</option>
 						<option value="No">No</option>
 					</select>
@@ -92,7 +97,7 @@
 
 			<h4>5. Does your family have a history of the following conditions:</h4>
 					<select id="Q5" onchange="showQ5()" style="width:100%;">
-						<option disabled selected>Choose</option>
+						<option hidden selected>Choose</option>
 						<option value="Yes">Yes</option>
 						<option value="No">No</option>
 					</select>
@@ -101,7 +106,7 @@
 
 			<h4>6. Does your child/ward have exposure to cigarette/vape smoke at home?:</h4>
 					<select style="width:100%;">
-						<option disabled selected>Choose</option>
+						<option hidden selected>Choose</option>
 						<option value="Yes">Yes</option>
 						<option value="No">No</option>
 					</select>
