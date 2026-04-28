@@ -69,13 +69,13 @@
 						<tr>
 							<td>
 								<span style="padding-right: 100px;">1. With LRN?</span><br>
-								<input type="checkbox" value="Yes_LRN">Yes
-								<input type="checkbox" value="No_LRN">No
+								<input type="radio" name="with_lrn" value="Yes" onchange=""> Yes
+								<input type="radio" name="with_lrn" value="No" onchange=""> No
 							</td>
 							<td>
 								<span>2. Returning(Babalik?)</span><br>
-								<input type="checkbox" value="Yes_Returning">Yes
-								<input type="checkbox" value="No_Returning">No
+								<input type="radio" name="returning" value="Yes" onchange=""> Yes
+								<input type="radio" name="returning" value="No" onchange=""> No
 							</td>
 						</tr>
 					</table>
@@ -103,8 +103,8 @@
 					<input type="date" name="Birth_Date"><br><br>
 
 					<span>Sex</span><br>
-					<input type="checkbox" value="Sex_male">Male
-					<input type="checkbox" value="Sex_female">Female
+					<input type="radio" name="sex" value="Male" onchange=""> Male
+					<input type="radio" name="sex" value="Female" onchange=""> Female
 					<br><br>
 
 					<span>Place of Birth</span><br>
@@ -139,40 +139,42 @@
 
 	<!---------------------------------------------------------------------------------->
 
-					<span>Is the child a Learner with Disability</span>
-					<input type="checkbox" value="Yes_Disability">Yes
-					<input type="checkbox" value="No_Disability">No
+					<span>Is the child a Learner with Disability</span><br>
+					<input type="radio" name="disability" value="Yes" onchange="disabilityField()"> Yes
+					<input type="radio" name="disability" value="No" onchange="disabilityField()"> No
 					<br><br>
 
-					<table>
-						<tr>
-							<td><input type="checkbox" value="Visual_Impairment"> Visual Impairment</td>
-							<td><input type="checkbox" value="Hearing_Impairment"> Hearing Impairment</td>
-							<td><input type="checkbox" value="Learning_Disability"> Learning Disability</td>
-							<td><input type="checkbox" value="Intellectual_Disability"> Intellectual Disability</td>
-						</tr>
-						<tr>
-							<td><input type="checkbox" value="Blind"> a. blind</td>
-							<td><input type="checkbox" value="Autism"> Autism Spectrum Disorder</td>
-							<td><input type="checkbox" value="Emotional_Behavioral_Disorder"> Emotional / Behavioral Disorder</td>
-							<td><input type="checkbox" value="Orthopedic_Physical_Handicap"> Orthopedic / Physical Handicap</td>
-						</tr>
-						<tr>
-							<td><input type="checkbox" value="Low_Vision"> b. low vision</td>
-							<td><input type="checkbox" value="Speech_Language_Disorder">Speech / Language Disorder</td>
-							<td><input type="checkbox" value="Cerebral_Palsy">Cerebral Palsy</td>
-							<td><input type="checkbox" value="Low_Vision">Special Health Problem / Chronic Disease</td>
-						</tr>
-						<tr>
-							<td><input type="checkbox" value="Multiple_Disorder"> Multiple Disorder</td>
-							<td></td>
-							<td></td>
-							<td><input type="checkbox" value="Cancer"> a. Cancer</td>
-						</tr>
-					</table>
+					<div id="disabilityDetails" style="display:none;">
+						<table>
+							<tr>
+								<td><input type="checkbox" value="Visual_Impairment"> Visual Impairment</td>
+								<td><input type="checkbox" value="Blind"> a. blind</td>
+								<td><input type="checkbox" value="Low_Vision"> b. low vision</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" value="Hearing_Impairment"> Hearing Impairment</td>
+								<td><input type="checkbox" value="Autism"> Autism Spectrum Disorder</td>
+								<td><input type="checkbox" value="Speech_Language_Disorder">Speech / Language Disorder</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" value="Learning_Disability"> Learning Disability</td>
+								<td><input type="checkbox" value="Emotional_Behavioral_Disorder"> Emotional / Behavioral Disorder</td>
+								<td><input type="checkbox" value="Cerebral_Palsy">Cerebral Palsy</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" value="Intellectual_Disability"> Intellectual Disability</td>
+								<td><input type="checkbox" value="Orthopedic_Physical_Handicap"> Orthopedic / Physical Handicap</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" value="Special_Health_Problem">Special Health Problem / Chronic Disease</td>
+								<td><input type="checkbox" value="Cancer"> a. Cancer</td>
+								<td><input type="checkbox" value="Multiple_Disorder"> Multiple Disorder</td>
+							</tr>
+						</table><br>
+					</div>
 					<br><br>
 
-	<!---------------------------------------------------------------------------------->
+<!---------------------------------------------------------------------------------->
 
 					<hr>
 					<h3>Current Address</h3>
