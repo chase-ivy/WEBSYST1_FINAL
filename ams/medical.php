@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" type="text/css" href="style.css">
-	<title>Gibraltar AMS</title>
+	<title>Gibraltar - Medical Form</title>
 </head>
 <body>
 <header>
@@ -18,26 +18,26 @@
 					<nav class="nav-card">
 						<a href="index.php" class="select">Change Form Access <</a><br><br>
 
-						<p><strong>Student Module</strong></p>
+						<p><strong>Medical Module</strong></p>
 					</nav>
 
 
 <section>
 	<form>
 		<div class="card">
-			<span>Name of Learner:</span>
+			<label>Name of Learner:</label>
 			<input type="text" name="fullName" placeholder="Full Name (Family Name First)">
 
-			<span>Date of Birth:</span>
+			<label>Date of Birth:</label>
 			<input type="Date" name="DoB">
 
-			<span>Address:</span>
+			<label>Address:</label>
 			<input type="text" name="address">
 
-			<span>Age:</span>
+			<label>Age:</label>
 			<input type="number" name="age">
 
-			<span>Sex:</span>
+			<label>Sex:</label>
 			<select style="width: 100%">
 				<option disabled selected>Choose</option>
 				<option value="Male">Male</option>
@@ -45,10 +45,10 @@
 			</select>
 			<hr>
 
-			<span>Name of Parent/Guardian:</span>
+			<label>Name of Parent/Guardian:</label>
 			<input type="text" name="">
 
-			<span>Contact Number:</span>
+			<label>Contact Number:</label>
 			<input type="tel" name="">
 			<hr>
 			<strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
@@ -60,15 +60,69 @@
 						<option value="No">No</option>
 					</select>
 
-
 				<div id="fieldDetails"></div>
+
+			<h4>2. Does your child/ward have any ongoing medical condition?</h4>
+					<select id="Q2" onchange="showQ2()" style="width:100%;">
+						<option disabled selected>Choose</option>
+						<option value="Yes">Yes</option>
+						<option value="No">No</option>
+					</select>
+
+				<div id="q2"></div>
+
+
+			<h4>3. Did your child/ward ever have surgery / hospitalization?</h4>
+					<select id="Q3" onchange="showQ3()" style="width:100%;">
+						<option disabled selected>Choose</option>
+						<option value="Yes">Yes</option>
+						<option value="No">No</option>
+					</select>
+
+				<div id="q3"></div>
+
+			<h4>4. Is your  child currently taking treatment / medicines?</h4>
+					<select id="Q4" onchange="showQ4()" style="width:100%;">
+						<option disabled selected>Choose</option>
+						<option value="Yes">Yes</option>
+						<option value="No">No</option>
+					</select>
+
+				<div id="q4"></div>
+
+			<h4>5. Does your family have a history of the following conditions:</h4>
+					<select id="Q5" onchange="showQ5()" style="width:100%;">
+						<option disabled selected>Choose</option>
+						<option value="Yes">Yes</option>
+						<option value="No">No</option>
+					</select>
+
+				<div id="q5"></div>
+
+			<h4>6. Does your child/ward have exposure to cigarette/vape smoke at home?:</h4>
+					<select style="width:100%;">
+						<option disabled selected>Choose</option>
+						<option value="Yes">Yes</option>
+						<option value="No">No</option>
+					</select>
+
+				<div id="q5"></div>
+
+			<h4>7. Other pertinent learner information:</h4>
+					<input type="text" placeholder="Please specify">
+
+					<button type="submit" class="button">Submit</button>
 
 			</div>
 
-		</div>
+
+
+
+
+	
 
 	</form>
-
+</div>
 
 </section>
 
