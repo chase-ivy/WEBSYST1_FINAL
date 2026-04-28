@@ -13,32 +13,33 @@ header {
     align-items: center;
 }
 
-header h1 {
+header h1, header h2 {
     margin: 0;
 }
+
+/* FIX: was "ext-align" typo */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
 .h2 {
     text-align: center;
 }
 
 .logo {
-
     width: 100px;
 }
 
 header p {
     font-size: 1.2em;
     margin-top: 10px;
-    }
+}
 
 section {
     max-width: 1000px;
     margin: auto;
     padding: 40px 20px;
-}
-
-h2 {
-    ext-align: center;
-    margin-bottom: 20px;
 }
 
 .grid {
@@ -47,23 +48,19 @@ h2 {
     gap: 20px;
 }
 
-.card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
+/* FIX: merged duplicate .card and .card-1 */
+.card,
 .card-1 {
     background: white;
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
-.nav-card{
+
+.nav-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
 }
 
 footer {
@@ -72,6 +69,7 @@ footer {
     text-align: center;
     padding: 20px;
 }
+
 .grid-1 {
     display: flex;
     justify-content: center;
@@ -87,7 +85,9 @@ form label {
     font-weight: bold;
 }
 
-form input,form select,form textarea {
+form input,
+form select,
+form textarea {
     width: 100%;
     padding: 10px;
     margin-top: 5px;
@@ -97,6 +97,7 @@ form input,form select,form textarea {
     box-sizing: border-box;
 }
 
+/* FIX: removed broken duplicate .form block that had width: 0% */
 .form {
     display: flex;
     flex-direction: column;
@@ -107,22 +108,13 @@ form input,form select,form textarea {
     font-weight: bold;
 }
 
-.form input,form select,form textarea {
-    width: 0%;
-    padding: 10px;
-    margin-top: 5px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 1em;
-    box-sizing: border-box;
-}
-
-.select{
+.select {
     font-weight: bold;
     color: red;
     text-decoration: none;
 }
-.select:hover{
+
+.select:hover {
     text-decoration: underline;
 }
 
@@ -137,10 +129,12 @@ form input,form select,form textarea {
     font-size: 1em;
     width: 100%;
 }
-.button:hover{
+
+.button:hover {
     background: lightgreen;
 }
-.a-button{
+
+.a-button {
     display: block;
     width: 100%;
     padding: 20px;
@@ -153,11 +147,12 @@ form input,form select,form textarea {
     font-weight: bold;
     box-sizing: border-box;
 }
-.a-button:hover{
+
+.a-button:hover {
     background: lightgreen;
 }
 
-.apply{
+.apply {
     margin-top: 15px;
     padding: 20px;
     background: lightgray;
@@ -168,10 +163,12 @@ form input,form select,form textarea {
     font-size: 1em;
     width: 100%;
 }
-.apply:active{
+
+.apply:active {
     background: lightgreen;
 }
-.apply-1{
+
+.apply-1 {
     display: block;
     width: 100%;
     padding: 20px;
@@ -184,11 +181,12 @@ form input,form select,form textarea {
     font-weight: bold;
     box-sizing: border-box;
 }
-.apply-1:active{
+
+.apply-1:active {
     background: lightgreen;
 }
 
-.log{
+.log {
     margin-top: 15px;
     padding: 12px;
     background: skyblue;
@@ -199,14 +197,21 @@ form input,form select,form textarea {
     font-size: 1em;
     width: 100%;
 }
-.log:active{
+
+.log:hover {
+    background: #3a9bd5;
+}
+
+.log:active {
     background: red;
 }
-.pass-card{
+
+.pass-card {
     position: relative;
     width: 100%;
 }
-.pass-card .toggle{
+
+.pass-card .toggle {
     position: absolute;
     right: 10px;
     top: 50%;
@@ -214,6 +219,7 @@ form input,form select,form textarea {
     width: 16px;
     height: 16px;
 }
+
 .check .toggle {
     position: static;
     transform: none;
@@ -224,30 +230,3 @@ input[type="checkbox"] {
     padding: 0;
     margin-right: 5px;
 }
-
-/*SCRAP
-.button-1:disabled{
-    margin-top: 15px;
-    padding: 12px;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1em;
-    width: 100%;
-    background: gray;
-}
-.button-1:enabled{
-    margin-top: 15px;
-    padding: 12px;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1em;
-    width: 100%;
-    background: lightgreen;
-    text-decoration: underline;
-    font-weight: bold;
-    color: black;
-}*/
