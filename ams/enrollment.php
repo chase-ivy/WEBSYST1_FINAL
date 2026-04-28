@@ -169,7 +169,8 @@
 							<td></td>
 							<td><input type="checkbox" value="Cancer"> a. Cancer</td>
 						</tr>
-					</table><br><br>
+					</table>
+					<br><br>
 
 	<!---------------------------------------------------------------------------------->
 
@@ -286,9 +287,8 @@
 					<input type="text" name="Last_School_Year_Completed"><br><br>
 				</div>
 
-
-
 			</form>
+				<a href="medical.php" class="select"><button class="log">Next</button></a>
 </section>
 	</div>
 <script src="enrollment.js"></script>
