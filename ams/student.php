@@ -34,8 +34,8 @@
 					<span>LRN Number:</span>
 					<input type="number" name="lrn"><br>
 					<br>
-					<span>Birthdate: (Ex:.../.../.../)</span>
-					<input type="date" name="birthdate"><br>
+					<span>Parental Pin:</span>
+					<input type="number" name="pin" min="4"><br>
 					<br>
 					<span>Password:</span>
 					<div class="pass-card">
