@@ -46,7 +46,7 @@
 					<hr>
 
 					<span>School Year</span><br>
-					<select name="School_Year" id="School_Year">
+					<select name="School_Year" style="width: 100%">
 						<option value="" hidden>Select School Year</option>
 						<option value="School_Year">
 							<!-- <php echo shenanigans for the value and display Idk ?> -->
@@ -54,7 +54,7 @@
 					</select><br><br>
 
 					<span>Grade Level</span><br>
-					<select name="Grade_Level" id="Grade_Level">
+					<select name="Grade_Level" style="width: 100%">
 						<option value="" hidden>Select Grade Level</option>
 						<option value="Kinder">Kinder</option>
 						<option value="Grade 1">Grade 1</option>
@@ -117,25 +117,25 @@
 					<input type="text" name="Mother_Tongue"><br><br>
 					
 					<span>Belonging to any Indigenous Group (IP) Community/Indigenous Cultural Community</span><br>
-
 					<input type="radio" name="ip" value="Yes" onchange="ipField()"> Yes
-
 					<input type="radio" name="ip" value="No" onchange="ipField()"> No
-
 					<br><br>
-
-					<div id="fieldDetails" style="display:none;">
-					<span>If Yes, please specify:</span><br>
-					<input type="text" name="IP_Specify">
+					
+					<div id="ipDetails" style="display:none;">
+						<span>If Yes, please specify:</span><br>
+						<input type="text" name="IP_Specify">
 					</div>
+					<br>
 					
 					<span>Is your family a beneficiary of 4Ps</span><br>
-					<input type="checkbox" value="Yes_4ps">Yes
-					<input type="checkbox" value="No_4ps">No
-					<br><br>
+					<input type="radio" name="fourps" value="Yes" onchange="fourPsField()"> Yes
+					<input type="radio" name="fourps" value="No" onchange="fourPsField()"> No
 
-					<span>If Yes, write the 4Ps Household ID Number below:</span><br>
-					<input type="number" name="FourPs_Specify"><br><br>
+					<div id="fourPsDetails" style="display:none;">
+						<span>If Yes, write the 4Ps Household ID Number below:</span><br>
+						<input type="number" name="FourPs_Specify">
+					</div>
+					<br><br>
 
 	<!---------------------------------------------------------------------------------->
 
@@ -262,7 +262,32 @@
 					
 					<span>Contact Number</span><br>
 					<input type="text" name="Mother_Contact_Number"><br><br>
+
+					<hr>
+					<center><h2>For Returning Learner (Balik-Aral) And Those Who will Transfer/Move In</h2></center>
+					<hr>
+
+					<span>Last Grade Level Completed</span><br>
+					<select name="Returning_Grade_Level" style="width: 100%">
+						<option value="" hidden>Select Grade Level</option>
+						<option value="Kinder">Kinder</option>
+						<option value="Grade 1">Grade 1</option>
+						<option value="Grade 2">Grade 2</option>
+						<option value="Grade 3">Grade 3</option>
+						<option value="Grade 4">Grade 4</option>
+						<option value="Grade 5">Grade 5</option>
+						<option value="Grade 6">Grade 6</option>
+					</select><br><br>
+
+					<span>Last School Attended</span><br>
+					<input type="text" name="Last_School_Attended"><br><br>
+
+					<span>Last School Year Completed</span><br>
+					<input type="text" name="Last_School_Year_Completed"><br><br>
 				</div>
+
+
+
 			</form>
 </section>
 	</div>
