@@ -46,7 +46,7 @@
 					<hr>
 
 					<span>School Year</span><br>
-					<input type="number" name="year_start">-<input type="number" name="year_end">
+					<input style="width: 45%;" type="number" name="year_start">-<input style="width: 45%;" type="number" name="year_end">
 					<br><br>
 
 					<span>Grade Level</span><br>
