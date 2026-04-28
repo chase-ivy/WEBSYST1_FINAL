@@ -70,8 +70,8 @@
 						<input type="radio" name="with_lrn" value="No" onchange=""> No
 					<br><br>
 						<span>2. Returning(Babalik?)</span><br>
-						<input type="radio" name="returning" value="Yes" onchange=""> Yes
-						<input type="radio" name="returning" value="No" onchange=""> No
+						<input type="radio" name="returning" value="Yes" onchange="returningField()"> Yes
+						<input type="radio" name="returning" value="No" onchange="returningField()"> No
 					<br><br>
 					
 					<span>PSA Birth Certificate No.(if available upon registration)</span><br>
@@ -130,7 +130,7 @@
 					</div>
 					<br><br>
 
-	<!---------------------------------------------------------------------------------->
+<!---------------------------------------------------------------------------------->
 
 					<span>Is the child a Learner with Disability</span><br>
 					<input type="radio" name="disability" value="Yes" onchange="disabilityField()"> Yes
@@ -163,7 +163,7 @@
 								<td><input type="checkbox" value="Cancer"> a. Cancer</td>
 								<td><input type="checkbox" value="Multiple_Disorder"> Multiple Disorder</td>
 							</tr>
-						</table><br>
+						</table>
 					</div>
 					<br><br>
 
@@ -259,6 +259,8 @@
 					<span>Contact Number</span><br>
 					<input type="text" name="Mother_Contact_Number"><br><br>
 
+
+					<div id="returningDetails" style="display:none;">
 					<hr>
 					<center><h2>For Returning Learner (Balik-Aral) And Those Who will Transfer/Move In</h2></center>
 					<hr>
@@ -283,6 +285,7 @@
 
 					<span>School ID</span><br>
 					<input type="number" name="school_ID"><br><br>
+					</div>
 				</div>
 
 			</form>
