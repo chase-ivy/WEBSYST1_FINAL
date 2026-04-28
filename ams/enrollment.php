@@ -10,7 +10,13 @@
 			transform: none;
 		}
 
-		input[type="checkbox"] {
+		input[type="checkbox"]{
+			width: auto;
+			padding: 0;
+			margin-right: 5px;
+		}
+
+		input[type="radio"]{
 			width: auto;
 			padding: 0;
 			margin-right: 5px;
@@ -26,8 +32,9 @@
 <body>
 	<center><h1>Enrollment Form</h1></center>
 
-	<div class="grid">
-			<form class="form">
+	<div class="card">
+		<section>
+			<form>
 				<div class="card">
 					<nav class="nav-card">
 						<a href="index.php" class="select">Change Form Access <</a><br><br>
@@ -110,12 +117,17 @@
 					<input type="text" name="Mother_Tongue"><br><br>
 					
 					<span>Belonging to any Indigenous Group (IP) Community/Indigenous Cultural Community</span><br>
-					<input type="checkbox" value="Yes_IP">Yes
-					<input type="checkbox" value="No_IP">No
+
+					<input type="radio" name="ip" value="Yes" onchange="ipField()"> Yes
+
+					<input type="radio" name="ip" value="No" onchange="ipField()"> No
+
 					<br><br>
 
+					<div id="fieldDetails" style="display:none;">
 					<span>If Yes, please specify:</span><br>
-					<input type="text" name="IP_Specify"><br><br>
+					<input type="text" name="IP_Specify">
+					</div>
 					
 					<span>Is your family a beneficiary of 4Ps</span><br>
 					<input type="checkbox" value="Yes_4ps">Yes
@@ -125,7 +137,7 @@
 					<span>If Yes, write the 4Ps Household ID Number below:</span><br>
 					<input type="number" name="FourPs_Specify"><br><br>
 
-<!---------------------------------------------------------------------------------->
+	<!---------------------------------------------------------------------------------->
 
 					<span>Is the child a Learner with Disability</span>
 					<input type="checkbox" value="Yes_Disability">Yes
@@ -159,7 +171,7 @@
 						</tr>
 					</table><br><br>
 
-<!---------------------------------------------------------------------------------->
+	<!---------------------------------------------------------------------------------->
 
 					<hr>
 					<h3>Current Address</h3>
@@ -189,7 +201,7 @@
 					<span>Zip Code</span><br>
 					<input type="number" name="Current_Zip_Code"><br><br>
 
-<!---------------------------------------------------------------------------------->
+	<!---------------------------------------------------------------------------------->
 					
 					<hr>
 					<h3>Permanent Address</h3>
@@ -219,7 +231,7 @@
 					<span>Zip Code</span><br>
 					<input type="number" name="Permanent_Zip_Code"><br><br>
 
-<!---------------------------------------------------------------------------------->
+	<!---------------------------------------------------------------------------------->
 					
 					<hr>
 					<center><h2>PARENT'S/GUARDIAN'S INFORMATION</h2></center>
@@ -252,7 +264,8 @@
 					<input type="text" name="Mother_Contact_Number"><br><br>
 				</div>
 			</form>
+</section>
 	</div>
-
+<script src="enrollment.js"></script>
 </body>
 </html>
