@@ -36,12 +36,7 @@
 					<br>
 					<span>Parental Pin:</span>
 					<input type="number" name="pin" min="4"><br>
-					<br>
-					<span>Password:</span>
-					<div class="pass-card">
-						<input type="password" name="password" id="pass">
-						<input type="checkbox" class="toggle" onclick="pass.type = this.checked ? 'text' : 'password'">
-					</div>
+					
 
 				</div>
 			</form>
