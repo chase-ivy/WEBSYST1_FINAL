@@ -46,12 +46,8 @@
 					<hr>
 
 					<span>School Year</span><br>
-					<select name="School_Year" style="width: 100%">
-						<option value="" hidden>Select School Year</option>
-						<option value="School_Year">
-							<!-- <php echo shenanigans for the value and display Idk ?> -->
-						</option>
-					</select><br><br>
+					<input style="width: 45%;" type="number" name="year_start">-<input style="width: 45%;" type="number" name="year_end">
+					<br><br>
 
 					<span>Grade Level</span><br>
 					<select name="Grade_Level" style="width: 100%">
@@ -66,12 +62,12 @@
 					</select><br><br>
 
 						<span style="padding-right: 100px;">1. With LRN?</span><br>
-						<input type="radio" name="with_lrn" value="Yes" onchange=""> Yes
-						<input type="radio" name="with_lrn" value="No" onchange=""> No
+						<label><input type="radio" name="with_lrn" value="Yes" onchange="" placeholder="Yes"> Yes</label>
+						<label><input type="radio" name="with_lrn" value="No" onchange=""> No</label>
 					<br><br>
 						<span>2. Returning(Babalik?)</span><br>
-						<input type="radio" name="returning" value="Yes" onchange="returningField()"> Yes
-						<input type="radio" name="returning" value="No" onchange="returningField()"> No
+						<label><input type="radio" name="returning" value="Yes" onchange="returningField()"> Yes</label>
+						<label><input type="radio" name="returning" value="No" onchange="returningField()"> No</label>
 					<br><br>
 					
 					<span>PSA Birth Certificate No.(if available upon registration)</span><br>
@@ -96,8 +92,8 @@
 					<input type="date" name="Birth_Date"><br><br>
 
 					<span>Sex</span><br>
-					<input type="radio" name="sex" value="Male" onchange=""> Male
-					<input type="radio" name="sex" value="Female" onchange=""> Female
+					<label><input type="radio" name="sex" value="Male" onchange=""> Male</label>
+					<label><input type="radio" name="sex" value="Female" onchange=""> Female</label>
 					<br><br>
 
 					<span>Place of Birth</span><br>
@@ -110,8 +106,8 @@
 					<input type="text" name="Mother_Tongue"><br><br>
 					
 					<span>Belonging to any Indigenous Group (IP) Community/Indigenous Cultural Community</span><br>
-					<input type="radio" name="ip" value="Yes" onchange="ipField()"> Yes
-					<input type="radio" name="ip" value="No" onchange="ipField()"> No
+					<label><input type="radio" name="ip" value="Yes" onchange="ipField()"> Yes</label>
+					<label><input type="radio" name="ip" value="No" onchange="ipField()"> No</label>
 					<br><br>
 					
 					<div id="ipDetails" style="display:none;">
@@ -121,8 +117,8 @@
 					<br>
 					
 					<span>Is your family a beneficiary of 4Ps</span><br>
-					<input type="radio" name="fourps" value="Yes" onchange="fourPsField()"> Yes
-					<input type="radio" name="fourps" value="No" onchange="fourPsField()"> No
+					<label><input type="radio" name="fourps" value="Yes" onchange="fourPsField()"> Yes</label>
+					<label><input type="radio" name="fourps" value="No" onchange="fourPsField()"> No</label>
 
 					<div id="fourPsDetails" style="display:none;">
 						<span>If Yes, write the 4Ps Household ID Number below:</span><br>
@@ -133,8 +129,8 @@
 <!---------------------------------------------------------------------------------->
 
 					<span>Is the child a Learner with Disability</span><br>
-					<input type="radio" name="disability" value="Yes" onchange="disabilityField()"> Yes
-					<input type="radio" name="disability" value="No" onchange="disabilityField()"> No
+					<label><input type="radio" name="disability" value="Yes" onchange="disabilityField()"> Yes</label>
+					<label><input type="radio" name="disability" value="No" onchange="disabilityField()"> No</label>
 					<br><br>
 
 					<div id="disabilityDetails" style="display:none;">
