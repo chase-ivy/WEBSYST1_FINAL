@@ -288,7 +288,7 @@
 				</div>
 
 			</form>
-				<a href="medical.php" class="select"><button class="log">Next</button></a>
+				<a href="medical.php" class="select"><button type="submit" class="button">Next</button></a>
 </section>
 	</div>
 <script src="enrollment.js"></script>
