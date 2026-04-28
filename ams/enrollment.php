@@ -199,6 +199,11 @@
 					<h3>Permanent Address</h3>
 					<hr><br>
 
+					<span>Same with your Current Address?  </span>
+					<label><input type="radio" name="fourps" value="Yes" > Yes</label>
+					<label><input type="radio" name="fourps" value="No" > No</label>
+					<br><br>
+
 					<span>House No.</span><br>
 					<input type="number" name="Permanent_House_No"><br><br>
 					
