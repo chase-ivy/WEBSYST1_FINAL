@@ -19,8 +19,7 @@ class Database
 
         $this->pdo->setAttribute(
             PDO::ATTR_ERRMODE,
-            PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_EMULATE_PREPARES => false);
+            PDO::ERRMODE_EXCEPTION
     }
 
 // Generic insert method that takes a table name and an array of allowed fields
