@@ -381,7 +381,16 @@ if (isset($_POST['next'])){
                 </div>
             </div>
 
-            <button type="button" class="button" name="next" onclick="window.location.href='medical.php'">Next</button>
+            <table>
+                <tr>
+                    <td style="width: 50%">
+                        <button type="button" class="button" name="next" onclick="window.location.href='medical.php'">Next</button>
+                    </td>
+                    <td style="width: 50%">
+                        <button type="button" class="button" name="submit" onclick="window.location.href=''">Submit</button>
+                    </td>
+                </tr>
+            </table>
         </form>
     </section>
 </div>
