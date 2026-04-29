@@ -6,7 +6,7 @@ class Database
 
     public function __construct()
     {
-        $host = "localhost";
+        $host = "localhost:3307";
         $dbname = "gems_db";
         $username = "root";
         $password = "";
@@ -20,39 +20,48 @@ class Database
         $this->pdo->setAttribute(
             PDO::ATTR_ERRMODE,
             PDO::ERRMODE_EXCEPTION
+        );
     }
 
 // Generic insert method that takes a table name and an array of allowed fields
 // This thing is magical, allows us to insert into any table just by passing the right parameters
 
-    public function insert(string $table, array $allowedFields): int
-    {
-        $data = [];
+public function insert(string $table, array $allowedFields): int
+{
+    $data = [];
 
-        foreach ($allowedFields as $field) {
-            $data[$field] = $_POST[$field] ?? null;
+    foreach ($allowedFields as $field) {
+        // Check if the field exists in $_POST, otherwise set it to null
+        $data[$field] = $_POST[$field] ?? null;
+
+        // Validate required fields (e.g., school_year)
+        if (is_null($data[$field])) {
+            throw new Exception("The field '{$field}' is required and cannot be null.");
         }
-
-        $columns = array_keys($data);
-        $placeholders = array_map(fn($col) => ":" . $col, $columns);
-
-        $sql = "INSERT INTO {$table} (
-                    " . implode(", ", $columns) . "
-                ) VALUES (
-                    " . implode(", ", $placeholders) . "
-                )";
-
-        $stmt = $this->pdo->prepare($sql);
-
-        foreach ($data as $column => $value) {
-            $stmt->bindValue(":" . $column, $value);
-        }
-
-        $stmt->execute();
-
-        return (int)$this->pdo->lastInsertId();
     }
+
+    $keys = array_keys($data);
+    $escaped_keys = array_map(function($key) { return "`$key`"; }, $keys);
+    $placeholders = array_map(function($key) { return ":$key"; }, $keys);
+
+    $sql = "INSERT INTO {$table} (
+                " . implode(", ", $escaped_keys) . "
+            ) VALUES (
+                " . implode(", ", $placeholders) . "
+            )";
+
+    $stmt = $this->pdo->prepare($sql);
+
+    foreach ($data as $column => $value) {
+        $stmt->bindValue(":" . $column, $value);
+    }
+
+    $stmt->execute();
+
+    return (int)$this->pdo->lastInsertId();
 }
+}
+
 
 // Initialize the database connection
 
@@ -64,6 +73,7 @@ $studentFields = [
     'school_year',
     'grade_level',
     'with_lrn',
+    'returning',
     'psa_bcn',
     'lrn',
     'last_name',
@@ -76,7 +86,7 @@ $studentFields = [
     'age',
     'mother_tongue',
     'indigenous_group',
-    '4p_beneficiary',
+    '4p_benificiary',
     'is_learner_with_disability'
 ];
 
