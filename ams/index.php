@@ -81,21 +81,25 @@
 
 <section class="index-section">
     <div class="index-wrapper">
-        <div class="card">
-            <h2>Gibraltar Elementary School</h2>
-            <p class="subtitle">Academic Management System</p>
+        <div class="container">
+    <div class="card">
 
-            <hr>
-            <p class="section-label">Choose Login Access Form</p>
+        <img src="logo.png" class="logo" alt="Logo">
 
-            <a href="unknown.php" class="a-button">Admin</a>
-            <a href="teacher.php" class="a-button">Teacher</a>
-            <a href="student.php" class="a-button">Current Student</a>
+        <h2>Gibraltar AMS</h2>
+        <p class="subtitle">Login to your account</p>
 
-            <hr>
+        <form action="login.php" method="POST">
 
-            <a href="enrollment.php" class="apply-1">Apply as a New Student</a>
-        </div>
+            <input type="text" name="username" placeholder="Username" required>
+
+            <input type="password" name="password" placeholder="Password" required>
+
+            <button type="submit" class="btn">Login</button>
+
+        </form>
+    </div>
+</div>
     </div>
 </section>
 
