@@ -38,22 +38,6 @@ if(isset($_POST['submit'])){
 <section>
 	<form>
 		<div class="card">
-			<label>Name of Learner:</label>
-			<input type="text" name="fullName" placeholder="Full Name (Family Name First)">
-
-			<label>Date of Birth:</label>
-			<input type="Date" name="DoB">
-
-			<label>Address:</label>
-			<input type="text" name="address">
-
-			<label>Age:</label>
-			<input type="number" name="age">
-
-			<label>Sex</label><br>
-			<label><input type="radio" name="sex" value="Male" onchange=""> Male</label>
-			<label><input type="radio" name="sex" value="Female" onchange=""> Female</label>
-			<br><br>
 			<hr>
 
 			<label>Name of Parent/Guardian:</label>
