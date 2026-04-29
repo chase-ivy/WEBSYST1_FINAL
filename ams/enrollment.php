@@ -377,33 +377,6 @@ if (isset($_POST['next'])){
                     <span>School ID</span><br>
                     <input type="number" name="school_ID"><br><br>
                 </div>
-
-                <!-- DECLARATION BOX -->
-                <div class="declaration-box">
-                    <div class="declaration-header">
-                        <strong>Enrollment Declaration and Agreement</strong>
-                        <span style="font-size:0.8rem;">(Elementary Level)</span>
-                    </div>
-                    <div class="declaration-body">
-                        <p>I am enrolling my child as a <strong>Kindergarten / Grade ___</strong> pupil in this institution. I hereby attest that I have complied with and submitted all the necessary documents required for enrollment. I voluntarily provide these documents for verification and evaluation by the School Administration.</p>
-                        <p><strong>As a parent/guardian, I agree to the following:</strong></p>
-                        <ol>
-                            <li>I will ensure that my child follows the rules and regulations of the school.</li>
-                            <li>I will support my child in their studies and encourage them to do their best at all times.</li>
-                            <li>I will make sure that my child attends classes regularly and arrives on time.</li>
-                            <li>If my child needs to withdraw or transfer, I will process the necessary documents and inform the school officially.</li>
-                            <li>I understand that if my child has incomplete academic requirements, these must be completed within the given period set by the school. Failure to do so may affect my child's academic standing.</li>
-                        </ol>
-                        <p>I understand that any false information or fraudulent documents submitted may result in the <strong>cancellation of my child's enrollment or dismissal</strong> from the school.</p>
-                        <p>I certify that all the information provided is true and correct. I agree to abide by the policies and guidelines set by the school. I voluntarily affix my signature and complete the required verification as confirmation of my agreement.</p>
-                    </div>
-                    <div class="declaration-check">
-                        <label>
-                            <input type="checkbox" name="agree" required>
-                            I have read and agree to the Enrollment Declaration and Agreement.
-                        </label>
-                    </div>
-                </div>
             </div>
 
             <button type="button" class="button" name="next" onclick="window.location.href='medical.php'">Next</button>
