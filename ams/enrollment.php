@@ -4,8 +4,7 @@ include "config.php";
 $db = new Database();
 
 if (isset($_POST['next'])){
-    $school_start = $_POST['year_start'];
-    $school_end = $_POST['year_end'];
+    $school_year = $_POST['school_year'];
     $grade_level = $_POST['Grade_Level'];
     $with_lrn = $_POST['with_lrn'];
     $returning = $_POST['returning'];
