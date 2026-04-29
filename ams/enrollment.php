@@ -258,11 +258,13 @@ if (isset($_POST['next'])){
                         <tr>
                             <td><input type="checkbox" value="Intellectual_Disability"> Intellectual Disability</td>
                             <td><input type="checkbox" value="Orthopedic_Physical_Handicap"> Orthopedic / Physical Handicap</td>
+                            <td><input type="checkbox" value="Multiple_Disorder"> Multiple Disabilities</td>
+                            
                         </tr>
                         <tr>
                             <td><input type="checkbox" value="Special_Health_Problem"> Special Health Problem / Chronic Disease</td>
                             <td><input type="checkbox" value="Cancer"> a. Cancer</td>
-                            <td><input type="checkbox" value="Multiple_Disorder"> Multiple Disorder</td>
+                            <td><input type="checkbox" value="Non_Cancer"> b. Non-Cancer</td>
                         </tr>
                     </table>
                 </div>
