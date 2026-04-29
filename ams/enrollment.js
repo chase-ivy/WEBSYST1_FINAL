@@ -1,5 +1,5 @@
 function ipField() {
-  const selected = document.querySelector('input[name="ip"]:checked');
+  const selected = document.querySelector('input[name="indigenous_group"]:checked');
   const card = document.getElementById("ipDetails");
 
   if (!selected) return;
@@ -8,7 +8,7 @@ function ipField() {
 }
 
 function fourPsField() {
-  const selected = document.querySelector('input[name="fourps"]:checked');
+  const selected = document.querySelector('input[name="4p_benificiary"]:checked');
   const card = document.getElementById("fourPsDetails");
 
   if (!selected) return;
@@ -17,7 +17,7 @@ function fourPsField() {
 }
 
 function disabilityField() {
-  const selected = document.querySelector('input[name="disability"]:checked');
+  const selected = document.querySelector('input[name="is_learner_with_disability"]:checked');
   const card = document.getElementById("disabilityDetails");
 
   if (!selected) return;

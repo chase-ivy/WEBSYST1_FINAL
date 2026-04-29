@@ -1,58 +1,5 @@
 <?php
-include "config.php";
-
-$db = new Database();
-
-if (isset($_POST['next'])){
-    $school_year = $_POST['school_year'];
-    $grade_level = $_POST['Grade_Level'];
-    $with_lrn = $_POST['with_lrn'];
-    $returning = $_POST['returning'];
-    $PSA = $_POST['PSA_Birth_Certificate_No'];
-    $LRN = $_POST['Learner_Reference_No'];
-    $LearnerLN = $_POST['Learner_Last_Name'];
-    $LearnerFN = $_POST['Learner_First_Name'];
-    $LearnerMN = $_POST['Learner_Middle_Name'];
-    $LearnerEN = $_POST['Learner_Extension_Name'];
-    $birthDate = $_POST['Birth_Date'];
-    $sex = $_POST['sex'];
-    $place_of_birth = $_POST['Place_of_Birth'];
-    $age = $_POST['Age'];
-    $mother_tongue = $_POST['Mother_Tongue'];
-    $ip = $_POST['ip'];
-    $IPspecify = $_POST['IP_Specify'];
-    $fourp = $_POST['fourps'];
-    $fourps = $_POST['FourPs_Specify'];
-    $disability = $_POST['disability'];
-    $current_house_number =$_POST['Current_House_No'];
-    $current_street_name = $_POST['Current_Street_Name'];
-    $current_barangay = $_POST['Current_Barangay'];
-    $current_municipality_city = $_POST['Current_Municipality_City'];
-    $current_province = $_POST['Current_Province'];
-    $current_country = $_POST['Current_Country'];
-    $current_zip = $_POST['Current_Zip_Code'];
-    $same_address = $_POST['same_address'];
-    $permanent_house_no = $_POST['Permanent_House_No'];
-    $permanent_street_name = $_POST['Permnanent_Street_Name'];
-    $permanent_barangay = $_POST['Permanent_Barangay'];
-    $permanent_municipality_city = $_POST['Permanent_Municipality_City'];
-    $permanent_country = $_POST['Permanent_Country'];
-    $permanent_zip = $_POST['Permanent_Zip_Code'];
-    $father_lname= $_POST['Father_Last_Name'];
-    $father_fname = $_POST['Father_First_Name'];
-    $father_mname = $_POST['Father_Middle_Name'];
-    $father_contanct = $_POST['Father_Contact_Number'];
-    $mother_lname = $_POST['Mother_Last_Name'];
-    $mother_fname = $_POST['Mother_First_Name'];
-    $mother_mname = $_POST['Mother_Middle_Name'];
-    $mother_contact = $_POST['Mother_Contact_Number'];
-    $returning_gLevel = $_POST['Returning_Grade_Level'];
-    $last_school_attended = $_POST['Last_School_Attended'];
-    $last_school_year_completed = $_POST['Last_School_Year_Completed'];
-    $s_id = $_POST['school_ID'];
-    $agree = $_POST['agree'];
-    
-}
+// This page submits to config.php which handles the database insert
 ?>
 
 <!DOCTYPE html>
@@ -140,7 +87,7 @@ if (isset($_POST['next'])){
 
 <div class="card">
     <section>
-        <form>
+        <form method="POST" action="config.php">
             <div class="card">
                 <nav class="nav-card">
                     <a href="index.php" class="select">Change Form Access <</a><br><br>
@@ -151,10 +98,10 @@ if (isset($_POST['next'])){
                 <hr>
 
                 <span>School Year</span><br>
-                <input type="number" name="school_year">
+                <input style="width: 45%;" type="text" name="school_year" placeholder="e.g. 2025-2026"><br><br>
 
                 <span>Grade Level</span><br>
-                <select name="Grade_Level" style="width: 100%">
+                <select name="grade_level" style="width: 100%">
                     <option value="" hidden>Select Grade Level</option>
                     <option value="Kinder">Kinder</option>
                     <option value="Grade 1">Grade 1</option>
@@ -176,25 +123,25 @@ if (isset($_POST['next'])){
                 <br><br>
 
                 <span>PSA Birth Certificate No.(if available upon registration)</span><br>
-                <input type="number" name="PSA_Birth_Certificate_No"><br><br>
+                <input type="number" name="psa_bcn"><br><br>
 
-                <span>Learner Reference No. (LRN)</span><br>
-                <input type="number" name="Learner_Reference_No"><br><br>
+                <span>LRN (Learner Reference No.)</span><br>
+                <input type="number" name="lrn"><br><br>
 
                 <span>Last Name</span><br>
-                <input type="text" name="Learner_Last_Name"><br><br>
+                <input type="text" name="last_name"><br><br>
 
                 <span>First Name</span><br>
-                <input type="text" name="Learner_First_Name"><br><br>
+                <input type="text" name="first_name"><br><br>
 
                 <span>Middle Name</span><br>
-                <input type="text" name="Learner_Middle_Name"><br><br>
+                <input type="text" name="middle_name"><br><br>
 
                 <span>Extension Name</span><br>
-                <input type="text" name="Learner_Extension_Name"><br><br>
+                <input type="text" name="extension_name" placeholder="e.g. Jr., Sr., III"><br><br>
 
                 <span>Birth Date</span><br>
-                <input type="date" name="Birth_Date"><br><br>
+                <input type="date" name="birth_date"><br><br>
 
                 <span>Sex</span><br>
                 <label><input type="radio" name="sex" value="Male"> Male</label>
@@ -202,17 +149,17 @@ if (isset($_POST['next'])){
                 <br><br>
 
                 <span>Place of Birth</span><br>
-                <input type="text" name="Place_of_Birth" placeholder="Municipality/City"><br><br>
+                <input type="text" name="place_of_birth" placeholder="Municipality/City"><br><br>
 
                 <span>Age</span><br>
-                <input type="number" name="Age"><br><br>
+                <input type="number" name="age"><br><br>
 
                 <span>Mother Tongue</span><br>
-                <input type="text" name="Mother_Tongue"><br><br>
+                <input type="text" name="mother_tongue"><br><br>
 
                 <span>Belonging to any Indigenous Group (IP) Community/Indigenous Cultural Community</span><br>
-                <label><input type="radio" name="ip" value="Yes" onchange="ipField()"> Yes</label>
-                <label><input type="radio" name="ip" value="No" onchange="ipField()"> No</label>
+                <label><input type="radio" name="indigenous_group" value="Yes" onchange="ipField()"> Yes</label>
+                <label><input type="radio" name="indigenous_group" value="No" onchange="ipField()"> No</label>
                 <br><br>
 
                 <div id="ipDetails" style="display:none;">
@@ -222,8 +169,8 @@ if (isset($_POST['next'])){
                 <br>
 
                 <span>Is your family a beneficiary of 4Ps</span><br>
-                <label><input type="radio" name="fourps" value="Yes" onchange="fourPsField()"> Yes</label>
-                <label><input type="radio" name="fourps" value="No" onchange="fourPsField()"> No</label>
+                <label><input type="radio" name="4p_benificiary" value="Yes" onchange="fourPsField()"> Yes</label>
+                <label><input type="radio" name="4p_benificiary" value="No" onchange="fourPsField()"> No</label>
 
                 <div id="fourPsDetails" style="display:none;">
                     <span>If Yes, write the 4Ps Household ID Number below:</span><br>
@@ -232,8 +179,8 @@ if (isset($_POST['next'])){
                 <br><br>
 
                 <span>Is the child a Learner with Disability</span><br>
-                <label><input type="radio" name="disability" value="Yes" onchange="disabilityField()"> Yes</label>
-                <label><input type="radio" name="disability" value="No" onchange="disabilityField()"> No</label>
+                <label><input type="radio" name="is_learner_with_disability" value="Yes" onchange="disabilityField()"> Yes</label>
+                <label><input type="radio" name="is_learner_with_disability" value="No" onchange="disabilityField()"> No</label>
                 <br><br>
 
                 <div id="disabilityDetails" style="display:none;">
@@ -273,25 +220,28 @@ if (isset($_POST['next'])){
                 <hr><br>
 
                 <span>House No.</span><br>
-                <input type="number" name="Current_House_No"><br><br>
+                <input type="text" name="house_no"><br><br>
 
                 <span>Street Name</span><br>
-                <input type="text" name="Current_Street_Name"><br><br>
+                <input type="text" name="street_name"><br><br>
 
                 <span>Barangay</span><br>
-                <input type="text" name="Current_Barangay"><br><br>
+                <input type="text" name="barangay"><br><br>
+
+                <span>Subdivision</span><br>
+                <input type="text" name="subdivision_house_no"><br><br>
 
                 <span>Municipality / City</span><br>
-                <input type="text" name="Current_Municipality_City"><br><br>
+                <input type="text" name="municipality_city"><br><br>
 
                 <span>Province</span><br>
-                <input type="text" name="Current_Province"><br><br>
+                <input type="text" name="province"><br><br>
 
                 <span>Country</span><br>
-                <input type="text" name="Current_Country"><br><br>
+                <input type="text" name="country"><br><br>
 
                 <span>Zip Code</span><br>
-                <input type="number" name="Current_Zip_Code"><br><br>
+                <input type="text" name="zip_code"><br><br>
 
                 <hr>
                 <h3>Permanent Address</h3>
@@ -303,53 +253,56 @@ if (isset($_POST['next'])){
                 <br><br>
 
                 <span>House No.</span><br>
-                <input type="number" name="Permanent_House_No"><br><br>
+                <input type="text" name="permanent_house_no"><br><br>
 
                 <span>Street Name</span><br>
-                <input type="text" name="Permanent_Street_Name"><br><br>
+                <input type="text" name="permanent_street_name"><br><br>
 
                 <span>Barangay</span><br>
-                <input type="text" name="Permanent_Barangay"><br><br>
+                <input type="text" name="permanent_barangay"><br><br>
+
+                <span>Subdivision</span><br>
+                <input type="text" name="permanent_subdivision_house_no"><br><br>
 
                 <span>Municipality / City</span><br>
-                <input type="text" name="Permanent_Municipality_City"><br><br>
+                <input type="text" name="permanent_municipality_city"><br><br>
 
                 <span>Province</span><br>
-                <input type="text" name="Permanent_Province"><br><br>
+                <input type="text" name="permanent_province"><br><br>
 
                 <span>Country</span><br>
-                <input type="text" name="Permanent_Country"><br><br>
+                <input type="text" name="permanent_country"><br><br>
 
                 <span>Zip Code</span><br>
-                <input type="number" name="Permanent_Zip_Code"><br><br>
+                <input type="text" name="permanent_zip_code"><br><br>
 
                 <hr>
                 <center><h2>PARENT'S/GUARDIAN'S INFORMATION</h2></center>
                 <hr>
 
                 <span>Father's Last Name</span><br>
-                <input type="text" name="Father_Last_Name"><br><br>
+                <input type="text" name="father_last_name"><br><br>
 
                 <span>Father's First Name</span><br>
-                <input type="text" name="Father_First_Name"><br><br>
+                <input type="text" name="father_first_name"><br><br>
 
                 <span>Father's Middle Name</span><br>
-                <input type="text" name="Father_Middle_Name"><br><br>
+                <input type="text" name="father_middle_name"><br><br>
 
                 <span>Father's Contact Number</span><br>
-                <input type="text" name="Father_Contact_Number"><br><br>
+                <input type="text" name="father_contact_number"><br><br>
 
                 <span>Mother's Last Name</span><br>
-                <input type="text" name="Mother_Last_Name"><br><br>
+                <input type="text" name="mother_last_name"><br><br>
 
                 <span>Mother's First Name</span><br>
-                <input type="text" name="Mother_First_Name"><br><br>
+                <input type="text" name="mother_first_name"><br><br>
 
                 <span>Mother's Middle Name</span><br>
-                <input type="text" name="Mother_Middle_Name"><br><br>
+                <input type="text" name="mother_middle_name"><br><br>
 
                 <span>Mother's Contact Number</span><br>
-                <input type="text" name="Mother_Contact_Number"><br><br>
+                <input type="text" name="mother_contact_number"><br><br>
 
                 <div id="returningDetails" style="display:none;">
                     <hr>
@@ -357,7 +310,7 @@ if (isset($_POST['next'])){
                     <hr>
 
                     <span>Last Grade Level Completed</span><br>
-                    <select name="Returning_Grade_Level" style="width: 100%">
+                    <select name="last_grade_level_completed" style="width: 100%">
                         <option value="" hidden>Select Grade Level</option>
                         <option value="Kinder">Kinder</option>
                         <option value="Grade 1">Grade 1</option>
@@ -369,26 +322,17 @@ if (isset($_POST['next'])){
                     </select><br><br>
 
                     <span>Last School Attended</span><br>
-                    <input type="text" name="Last_School_Attended"><br><br>
+                    <input type="text" name="last_school_attended"><br><br>
 
                     <span>Last School Year Completed</span><br>
-                    <input type="number" name="Last_School_Year_Completed"><br><br>
+                    <input type="text" name="last_school_year_completed"><br><br>
 
                     <span>School ID</span><br>
                     <input type="number" name="school_ID"><br><br>
                 </div>
             </div>
 
-            <table>
-                <tr>
-                    <td style="width: 50%">
-                        <button type="button" class="button" name="next" onclick="window.location.href='medical.php'">Next</button>
-                    </td>
-                    <td style="width: 50%">
-                        <button type="button" class="button" name="submit" onclick="window.location.href=''">Submit</button>
-                    </td>
-                </tr>
-            </table>
+            <button type="submit" class="button" name="next">Next</button>
         </form>
     </section>
 </div>

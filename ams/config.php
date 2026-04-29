@@ -67,6 +67,9 @@ public function insert(string $table, array $allowedFields): int
 
 $db = new Database();
 
+// Only process form submission if school_year is provided
+if (isset($_POST['school_year']) && !empty($_POST['school_year'])) {
+
 //Students Table
 
 $studentFields = [
@@ -111,17 +114,18 @@ $currentAddressFields = [
 $db->insert('current_address', $currentAddressFields);
 
 //Permanent Address
-// This is like this because if isnt, it will use current address fields aswell.
-// Too tired to fix
+// If "same_address" is checked, use current address values; otherwise use permanent address fields
 
-$_POST['house_no'] = $_POST['permanent_house_no'] ?? null;
-$_POST['street_name'] = $_POST['permanent_street_name'] ?? null;
-$_POST['barangay'] = $_POST['permanent_barangay'] ?? null;
-$_POST['subdivision_house_no'] = $_POST['permanent_subdivision_house_no'] ?? null;
-$_POST['municipality_city'] = $_POST['permanent_municipality_city'] ?? null;
-$_POST['province'] = $_POST['permanent_province'] ?? null;
-$_POST['country'] = $_POST['permanent_country'] ?? null;
-$_POST['zip_code'] = $_POST['permanent_zip_code'] ?? null;
+if (isset($_POST['same_address']) && $_POST['same_address'] === 'Yes') {
+    $_POST['permanent_house_no'] = $_POST['house_no'];
+    $_POST['permanent_street_name'] = $_POST['street_name'];
+    $_POST['permanent_barangay'] = $_POST['barangay'];
+    $_POST['permanent_subdivision_house_no'] = $_POST['subdivision_house_no'];
+    $_POST['permanent_municipality_city'] = $_POST['municipality_city'];
+    $_POST['permanent_province'] = $_POST['province'];
+    $_POST['permanent_country'] = $_POST['country'];
+    $_POST['permanent_zip_code'] = $_POST['zip_code'];
+}
 
 $permanentAddressFields = [
     'student_id',
@@ -252,4 +256,6 @@ $familyHistoryFields = [
 
 $db->insert('family_medical_history', $familyHistoryFields);
 
-echo "All student records saved successfully.";
+    echo "All student records saved successfully.";
+    exit;
+}
