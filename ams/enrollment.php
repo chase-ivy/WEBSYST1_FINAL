@@ -151,7 +151,7 @@ if (isset($_POST['next'])){
                 <hr>
 
                 <span>School Year</span><br>
-                <input type="number" name="year_start">
+                <input type="number" name="school_year">
 
                 <span>Grade Level</span><br>
                 <select name="Grade_Level" style="width: 100%">
