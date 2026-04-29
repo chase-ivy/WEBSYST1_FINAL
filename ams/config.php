@@ -76,7 +76,7 @@ $studentFields = [
     'age',
     'mother_tongue',
     'indigenous_group',
-    'four_ps_beneficiary',
+    '4p_beneficiary',
     'is_learner_with_disability'
 ];
 
