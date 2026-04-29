@@ -1,5 +1,59 @@
 <?php
+include "config.php";
 
+$db = new Database();
+
+if (isset($_POST['next'])){
+    $school_start = $_POST['year_start'];
+    $school_end = $_POST['year_end'];
+    $grade_level = $_POST['Grade_Level'];
+    $with_lrn = $_POST['with_lrn'];
+    $returning = $_POST['returning'];
+    $PSA = $_POST['PSA_Birth_Certificate_No'];
+    $LRN = $_POST['Learner_Reference_No'];
+    $LearnerLN = $_POST['Learner_Last_Name'];
+    $LearnerFN = $_POST['Learner_First_Name'];
+    $LearnerMN = $_POST['Learner_Middle_Name'];
+    $LearnerEN = $_POST['Learner_Extension_Name'];
+    $birthDate = $_POST['Birth_Date'];
+    $sex = $_POST['sex'];
+    $place_of_birth = $_POST['Place_of_Birth'];
+    $age = $_POST['Age'];
+    $mother_tongue = $_POST['Mother_Tongue'];
+    $ip = $_POST['ip'];
+    $IPspecify = $_POST['IP_Specify'];
+    $fourp = $_POST['fourps'];
+    $fourps = $_POST['FourPs_Specify'];
+    $disability = $_POST['disability'];
+    $current_house_number =$_POST['Current_House_No'];
+    $current_street_name = $_POST['Current_Street_Name'];
+    $current_barangay = $_POST['Current_Barangay'];
+    $current_municipality_city = $_POST['Current_Municipality_City'];
+    $current_province = $_POST['Current_Province'];
+    $current_country = $_POST['Current_Country'];
+    $current_zip = $_POST['Current_Zip_Code'];
+    $same_address = $_POST['same_address'];
+    $permanent_house_no = $_POST['Permanent_House_No'];
+    $permanent_street_name = $_POST['Permnanent_Street_Name'];
+    $permanent_barangay = $_POST['Permanent_Barangay'];
+    $permanent_municipality_city = $_POST['Permanent_Municipality_City'];
+    $permanent_country = $_POST['Permanent_Country'];
+    $permanent_zip = $_POST['Permanent_Zip_Code'];
+    $father_lname= $_POST['Father_Last_Name'];
+    $father_fname = $_POST['Father_First_Name'];
+    $father_mname = $_POST['Father_Middle_Name'];
+    $father_contanct = $_POST['Father_Contact_Number'];
+    $mother_lname = $_POST['Mother_Last_Name'];
+    $mother_fname = $_POST['Mother_First_Name'];
+    $mother_mname = $_POST['Mother_Middle_Name'];
+    $mother_contact = $_POST['Mother_Contact_Number'];
+    $returning_gLevel = $_POST['Returning_Grade_Level'];
+    $last_school_attended = $_POST['Last_School_Attended'];
+    $last_school_year_completed = $_POST['Last_School_Year_Completed'];
+    $s_id = $_POST['school_ID'];
+    $agree = $_POST['agree'];
+    
+}
 ?>
 
 <!DOCTYPE html>
@@ -350,10 +404,9 @@
                         </label>
                     </div>
                 </div>
-
             </div>
 
-            <button type="button" class="button" onclick="window.location.href='medical.php'">Next</button>
+            <button type="button" class="button" name="next" onclick="window.location.href='medical.php'">Next</button>
         </form>
     </section>
 </div>
