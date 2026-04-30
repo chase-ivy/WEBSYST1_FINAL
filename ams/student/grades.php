@@ -1,22 +1,37 @@
 <?php
 include "config.php";
+$student_id = isset($_GET['student_id']) ? intval($_GET['student_id']) : 1;
+$rawGrades = getGrades($pdo, $student_id);
+$grades = [];
 
-$student_id = 1;
+foreach ($rawGrades as $g) {
+    $subject = $g['subject_name'];
+    $period = strtolower($g['grading_period']);
 
-$stmt = $pdo->prepare("
-    SELECT 
-        s.subject_name,
-        MAX(CASE WHEN g.quarter = 1 THEN g.grade END) AS q1,
-        MAX(CASE WHEN g.quarter = 2 THEN g.grade END) AS q2,
-        MAX(CASE WHEN g.quarter = 3 THEN g.grade END) AS q3,
-        MAX(CASE WHEN g.quarter = 4 THEN g.grade END) AS q4
-    FROM grades g
-    JOIN subjects s ON g.subject_id = s.id
-    WHERE g.student_id = ?
-    GROUP BY s.subject_name
-");
-$stmt->execute([$student_id]);
-$grades = $stmt->fetchAll();
+    if (!isset($grades[$subject])) {
+        $grades[$subject] = [
+            'subject_name' => $subject,
+            'q1' => '-',
+            'q2' => '-',
+            'q3' => '-',
+            'q4' => '-',
+            'remarks' => '-'
+        ];
+    }
+
+    // Adjust depending on your DB values
+    if ($period == '1st grading' || $period == 'q1') {
+        $grades[$subject]['q1'] = $g['final_grade'];
+    } elseif ($period == '2nd grading' || $period == 'q2') {
+        $grades[$subject]['q2'] = $g['final_grade'];
+    } elseif ($period == '3rd grading' || $period == 'q3') {
+        $grades[$subject]['q3'] = $g['final_grade'];
+    } elseif ($period == '4th grading' || $period == 'q4') {
+        $grades[$subject]['q4'] = $g['final_grade'];
+    }
+
+    $grades[$subject]['remarks'] = $g['remarks'];
+}
 ?>
 
 <!DOCTYPE html>
@@ -26,7 +41,6 @@ $grades = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student Portal - Grades</title>
     <link rel="stylesheet" type="text/css" href="../style/style.css">
-    
 </head>
 
 <body>
@@ -38,18 +52,18 @@ $grades = $stmt->fetchAll();
 
 <div class="container">
     <div class="sidebar">
-        <a href="student.php">Dashboard</a>
-        <a href="grades.php">Grades</a>
-        <a href="activities.php">Activities</a>
-        <a href="report.php">Report Card</a>
-        <a href="classrecords.php">Class Record</a>
+        <a href="student.php?student_id=<?= $student_id ?>">Dashboard</a>
+        <a href="grades.php?student_id=<?= $student_id ?>">Grades</a>
+        <a href="activities.php?student_id=<?= $student_id ?>">Activities</a>
+        <a href="report.php?student_id=<?= $student_id ?>">Report Card</a>
+        <a href="classrecords.php?student_id=<?= $student_id ?>">Class Record</a>
         <a href="index.php">Logout</a>
     </div>
 
-
     <div class="content">
         <div class="card">
-            <h3>Recorded Grades</h3>
+            <h3>Grades</h3>
+
             <table>
                 <tr>
                     <th>Subject</th>
@@ -59,15 +73,23 @@ $grades = $stmt->fetchAll();
                     <th>4th Quarter</th>
                     <th>Remarks</th>
                 </tr>
-                <?php foreach ($grades as $g): ?>
-                <tr>
-                    <td><?= $g['subject_name'] ?></td>
-                    <td><?= $g['q1'] ?? '-' ?></td>
-                    <td><?= $g['q2'] ?? '-' ?></td>
-                    <td><?= $g['q3'] ?? '-' ?></td>
-                    <td><?= $g['q4'] ?? '-' ?></td>
-                </tr>
-                <?php endforeach; ?>
+
+                <?php if (!empty($grades)): ?>
+                    <?php foreach ($grades as $g): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($g['subject_name']) ?></td>
+                        <td><?= htmlspecialchars($g['q1']) ?></td>
+                        <td><?= htmlspecialchars($g['q2']) ?></td>
+                        <td><?= htmlspecialchars($g['q3']) ?></td>
+                        <td><?= htmlspecialchars($g['q4']) ?></td>
+                        <td><?= htmlspecialchars($g['remarks']) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="6">No grades found.</td>
+                    </tr>
+                <?php endif; ?>
 
             </table>
         </div>

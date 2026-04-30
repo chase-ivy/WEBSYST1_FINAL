@@ -1,8 +1,7 @@
 <?php
-session_start();
 include "config.php";
 
-$student_id = $_SESSION['student_id'];
+$student_id = 1; 
 
 $student = getStudentInfo($pdo, $student_id);
 $grades = getGrades($pdo, $student_id);
@@ -24,11 +23,12 @@ $attendance = getAttendance($pdo, $student_id);
 <header>
     <h2>Gibraltar AMS - Student Portal</h2>
     <img src="../style/logo.png" alt="Logo" class="logo">
+
 </header>
 
 <div class="container">
 
-    <!-- Sidebar -->
+
     <div class="sidebar">
         <a href="student.php">Dashboard</a>
         <a href="grades.php">Grades</a>
@@ -38,10 +38,10 @@ $attendance = getAttendance($pdo, $student_id);
         <a href="index.php">Logout</a>
     </div>
 
-    <!-- Main Content -->
-    <div class="content">
 
-        <!-- Grades -->
+    <div class="content">
+    <h3>Welcome <?= $student['first_name'] . ' ' . $student['last_name'] ?></h3>
+
         <div class="card">
             <h3>Recorded Grades</h3>
             <table>
@@ -60,7 +60,7 @@ $attendance = getAttendance($pdo, $student_id);
             </table>
         </div>
 
-        <!-- Activities -->
+
         <div class="card">
             <h3>Activities</h3>
             <table>
@@ -79,14 +79,14 @@ $attendance = getAttendance($pdo, $student_id);
             </table>
         </div>
 
-        <!-- Report Card -->
+
         <div class="card">
             <h3>Report Card</h3>
             <p>General Average: <strong>89.5</strong></p>
             <p>Remarks: Passed</p>
         </div>
 
-        <!-- Class Record -->
+
         <div class="card">
             <h3>Class Record</h3>
             <table>
@@ -102,8 +102,6 @@ $attendance = getAttendance($pdo, $student_id);
                     <td>2nd</td>
                     <td>91</td>
                 </tr>
-
-                <button>Print Report Card</button>
             </table>
         </div>
 

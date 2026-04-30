@@ -1,7 +1,4 @@
 <?php
-/* =========================
-   DATABASE CONNECTION
-========================= */
 $host = "localhost";
 $db   = "gems_db";
 $user = "root";
@@ -22,9 +19,8 @@ try {
     exit("Connection failed: " . $e->getMessage());
 }
 
-/* =========================
-   STUDENT INFO (FIXED)
-========================= */
+
+   //STUDENT INFO
 function getStudentInfo($pdo, $student_id) {
     $stmt = $pdo->prepare("
         SELECT 
@@ -44,9 +40,7 @@ function getStudentInfo($pdo, $student_id) {
     return $stmt->fetch();
 }
 
-/* =========================
-   GRADES
-========================= */
+   //GRADES
 function getGrades($pdo, $student_id, $school_year = null) {
     $sql = "
         SELECT 
@@ -78,9 +72,7 @@ function getGrades($pdo, $student_id, $school_year = null) {
     return $stmt->fetchAll();
 }
 
-/* =========================
-   ACTIVITIES
-========================= */
+   //ACTIVITIES
 function getActivities($pdo, $student_id, $school_year = null) {
     $sql = "
         SELECT 
@@ -116,9 +108,7 @@ function getActivities($pdo, $student_id, $school_year = null) {
     return $stmt->fetchAll();
 }
 
-/* =========================
-   ATTENDANCE SUMMARY
-========================= */
+   //ATTENDANCE SUMMARY
 function getAttendance($pdo, $student_id, $school_year = null) {
     $sql = "
         SELECT 
@@ -146,9 +136,38 @@ function getAttendance($pdo, $student_id, $school_year = null) {
     return $stmt->fetch();
 }
 
-/* =========================
-   REPORT CARD
-========================= */
+   //ATTENDANCE PER DATE 
+function getAttendanceRecords($pdo, $student_id, $school_year = null) {
+    $sql = "
+        SELECT 
+            s.subject_name,
+            a.attendance_date,
+            a.status
+        FROM attendance a
+        JOIN enrollments e ON a.enrollment_id = e.enrollment_id
+        JOIN classes c ON e.class_id = c.class_id
+        JOIN subjects s ON c.subject_id = s.subject_id
+        WHERE e.student_id = ?
+    ";
+
+    if ($school_year) {
+        $sql .= " AND e.school_year = ?";
+    }
+
+    $sql .= " ORDER BY a.attendance_date DESC";
+
+    $stmt = $pdo->prepare($sql);
+
+    if ($school_year) {
+        $stmt->execute([$student_id, $school_year]);
+    } else {
+        $stmt->execute([$student_id]);
+    }
+
+    return $stmt->fetchAll();
+}
+
+   //REPORT CARD
 function getReportCard($pdo, $student_id, $school_year = null) {
     $sql = "
         SELECT 
@@ -183,16 +202,15 @@ function getReportCard($pdo, $student_id, $school_year = null) {
     return $stmt->fetchAll();
 }
 
-/* =========================
-   FULL DASHBOARD
-========================= */
+   //FULL DASHBOARD
 function getStudentDashboard($pdo, $student_id, $school_year = null) {
     return [
-        "student"     => getStudentInfo($pdo, $student_id),
-        "grades"      => getGrades($pdo, $student_id, $school_year),
-        "activities"  => getActivities($pdo, $student_id, $school_year),
-        "attendance"  => getAttendance($pdo, $student_id, $school_year),
-        "report_card" => getReportCard($pdo, $student_id, $school_year)
+        "student"           => getStudentInfo($pdo, $student_id),
+        "grades"            => getGrades($pdo, $student_id, $school_year),
+        "activities"        => getActivities($pdo, $student_id, $school_year),
+        "attendance"        => getAttendance($pdo, $student_id, $school_year),
+        "attendance_logs"   => getAttendanceRecords($pdo, $student_id, $school_year), // NEW
+        "report_card"       => getReportCard($pdo, $student_id, $school_year)
     ];
 }
 ?>
