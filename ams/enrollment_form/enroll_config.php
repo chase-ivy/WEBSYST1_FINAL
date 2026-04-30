@@ -1,6 +1,6 @@
 <?php
 
-
+// PLEASE DO NOT REMOVE THIS.
 $host = "localhost";
 $db = "gems_db";
 $user = "root";
@@ -23,7 +23,7 @@ try {
 }
 
 ?>
-
+//ENROLLMENT SIDE
 <?php
     $year_start = $_POST['year_start'] ?? '';
     $year_end   = $_POST['year_end'] ?? '';
@@ -66,7 +66,7 @@ try {
         `4p_benificiary`, is_learner_with_disability) 
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
         
-        return $state->execute([
+        $state->execute([
         $school_year,
         $_POST['Grade_Level'] ?? null,
         $_POST['with_lrn'] ?? null,
@@ -87,7 +87,20 @@ try {
         $disability_value
         ]);
         
+        $student_id = $pdo->lastInsertId();
 
-    }
+        $state1 =$pdo->prepare('INSERT INTO current_address (student_id, house_no, street_name, barangay, municipality_city, province, zip_code) VALUES (?,?,?,?,?,?,?)');
+
+        $state1->execute([
+            $student_id,
+            $_POST['Current_House_No'] ?? null,
+            $_POST['Current_Street_Name'] ?? null,
+            $_POST['Current_Barangay'] ?? null,
+            $_POST['Current_Municipality_City'] ?? null,
+            $_POST['Current_Province'] ?? null,
+            $_POST['Current_Zip_Code'] ?? null
+        ]);
+    }       
+    
 
 ?>
