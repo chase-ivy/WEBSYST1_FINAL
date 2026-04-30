@@ -1,21 +1,21 @@
 <?php
-    include "enroll_config.php";
+    include "enrollCONFIG.php";
 
 ?>
-//IT WORKS
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="../style/style.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
     <title>Gibraltar AMS</title>
 </head>
 <body>
 
 <header>
     <h2>Gibraltar - AMES</h2>
-    <img src="../style/logo.png" alt="Logo" class="logo">
+    <img src="logo.png" alt="Logo" class="logo">
 </header>
 
 <center><h1>Enrollment Form</h1></center>
@@ -49,13 +49,13 @@
                 </select><br><br>
 
                 <span style="padding-right: 100px;">1. With LRN?</span><br>
-                <label><input type="radio" name="with_lrn" value="Yes"> Yes</label>
-                <label><input type="radio" name="with_lrn" value="No"> No</label>
+                <label><input type="radio" name="with_lrn" value="1"> Yes</label>
+                <label><input type="radio" name="with_lrn" value="0"> No</label>
                 <br><br>
 
                 <span>2. Returning(Babalik?)</span><br>
-                <label><input type="radio" name="returning" value="Yes" onchange="returningField()"> Yes</label>
-                <label><input type="radio" name="returning" value="No" onchange="returningField()"> No</label>
+                <label><input type="radio" name="returning" value="Y1es" onchange="returningField()"> Yes</label>
+                <label><input type="radio" name="returning" value="0" onchange="returningField()"> No</label>
                 <br><br>
 
                 <span>PSA Birth Certificate No.(if available upon registration)</span><br>
@@ -159,12 +159,8 @@
                     </table>
                 </div>
                 <br><br>
-
-                <button type="submit" class="button" onclick="sub()">Submit</button>
-        </form>
-</section>
-</div>
-                <!-- <hr>
+// WORKING
+                <hr>
                 <h3>Current Address</h3>
                 <hr><br>
 
@@ -219,6 +215,11 @@
                 <span>Zip Code</span><br>
                 <input type="number" name="Permanent_Zip_Code"><br><br>
 
+                <!-- <button type="submit" class="button">Submit</button>
+            </form>
+    </section>
+</div> -->
+
                 <hr>
                 <center><h2>PARENT'S/GUARDIAN'S INFORMATION</h2></center>
                 <hr>
@@ -247,7 +248,7 @@
                 <span>Mother's Contact Number</span><br>
                 <input type="text" name="Mother_Contact_Number"><br><br>
 
-                <div id="returningDetails" style="display:none;">
+                <!-- <div id="returningDetails" style="display:none;">
                     <hr>
                     <center><h2>For Returning Learner (Balik-Aral) And Those Who will Transfer/Move In</h2></center>
                     <hr>
@@ -273,19 +274,13 @@
                     <span>School ID</span><br>
                     <input type="number" name="school_ID"><br><br>
                 </div>
-            </div>
+            </div> -->
 
-            <button type="button" class="button" name="next" onclick="sub()">Submit</button>
+            <button type="submit" class="button">Submit</button>
         </form>
     </section>
 </div>
--->
-<scrip>
-function sub(){
-    alert("Enrollment Form Submitted!");
-    window.location.href = "medical.php";
-}
-</script>   
+ 
 
 <script>
     document.getElementById('visual_impairment').addEventListener('change', function() {

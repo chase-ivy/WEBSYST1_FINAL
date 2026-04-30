@@ -100,6 +100,55 @@ try {
             $_POST['Current_Province'] ?? null,
             $_POST['Current_Zip_Code'] ?? null
         ]);
+
+        if (isset($_POST['same_address']) && $_POST['same_address'] === 'Yes') {
+
+            $permanent_house   = $_POST['Current_House_No'] ?? null;
+            $permanent_street  = $_POST['Current_Street_Name'] ?? null;
+            $permanent_barangay= $_POST['Current_Barangay'] ?? null;
+            $permanent_city    = $_POST['Current_Municipality_City'] ?? null;
+            $permanent_province= $_POST['Current_Province'] ?? null;
+            $permanent_zip     = $_POST['Current_Zip_Code'] ?? null;
+
+        } else {
+
+            $permanent_house   = $_POST['Permanent_House_No'] ?? null;
+            $permanent_street  = $_POST['Permanent_Street_Name'] ?? null;
+            $permanent_barangay= $_POST['Permanent_Barangay'] ?? null;
+            $permanent_city    = $_POST['Permanent_Municipality_City'] ?? null;
+            $permanent_province= $_POST['Permanent_Province'] ?? null;
+            $permanent_zip     = $_POST['Permanent_Zip_Code'] ?? null;
+        }
+
+        $state2 = $pdo->prepare('INSERT INTO permanent_address (student_id, house_no, street_name, barangay, municipality_city, province, zip_code) VALUES (?,?,?,?,?,?,?)');       
+
+        $state2->execute([
+            $student_id,
+            $permanent_house,
+            $permanent_street,
+            $permanent_barangay,
+            $permanent_city,
+            $permanent_province,
+            $permanent_zip
+        ]);
+
+
+        $state3 = $pdo->prepare('INSERT INTO parent_guardian_information (student_id, father_last_name, father_first_name, father_middle_name, father_contact_number, mother_last_name, mother_first_name, mother_middle_name, mother_contact_number) VALUES (?,?,?,?,?,?,?,?,?)');
+
+        $state3->execute([
+            $student_id,
+            $_POST['Father_Last_Name'] ?? null,
+            $_POST['Father_First_Name'] ?? null,
+            $_POST['Father_Middle_Name'] ?? null,
+            $_POST['Father_Contact_Number'] ?? null,
+            $_POST['Mother_Last_Name'] ?? null,
+            $_POST['Mother_First_Name'] ?? null,
+            $_POST['Mother_Middle_Name'] ?? null,
+            $_POST['Mother_Contact_Number'] ?? null
+        ]); 
+
+        // $state4 = $pdo->prepare('INSERT INTO returning_learner_information (student_id, last_school_attended, last_school_year_attended, last_grade_level_completed, reason_for_returning) VALUES (?,?,?,?,?)');
+        // // Ill continue this later
     }       
     
 
