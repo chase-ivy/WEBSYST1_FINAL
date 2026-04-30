@@ -8,14 +8,13 @@ if(isset($_POST['submit'])){
 <html>
 <meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" type="text/css" href="style.css">
+	<link rel="stylesheet" type="text/css" href="../style/style.css">
 	<title>Gibraltar - Medical Form</title>
 </head>
 <body>
 <header>
   <h2>Medical Form - AMS</h2>
-<!-- Can someone put a pic logo ng school -->
-  <img src="logo.png" alt="Logo" class="logo">
+  <img src="../style/logo.png" alt="Logo" class="logo">
   <style>		
   		input[type="radio"]{
 			width: auto;

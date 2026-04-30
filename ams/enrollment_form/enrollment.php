@@ -8,14 +8,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="../style/style.css">
     <title>Gibraltar AMS</title>
 </head>
 <body>
 
 <header>
     <h2>Gibraltar - AMES</h2>
-    <img src="logo.png" alt="Logo" class="logo">
+    <img src="../style/logo.png" alt="Logo" class="logo">
 </header>
 
 <center><h1>Enrollment Form</h1></center>

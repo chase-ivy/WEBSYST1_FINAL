@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="../style/style.css">
     <title>Gibraltar AMS</title>
     <style>
         .index-section {
@@ -76,7 +76,7 @@
 
 <header>
     <h2>Gibraltar - AMS</h2>
-    <img src="logo.png" alt="Logo" class="logo">
+    <img src="../style/logo.png" alt="Logo" class="logo">
 </header>
 
 <section class="index-section">
@@ -84,7 +84,7 @@
         <div class="container">
     <div class="card">
 
-        <img src="logo.png" class="logo" alt="Logo">
+        <img src="../style/logo.png" class="logo" alt="Logo">
 
         <h2>Gibraltar AMS</h2>
         <p class="subtitle">Login to your account</p>
