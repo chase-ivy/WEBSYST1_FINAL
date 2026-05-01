@@ -16,7 +16,7 @@ function redirect_to_dashboard($role) {
         case 'teacher':
             return '../dashboard/teacher_dashboard/teacher_dashboard.php';
         case 'parent':
-            return '../dashboard/student_dashboard/student_dashboard.php';
+            return '../dashboard/student_dashboard/student.php';
         default:
             return '../login/index.php';
     }
