@@ -53,8 +53,8 @@
                 <br><br>
 
                 <span>2. Returning(Babalik?)</span><br>
-                <label><input type="radio" name="returning" value="Y1es" onchange="returningField()"> Yes</label>
-                <label><input type="radio" name="returning" value="0" onchange="returningField()"> No</label>
+                <label><input type="radio" name="returning" value="Yes" onchange="returningField()"> Yes</label>
+                <label><input type="radio" name="returning" value="No" onchange="returningField()"> No</label>
                 <br><br>
 
                 <span>PSA Birth Certificate No.(if available upon registration)</span><br>
@@ -179,7 +179,7 @@
                 <input type="text" name="Current_Province"><br><br>
 
                 <span>Country</span><br>
-                <input type="text" name="Current_Country"><br><br>
+                <input type="text" name="Current_Country" value="Philippines"><br><br>
 
                 <span>Zip Code</span><br>
                 <input type="number" name="Current_Zip_Code"><br><br>
@@ -214,11 +214,6 @@
                 <span>Zip Code</span><br>
                 <input type="number" name="Permanent_Zip_Code"><br><br>
 
-                <!-- <button type="submit" class="button">Submit</button>
-            </form>
-    </section>
-</div> -->
-
                 <hr>
                 <center><h2>PARENT'S/GUARDIAN'S INFORMATION</h2></center>
                 <hr>
@@ -247,13 +242,13 @@
                 <span>Mother's Contact Number</span><br>
                 <input type="text" name="Mother_Contact_Number"><br><br>
 
-                <!-- <div id="returningDetails" style="display:none;">
+                <div id="returningDetails" style="display:none;">
                     <hr>
                     <center><h2>For Returning Learner (Balik-Aral) And Those Who will Transfer/Move In</h2></center>
                     <hr>
 
                     <span>Last Grade Level Completed</span><br>
-                    <select name="Returning_Grade_Level" style="width: 100%">
+                    <select name="Last_Grade_Level_Completed" style="width: 100%">
                         <option value="" hidden>Select Grade Level</option>
                         <option value="Kinder">Kinder</option>
                         <option value="Grade 1">Grade 1</option>
@@ -268,12 +263,12 @@
                     <input type="text" name="Last_School_Attended"><br><br>
 
                     <span>Last School Year Completed</span><br>
-                    <input type="number" name="Last_School_Year_Completed"><br><br>
+                    <input type="text" name="Last_School_Year_Completed" placeholder="e.g., 2020-2021"><br><br>
 
                     <span>School ID</span><br>
                     <input type="number" name="school_ID"><br><br>
                 </div>
-            </div> -->
+            </div>
 
             <button type="submit" class="button">Submit</button>
         </form>
@@ -302,6 +297,68 @@
     }
 
     document.getElementById("age").value = age;
+});
+document.addEventListener("DOMContentLoaded", function () {
+
+    const sameYes = document.querySelector('input[name="same_address"][value="Yes"]');
+    const sameNo  = document.querySelector('input[name="same_address"][value="No"]');
+
+    const currentFields = {
+        house: document.querySelector('[name="Current_House_No"]'),
+        street: document.querySelector('[name="Current_Street_Name"]'),
+        barangay: document.querySelector('[name="Current_Barangay"]'),
+        city: document.querySelector('[name="Current_Municipality_City"]'),
+        province: document.querySelector('[name="Current_Province"]'),
+        country: document.querySelector('[name="Current_Country"]'),
+        zip: document.querySelector('[name="Current_Zip_Code"]')
+    };
+
+    const permanentFields = {
+        house: document.querySelector('[name="Permanent_House_No"]'),
+        street: document.querySelector('[name="Permanent_Street_Name"]'),
+        barangay: document.querySelector('[name="Permanent_Barangay"]'),
+        city: document.querySelector('[name="Permanent_Municipality_City"]'),
+        province: document.querySelector('[name="Permanent_Province"]'),
+        country: document.querySelector('[name="Permanent_Country"]'),
+        zip: document.querySelector('[name="Permanent_Zip_Code"]')
+    };
+
+    function copyAddress() {
+        permanentFields.house.value = currentFields.house.value;
+        permanentFields.street.value = currentFields.street.value;
+        permanentFields.barangay.value = currentFields.barangay.value;
+        permanentFields.city.value = currentFields.city.value;
+        permanentFields.province.value = currentFields.province.value;
+        permanentFields.country.value = currentFields.country.value;
+        permanentFields.zip.value = currentFields.zip.value;
+    }
+
+    function clearPermanent() {
+        for (let key in permanentFields) {
+            permanentFields[key].value = '';
+        }
+    }
+
+    sameYes.addEventListener("change", function () {
+        if (this.checked) {
+            copyAddress();
+        }
+    });
+
+    sameNo.addEventListener("change", function () {
+        if (this.checked) {
+            clearPermanent();
+        }
+    });
+
+    Object.values(currentFields).forEach(field => {
+        field.addEventListener("input", function () {
+            if (sameYes.checked) {
+                copyAddress();
+            }
+        });
+    });
+
 });
 </script>
 

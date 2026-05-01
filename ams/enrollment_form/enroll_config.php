@@ -89,7 +89,7 @@ try {
         
         $student_id = $pdo->lastInsertId();
 
-        $state1 =$pdo->prepare('INSERT INTO current_address (student_id, house_no, street_name, barangay, municipality_city, province, zip_code) VALUES (?,?,?,?,?,?,?)');
+        $state1 =$pdo->prepare('INSERT INTO current_address (student_id, house_no, street_name, barangay, municipality_city, province, country, zip_code) VALUES (?,?,?,?,?,?,?,?)');
 
         $state1->execute([
             $student_id,
@@ -98,6 +98,7 @@ try {
             $_POST['Current_Barangay'] ?? null,
             $_POST['Current_Municipality_City'] ?? null,
             $_POST['Current_Province'] ?? null,
+            $_POST['Current_Country'] ?? null,
             $_POST['Current_Zip_Code'] ?? null
         ]);
 
@@ -108,6 +109,7 @@ try {
             $permanent_barangay= $_POST['Current_Barangay'] ?? null;
             $permanent_city    = $_POST['Current_Municipality_City'] ?? null;
             $permanent_province= $_POST['Current_Province'] ?? null;
+            $permanent_country  = $_POST['Current_Country'] ?? null;
             $permanent_zip     = $_POST['Current_Zip_Code'] ?? null;
 
         } else {
@@ -117,10 +119,11 @@ try {
             $permanent_barangay= $_POST['Permanent_Barangay'] ?? null;
             $permanent_city    = $_POST['Permanent_Municipality_City'] ?? null;
             $permanent_province= $_POST['Permanent_Province'] ?? null;
+            $permanent_country  = $_POST['Permanent_Country'] ?? null;
             $permanent_zip     = $_POST['Permanent_Zip_Code'] ?? null;
         }
 
-        $state2 = $pdo->prepare('INSERT INTO permanent_address (student_id, house_no, street_name, barangay, municipality_city, province, zip_code) VALUES (?,?,?,?,?,?,?)');       
+        $state2 = $pdo->prepare('INSERT INTO permanent_address (student_id, house_no, street_name, barangay, municipality_city, province, country, zip_code) VALUES (?,?,?,?,?,?,?,?)');       
 
         $state2->execute([
             $student_id,
@@ -129,6 +132,7 @@ try {
             $permanent_barangay,
             $permanent_city,
             $permanent_province,
+            $permanent_country,
             $permanent_zip
         ]);
 
@@ -139,7 +143,7 @@ try {
             $student_id,
             $_POST['Father_Last_Name'] ?? null,
             $_POST['Father_First_Name'] ?? null,
-            $_POST['Father_Middle_Name'] ?? null,
+            $_POST['Father_Middle_Name'] ?? null, 
             $_POST['Father_Contact_Number'] ?? null,
             $_POST['Mother_Last_Name'] ?? null,
             $_POST['Mother_First_Name'] ?? null,
@@ -147,8 +151,15 @@ try {
             $_POST['Mother_Contact_Number'] ?? null
         ]); 
 
-        // $state4 = $pdo->prepare('INSERT INTO returning_learner_information (student_id, last_school_attended, last_school_year_attended, last_grade_level_completed, reason_for_returning) VALUES (?,?,?,?,?)');
-        // // Ill continue this later
+        $state4 = $pdo->prepare('INSERT INTO returning_learner_information (student_id, last_grade_level_completed, last_school_attended, last_school_year_completed, school_id) VALUES (?,?,?,?,?)');
+
+        $state4->execute([
+            $student_id,
+            $_POST['Last_Grade_Level_Completed'] ?? null,
+            $_POST['Last_School_Attended'] ?? null,
+            $_POST['Last_School_Year_Completed'] ?? null,
+            $_POST['school_ID'] ?? null
+        ]);
     }       
     
 
