@@ -1,5 +1,5 @@
 <?php
-include "config.php";
+include 'student_config.php';
 
    //AUTO LOAD STUDENT (TEST)
 $stmt = $pdo->query("SELECT student_id FROM students LIMIT 1");

@@ -1,8 +1,7 @@
 <?php
 use Classes\GeneratePDF;
 
-include "config.php";
-
+require_once __DIR__ . '/../../config/config.php';
 require_once 'vendor/autoload.php';
 
 // if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['student_id'])) {

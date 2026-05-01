@@ -1,5 +1,5 @@
 <?php
-include "config.php";
+include 'student_config.php';
 
 $student_id = 1; 
 

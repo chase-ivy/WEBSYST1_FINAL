@@ -1,5 +1,5 @@
 <?php
-include "config.php";
+include 'student_config.php';
 
 
    //AUTO LOAD STUDENT to fix since no sessions

@@ -1,5 +1,5 @@
 <?php
-include "config.php";
+include 'student_config.php';
 $student_id = isset($_GET['student_id']) ? intval($_GET['student_id']) : 1;
 $rawGrades = getGrades($pdo, $student_id);
 $grades = [];
