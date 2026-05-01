@@ -67,7 +67,7 @@
         letter-spacing: 0.5px;
         text-transform: uppercase;
 }
-}
+
 
 
     </style>
@@ -94,8 +94,10 @@
             <input type="text" name="Email" placeholder="Email" required>
 
             <input type="password" name="password" placeholder="Password" required>
-
+            <br>
             <button type="submit" class="btn">Login</button>
+
+            <button type="button" onclick="window.location.href='../enrollment_form/enrollment.php'" class="button">Enroll Student</button>
 
         </form>
     </div>

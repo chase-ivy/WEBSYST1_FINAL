@@ -23,7 +23,7 @@ try {
 }
 
 ?>
-//ENROLLMENT SIDE
+
 <?php
     $year_start = $_POST['year_start'] ?? '';
     $year_end   = $_POST['year_end'] ?? '';
