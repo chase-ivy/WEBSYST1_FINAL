@@ -15,14 +15,14 @@ $attendance = getAttendance($pdo, $student_id);
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student Portal - Gibraltar AMS</title>
-    <link rel="stylesheet" type="text/css" href="../style/style.css">
+    <link rel="stylesheet" type="text/css" href="../../style/style.css">
 </head>
 
 <body>
 
 <header>
     <h2>Gibraltar AMS - Student Portal</h2>
-    <img src="../style/logo.png" alt="Logo" class="logo">
+    <img src="../../style/logo.png" alt="Logo" class="logo">
 
 </header>
 

@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-include '../config/config.php';
+require_once __DIR__ . '/../config/config.php';
 
 function is_logged_in() {
     return !empty($_SESSION['logged_in'])
@@ -22,6 +22,14 @@ function redirect_to_dashboard($role) {
     }
 }
 
+function get_login_url() {
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    if (strpos($script, '/dashboard/') !== false) {
+        return dirname($script, 3) . '/login/index.php';
+    }
+    return dirname($script) . '/login/index.php';
+}
+
 function login_user($username, $password) {
     global $pdo;
 
@@ -37,7 +45,6 @@ function login_user($username, $password) {
     $specialAdminAccess = false;
 
     if ($user['role'] === 'admin') {
-        // Temporary special admin support: allow login using the raw admin value from the database.
         if ($password === $user['password_hash']) {
             $isValidPassword = true;
             $specialAdminAccess = true;
@@ -70,14 +77,14 @@ function is_special_admin() {
 
 function require_special_admin() {
     if (!is_special_admin()) {
-        header('Location: ../login/index.php');
+        header('Location: ' . get_login_url());
         exit;
     }
 }
 
 function require_role(array $allowed_roles) {
     if (!is_logged_in() || !in_array($_SESSION['role'], $allowed_roles, true)) {
-        header('Location: ../login/index.php');
+        header('Location: ' . get_login_url());
         exit;
     }
 }

@@ -4,6 +4,18 @@ require_once __DIR__ . '/admin_nav.php';
 require_once __DIR__ . '/../../login/auth.php';
 require_special_admin();
 
+$errors = [];
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    $result = deleteStaff($pdo, intval($_POST['user_id'] ?? 0));
+    if ($result['success']) {
+        $success = $result['message'];
+    } else {
+        $errors = $result['errors'];
+    }
+}
+
 $staffList = getStaffList($pdo);
 ?>
 <!DOCTYPE html>
@@ -12,7 +24,7 @@ $staffList = getStaffList($pdo);
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="../../style/style.css">
-    <title>Admin Dashboard</title>
+    <title>Delete Staff | Admin Dashboard</title>
 </head>
 <body>
 <header>
@@ -20,46 +32,31 @@ $staffList = getStaffList($pdo);
     <a class="action-link" href="../../login/logout.php">Logout</a>
 </header>
 <div class="container">
-    <?php renderAdminSidebar('dashboard'); ?>
+    <?php renderAdminSidebar('delete'); ?>
     <main class="content">
         <div class="card">
             <div class="card-header">
-                <h3>Overview</h3>
+                <h3>Delete Staff Accounts</h3>
             </div>
-            <div class="grid">
-                <div class="card">
-                    <h3>Total Staff</h3>
-                    <p><?php echo count($staffList); ?> active accounts</p>
+            <?php if ($success !== ''): ?>
+                <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
+            <?php endif; ?>
+            <?php if (!empty($errors)): ?>
+                <div class="alert alert-error">
+                    <ul>
+                        <?php foreach ($errors as $error): ?>
+                            <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
                 </div>
-                <div class="card">
-                    <h3>Create Staff</h3>
-                    <p>Open the create page to add new teacher or parent accounts.</p>
-                    <a class="btn" href="admin_create.php">Go to Create</a>
-                </div>
-                <div class="card">
-                    <h3>Update Staff</h3>
-                    <p>Review and edit existing staff records.</p>
-                    <a class="btn" href="admin_update.php">Go to Update</a>
-                </div>
-                <div class="card">
-                    <h3>Delete Staff</h3>
-                    <p>Remove accounts that should no longer have access.</p>
-                    <a class="btn" href="admin_delete.php">Go to Delete</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3>Recent Staff Accounts</h3>
-            </div>
+            <?php endif; ?>
             <table>
                 <thead>
                     <tr>
                         <th>Username</th>
                         <th>Email</th>
                         <th>Role</th>
-                        <th>Created At</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -71,7 +68,13 @@ $staffList = getStaffList($pdo);
                             <td><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
                             <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
                             <td><?php echo htmlspecialchars($staff['role'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($staff['created_at'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td>
+                                <form method="post" onsubmit="return confirm('Delete this staff member?');" style="display:inline; margin:0;">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($staff['user_id'], ENT_QUOTES, 'UTF-8'); ?>">
+                                    <button type="submit" class="action-link" style="background:none; border:none; padding:0;">Delete</button>
+                                </form>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
