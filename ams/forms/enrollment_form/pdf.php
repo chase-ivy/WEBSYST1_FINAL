@@ -7,10 +7,6 @@ include "enroll_config.php";
 
 // if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['student_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    
-    // $student_id = 20187546;
-
-    // $student_id = $_GET['student_id'];
 
     $student_id = $_GET['student_id'] ?? 1;
 
@@ -95,7 +91,7 @@ $sameAddress = ($currentAddr === $permanentAddr);
 
 $data = [
     // '' => $(''),
-    'lrn' => $student['student_id'],
+    'lrn' => $student['lrn'],
     'school_year' => $student['school_year'],
 
     'grade_level' => $formattedGrade,
