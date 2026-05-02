@@ -1,6 +1,10 @@
-````php
 <?php
-require 'config.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../../login/auth.php';
+
+require_role(['teacher']);
+
+$teacher_id = $_SESSION['user_id'];
 
 if (isset($_POST['addActivity'])) {
     addActivity(

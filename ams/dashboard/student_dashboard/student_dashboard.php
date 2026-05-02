@@ -24,80 +24,103 @@ $attendance = getAttendance($pdo, $student_id);
 <header>
     <h2>Gibraltar AMS - Student Portal</h2>
     <img src="../../style/logo.png" alt="Logo" class="logo">
-
 </header>
 
 <div class="container">
 
+<?php renderStudentSidebar('dashboard', $student_id); ?>
 
-    <?php renderStudentSidebar('dashboard', $student_id); ?>
+<div class="content">
+    <div class="card">
+        <h3>Recorded Grades</h3>
+        <table>
+            <tr>
+                <th>Subject</th>
+                <th>Quarter</th>
+                <th>Grade</th>
+                <th>Remarks</th>
+            </tr>
 
+            <?php foreach ($grades as $g): ?>
+            <tr>
+                <td><?= $g['subject_name'] ?></td>
+                <td><?= $g['grading_period'] ?></td>
+                <td><?= $g['final_grade'] ?></td>
+                <td><?= $g['remarks'] ?></td>
+            </tr>
+            <?php endforeach; ?>
 
-    <div class="content">
-    <h3>Welcome <?= $student['first_name'] . ' ' . $student['last_name'] ?></h3>
+        </table>
+    </div>
 
-        <div class="card">
-            <h3>Recorded Grades</h3>
-            <table>
-                <tr>
-                    <th>Subject</th>
-                    <th>Grade</th>
-                </tr>
-                <tr>
-                    <td>Math</td>
-                    <td>90</td>
-                </tr>
-                <tr>
-                    <td>English</td>
-                    <td>88</td>
-                </tr>
-            </table>
-        </div>
+    <div class="card">
+        <h3>Activities</h3>
+        <table>
+            <tr>
+                <th>Subject</th>
+                <th>Activity</th>
+                <th>Date</th>
+                <th>Score</th>
+            </tr>
 
+            <?php foreach ($activities as $a): ?>
+            <tr>
+                <td><?= $a['subject_name'] ?></td>
+                <td><?= $a['activity_name'] ?></td>
+                <td><?= $a['activity_date'] ?></td>
+                <td><?= $a['score'] ?> / <?= $a['max_score'] ?></td>
+            </tr>
+            <?php endforeach; ?>
 
-        <div class="card">
-            <h3>Activities</h3>
-            <table>
-                <tr>
-                    <th>Activity</th>
-                    <th>Score</th>
-                </tr>
-                <tr>
-                    <td>Science Project</td>
-                    <td>Completed</td>
-                </tr>
-                <tr>
-                    <td>Math Quiz</td>
-                    <td>Pending</td>
-                </tr>
-            </table>
-        </div>
+        </table>
+    </div>
 
+    <div class="card">
+        <h3>Report Card</h3>
 
-        <div class="card">
-            <h3>Report Card</h3>
-            <p>General Average: <strong>89.5</strong></p>
-            <p>Remarks: Passed</p>
-        </div>
+        <?php 
+        $total = 0;
+        $count = count($report);
 
+        foreach ($report as $r) {
+            $total += $r['general_average'];
+        }
 
-        <div class="card">
-            <h3>Class Record</h3>
-            <table>
-                <tr>
-                    <th>Quarter</th>
-                    <th>Average</th>
-                </tr>
-                <tr>
-                    <td>1st</td>
-                    <td>88</td>
-                </tr>
-                <tr>
-                    <td>2nd</td>
-                    <td>91</td>
-                </tr>
-            </table>
-        </div>
+        $overall = $count > 0 ? round($total / $count, 2) : 0;
+        ?>
+
+        <p>General Average: <strong><?= $overall ?></strong></p>
+        <p>Remarks: <?= $overall >= 75 ? 'Passed' : 'Failed' ?></p>
+    </div>
+
+    <div class="card">
+        <h3>Class Record</h3>
+        <table>
+            <tr>
+                <th>Quarter</th>
+                <th>Average</th>
+            </tr>
+
+            <?php foreach ($report as $r): ?>
+            <tr>
+                <td><?= $r['grading_period'] ?></td>
+                <td><?= $r['general_average'] ?></td>
+            </tr>
+            <?php endforeach; ?>
+
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>Attendance Summary</h3>
+        <p>Present: <?= $attendance['present'] ?? 0 ?></p>
+        <p>Absent: <?= $attendance['absent'] ?? 0 ?></p>
+        <p>Late: <?= $attendance['late_count'] ?? 0 ?></p>
+        <p>Excused: <?= $attendance['excused'] ?? 0 ?></p>
+    </div>
+
+</div>
+</div>
 
 </body>
 </html>

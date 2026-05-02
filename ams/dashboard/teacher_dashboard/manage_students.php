@@ -1,7 +1,11 @@
 <?php
-require 'config.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../../login/auth.php';
 
-// UPDATE STUDENT
+require_role(['teacher']);
+
+$teacher_id = $_SESSION['user_id'];
+
 if (isset($_POST['updateStudent'])) {
     updateStudent(
         $pdo,
@@ -22,7 +26,7 @@ $staff = getStaffInfo($pdo, $user_id);
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Staff Dashboard</title>
+    <title>Manage Students</title>
     <link rel="stylesheet" type="text/css" href="../../style/style.css">
 </head>
 

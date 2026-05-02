@@ -7,7 +7,7 @@ $stmt = $pdo->query("SELECT student_id FROM students LIMIT 1");
 $studentRow = $stmt->fetch();
 
 if (!$studentRow) {
-    die("No students found.");
+    die("No student Records found.");
 }
 
 $student_id = $studentRow['student_id'];

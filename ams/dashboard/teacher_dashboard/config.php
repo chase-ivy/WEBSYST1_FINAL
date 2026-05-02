@@ -1,8 +1,5 @@
 <?php
 include '../../config/config.php';
-session_start();
-require_once __DIR__ . '/../../../auth/auth.php';
-require_role(['teacher']);
 function requireTeacher()
 {
     if (!is_logged_in() || $_SESSION['role'] !== 'teacher') {
