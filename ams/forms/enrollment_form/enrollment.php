@@ -283,62 +283,62 @@
                 <strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
                 <h4>1. Does your child/ward have any allergies?</h4>	
 
-                        <select id="field" onchange="showField()" style="width:100%;">
+                        <select id="field" onchange="showField()" name="has_allergies" style="width:100%;">
                             <option hidden selected>Choose</option>
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
                         </select>
 
                     <div id="fieldDetails"></div>
 
                 <h4>2. Does your child/ward have any ongoing medical condition?</h4>
-                        <select id="Q2" onchange="showQ2()" style="width:100%;">
+                        <select id="Q2" onchange="showQ2()" name="has_medical_condition" style="width:100%;">
                             <option hidden selected>Choose</option>
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
                         </select>
 
                     <div id="q2"></div>
 
 
                 <h4>3. Did your child/ward ever have surgery / hospitalization?</h4>
-                        <select id="Q3" onchange="showQ3()" style="width:100%;">
+                        <select id="Q3" onchange="showQ3()" name="has_surgery_hospitalization" style="width:100%;">
                             <option hidden selected>Choose</option>
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
                         </select>
 
                     <div id="q3"></div>
 
                 <h4>4. Is your  child currently taking treatment / medicines?</h4>
-                        <select id="Q4" onchange="showQ4()" style="width:100%;">
+                        <select id="Q4" onchange="showQ4()" name="is_currently_taking_treatment" style="width:100%;">
                             <option hidden selected>Choose</option>
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
                         </select>
 
                     <div id="q4"></div>
 
                 <h4>5. Does your family have a history of the following conditions:</h4>
-                        <select id="Q5" onchange="showQ5()" style="width:100%;">
+                        <select id="Q5" onchange="showQ5()" name="has_family_history" style="width:100%;">
                             <option hidden selected>Choose</option>
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
                         </select>
 
                     <div id="q5"></div>
 
                 <h4>6. Does your child/ward have exposure to cigarette/vape smoke at home?:</h4>
-                        <select style="width:100%;">
+                        <select name="exposed_to_cigarette_vape_smoke" style="width:100%;">
                             <option hidden selected>Choose</option>
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
                         </select>
 
                     <div id="q5"></div>
 
                 <h4>7. Other pertinent learner information:</h4>
-                        <input type="text" placeholder="Please specify">
+                        <input type="text" name="other_pertinent_information" placeholder="Please specify">
 
             </div>
 

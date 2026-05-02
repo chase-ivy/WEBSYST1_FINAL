@@ -6,6 +6,7 @@ include '../../config/config.php';
 ?>
 
 <?php
+    //Enrollment Part
     $year_start = $_POST['year_start'] ?? '';
     $year_end   = $_POST['year_end'] ?? '';
 
@@ -141,6 +142,76 @@ include '../../config/config.php';
             $_POST['Last_School_Year_Completed'] ?? null,
             $_POST['school_ID'] ?? null
         ]);
+
+        //Medical Part
+        $med_state = $pdo->prepare('INSERT INTO medical_information (student_id, parent_guardian_name, contact_number, exposed_to_cigarette_vape_smoke, other_pertinent_information) VALUES (?,?,?,?,?)');
+        $med_state->execute([
+            $student_id,
+            $_POST['parent_guardian_name'] ?? null,
+            $_POST['contact_number'] ?? null,
+            $_POST['exposed_to_cigarette_vape_smoke'] ?? null,
+            $_POST['other_pertinent_information'] ?? null
+        ]);
+
+        $medical_id = $pdo->lastInsertId();
+
+        $med_state1 = $pdo->prepare('INSERT INTO medical_allergies (medical_id, has_allergies, medicine_allergy, pollen_allergy, food_allergy, other_allergy) VALUES (?,?,?,?,?,?)');
+        $med_state1->execute([
+            $medical_id,
+            $_POST['has_allergies'] ?? null,
+            $_POST['medicine_allergy'] ?? null,
+            $_POST['pollen_allergy'] ?? null,
+            $_POST['food_allergy'] ?? null,
+            $_POST['other_allergy'] ?? null
+        ]);
+
+        $med_state2 = $pdo->prepare('INSERT INTO medical_conditions (medical_id, has_medical_condition, error_of_refraction, asthma, seizure, heart_illness, anemia, bleeding_disorder, fracture_dislocation, other_condition) VALUES (?,?,?,?,?,?,?,?,?,?)');
+        $med_state2->execute([
+            $medical_id,
+            $_POST['has_medical_condition'] ?? null,
+            $_POST['error_of_refraction'] ?? null,
+            $_POST['asthma'] ?? null,
+            $_POST['seizure'] ?? null,
+            $_POST['heart_illness'] ?? null,
+            $_POST['anemia'] ?? null,
+            $_POST['bleeding_disorder'] ?? null,
+            $_POST['fracture_dislocation'] ?? null,
+            $_POST['other_condition'] ?? null
+        ]);
+
+        $med_state3 = $pdo->prepare('INSERT INTO medical_surgery_hospitalization (medical_id, has_surgery_hospitalization, surgery_date, hospital_name, body_part) VALUES (?,?,?,?,?)');
+        $med_state3->execute([  
+            $medical_id,
+            $_POST['has_surgery_hospitalization'] ?? null,
+            $_POST['surgery_date'] ?? null,
+            $_POST['hospital_name'] ?? null,
+            $_POST['body_part'] ?? null
+        ]);
+
+        $med_state4 = $pdo->prepare('INSERT INTO medical_treatment_medicines (medical_id, is_currently_taking_treatment, treatment_medicine, schedule_dosage) VALUES (?,?,?,?)');
+        $med_state4->execute([          
+            $medical_id,
+            $_POST['is_currently_taking_treatment'] ?? null,
+            $_POST['treatment_medicine'] ?? null,
+            $_POST['schedule_dosage'] ?? null
+        ]);
+
+        $med_state5 = $pdo->prepare('INSERT INTO family_medical_history (medical_id, has_family_medical_history, tuberculosis, cancer, cancer_type, diabetes_mellitus, hypertension, stroke_heart_attack, depression, kidney_problems, other_condition) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+        $med_state5->execute([              
+            $medical_id,
+            $_POST['has_family_medical_history'] ?? null,
+            $_POST['tuberculosis'] ?? null,
+            $_POST['cancer'] ?? null,
+            $_POST['cancer_type'] ?? null,
+            $_POST['diabetes_mellitus'] ?? null,
+            $_POST['hypertension'] ?? null,
+            $_POST['stroke_heart_attack'] ?? null,
+            $_POST['depression'] ?? null,
+            $_POST['kidney_problems'] ?? null,
+            $_POST['other_condition'] ?? null
+        ]);
+
+
     }       
     
 
