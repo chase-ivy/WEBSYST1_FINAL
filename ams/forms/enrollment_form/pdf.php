@@ -1,8 +1,9 @@
 <?php
+require_once __DIR__ . '/../../pdf/vendor/autoload.php';
+
 use Classes\GeneratePDF;
 
-require_once __DIR__ . '/../../config/config.php';
-require_once 'vendor/autoload.php';
+include "enroll_config.php";
 
 // if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['student_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -11,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     // $student_id = $_GET['student_id'];
 
-    $student_id = $_GET['student_id'] ?? 20187546;
+    $student_id = $_GET['student_id'] ?? 1;
 
     function fetchOne($pdo, $table, $student_id) {
         $stmt = $pdo->prepare("SELECT * FROM $table WHERE student_id = ? LIMIT 1");
