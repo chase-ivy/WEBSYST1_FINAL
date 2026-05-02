@@ -26,5 +26,4 @@ class GeneratePDF {
         return $outputPath;
     }
 }
-
 ?>

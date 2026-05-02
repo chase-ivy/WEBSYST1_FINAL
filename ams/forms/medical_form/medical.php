@@ -108,13 +108,6 @@ if(isset($_POST['submit'])){
 					<button type="submit" class="button">Submit</button>
 
 			</div>
-
-
-
-
-
-	
-
 	</form>
 </div>
 
