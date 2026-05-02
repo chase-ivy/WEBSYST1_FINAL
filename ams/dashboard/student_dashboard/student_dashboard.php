@@ -1,5 +1,6 @@
 <?php
 include 'student_config.php';
+require_once __DIR__ . '/student_nav.php';
 
 $student_id = 1; 
 
@@ -29,14 +30,7 @@ $attendance = getAttendance($pdo, $student_id);
 <div class="container">
 
 
-    <div class="sidebar">
-        <a href="student.php">Dashboard</a>
-        <a href="grades.php">Grades</a>
-        <a href="activities.php">Activities</a>
-        <a href="report.php">Report Card</a>
-        <a href="classrecords.php">Class Record</a>
-        <a href="../login/index.php">Logout</a>
-    </div>
+    <?php renderStudentSidebar('dashboard', $student_id); ?>
 
 
     <div class="content">
