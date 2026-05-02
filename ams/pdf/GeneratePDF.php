@@ -14,7 +14,7 @@ class GeneratePDF {
         $filename = 'completed_' . $safeName . '.pdf';
         $outputPath = $outputDir . '/' . $filename;
 
-        $formPath = __DIR__ . '/templates/enroll_compressed_fdf.pdf';
+        $formPath = __DIR__ . '/templates/enrollment_form_compressed.pdf';
         $pdf = new Pdf($formPath);
         $pdf->fillForm($data);
         $pdf->flatten();
