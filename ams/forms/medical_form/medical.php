@@ -8,17 +8,17 @@ if(isset($_POST['submit'])){
 <html>
 <meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" type="text/css" href="../style/style.css">
+	<link rel="stylesheet" type="text/css" href="../../style/style.css">
 	<title>Gibraltar - Medical Form</title>
 </head>
 <body>
 <header>
   <h2>Medical Form - AMS</h2>
-  <img src="../style/logo.png" alt="Logo" class="logo">
+  <img src="../../style/logo.png" alt="Logo" class="logo">
   <style>		
   		input[type="radio"]{
 			width: auto;
-			padding: 0;
+			padding: 0; 
 			margin-right: 5px;
 		}
 	</style>
@@ -27,11 +27,11 @@ if(isset($_POST['submit'])){
 	<center><h1>Medical Form</h1></center>
 
 <div class="card">
-					<nav class="nav-card">
-						<a href="index.php" class="select">Change Form Access <</a><br><br>
+		<nav class="nav-card">
+			<a href="index.php" class="select">Change Form Access <</a><br><br>
 
-						<p><strong>Medical Module</strong></p>
-					</nav>
+			<p><strong>Medical Module</strong></p>
+		</nav>
 
 
 <section>

@@ -7,14 +7,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="./../style/style.css">
+    <link rel="stylesheet" type="text/css" href="../../style/style.css">
     <title>Gibraltar AMS</title>
 </head>
 <body>
 
 <header>
     <h2>Gibraltar - AMES</h2>
-    <img src="./../style/logo.png" alt="Logo" class="logo">
+    <img src="../../style/logo.png" alt="Logo" class="logo">
 </header>
 
 <center><h1>Enrollment Form</h1></center>
@@ -24,7 +24,7 @@
         <form method="post">
             <div class="card">
                 <nav class="nav-card">
-                    <a href="./../login/index.php" class="select">BACK <</a><br><br>
+                    <a href="../../login/index.php" class="select">BACK <</a><br><br>
                     <p><strong>Enrollment Form</strong></p>
                 </nav>
                 <hr>
@@ -269,6 +269,78 @@
                     <input type="number" name="school_ID"><br><br>
                 </div>
             </div>
+            <center><h1>Medical Form</h1></center>
+            <div>
+                <div class="card">
+			<hr>
+
+                <label>Name of Parent/Guardian:</label>
+                <input type="text" name="parent_guardian_name">
+
+                <label>Contact Number:</label>
+                <input type="tel" name="contact_number">
+                <hr>
+                <strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
+                <h4>1. Does your child/ward have any allergies?</h4>	
+
+                        <select id="field" onchange="showField()" style="width:100%;">
+                            <option hidden selected>Choose</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+
+                    <div id="fieldDetails"></div>
+
+                <h4>2. Does your child/ward have any ongoing medical condition?</h4>
+                        <select id="Q2" onchange="showQ2()" style="width:100%;">
+                            <option hidden selected>Choose</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+
+                    <div id="q2"></div>
+
+
+                <h4>3. Did your child/ward ever have surgery / hospitalization?</h4>
+                        <select id="Q3" onchange="showQ3()" style="width:100%;">
+                            <option hidden selected>Choose</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+
+                    <div id="q3"></div>
+
+                <h4>4. Is your  child currently taking treatment / medicines?</h4>
+                        <select id="Q4" onchange="showQ4()" style="width:100%;">
+                            <option hidden selected>Choose</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+
+                    <div id="q4"></div>
+
+                <h4>5. Does your family have a history of the following conditions:</h4>
+                        <select id="Q5" onchange="showQ5()" style="width:100%;">
+                            <option hidden selected>Choose</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+
+                    <div id="q5"></div>
+
+                <h4>6. Does your child/ward have exposure to cigarette/vape smoke at home?:</h4>
+                        <select style="width:100%;">
+                            <option hidden selected>Choose</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+
+                    <div id="q5"></div>
+
+                <h4>7. Other pertinent learner information:</h4>
+                        <input type="text" placeholder="Please specify">
+
+            </div>
 
             <button type="submit" class="button">Submit</button>
         </form>
@@ -363,6 +435,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <script src="enrollment.js"></script> 
+<script src="medical.js"></script>
 </body>
 </html>
 
