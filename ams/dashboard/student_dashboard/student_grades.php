@@ -1,5 +1,6 @@
 <?php
 include 'student_config.php';
+require_once __DIR__ . '/student_nav.php';
 $student_id = isset($_GET['student_id']) ? intval($_GET['student_id']) : 1;
 $rawGrades = getGrades($pdo, $student_id);
 $grades = [];
@@ -40,25 +41,18 @@ foreach ($rawGrades as $g) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student Portal - Grades</title>
-    <link rel="stylesheet" type="text/css" href="../style/style.css">
+    <link rel="stylesheet" type="text/css" href="../../style/style.css">
 </head>
 
 <body>
 
 <header>
     <h2>Gibraltar AMS - Student Portal</h2>
-    <img src="../style/logo.png" alt="Logo" class="logo">
+    <img src="../../style/logo.png" alt="Logo" class="logo">
 </header>
 
 <div class="container">
-    <div class="sidebar">
-        <a href="student.php?student_id=<?= $student_id ?>">Dashboard</a>
-        <a href="grades.php?student_id=<?= $student_id ?>">Grades</a>
-        <a href="activities.php?student_id=<?= $student_id ?>">Activities</a>
-        <a href="report.php?student_id=<?= $student_id ?>">Report Card</a>
-        <a href="classrecords.php?student_id=<?= $student_id ?>">Class Record</a>
-        <a href="index.php">Logout</a>
-    </div>
+    <?php renderStudentSidebar('grades', $student_id); ?>
 
     <div class="content">
         <div class="card">

@@ -1,5 +1,6 @@
 <?php
 include 'student_config.php';
+require_once __DIR__ . '/student_nav.php';
 
    //AUTO LOAD STUDENT (TEST)
 $stmt = $pdo->query("SELECT student_id FROM students LIMIT 1");
@@ -21,27 +22,20 @@ $activities = getActivities($pdo, $student_id);
 <head>
     <meta charset="utf-8">
     <title>Activities</title>
-    <link rel="stylesheet" type="text/css" href="../style/style.css">
+    <link rel="stylesheet" type="text/css" href="../../style/style.css">
 </head>
 
 <body>
 
 <header>
     <h2>Gibraltar AMS - Student Portal</h2>
-    <img src="../style/logo.png" alt="Logo" class="logo">
+    <img src="../../style/logo.png" alt="Logo" class="logo">
 </header>
 
 <div class="container">
 
 
-    <div class="sidebar">
-        <a href="student.php">Dashboard</a>
-        <a href="grades.php">Grades</a>
-        <a href="activities.php">Activities</a>
-        <a href="report.php">Report Card</a>
-        <a href="classrecords.php">Class Record</a>
-        <a href="../login/index.php">Logout</a>
-    </div>
+    <?php renderStudentSidebar('activities', $student_id); ?>
 
     <div class="content">
 
