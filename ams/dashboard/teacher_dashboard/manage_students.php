@@ -1,17 +1,7 @@
 <?php
-require_once __DIR__ . 'config.php';
-require_once __DIR__ . '/../../../auth/auth.php';
+require 'config.php';
 
-require_role(['teacher']);
-
-$teacher_id = $_SESSION['user_id'];
-
-if (isset($_GET['delete'])) {
-    deleteStudent($pdo, $_GET['delete']);
-    header("Location: teacher_dashboard.php");
-    exit();
-}
-
+// UPDATE STUDENT
 if (isset($_POST['updateStudent'])) {
     updateStudent(
         $pdo,
@@ -23,23 +13,9 @@ if (isset($_POST['updateStudent'])) {
     );
 }
 
-if (isset($_POST['enroll'])) {
-    enrollStudent($pdo, $_POST['student_id'], $_POST['class_id']);
-}
-
-
-if (isset($_POST['updateProfile'])) {
-    updateStaffInfo(
-        $pdo,
-        $_SESSION['user_id'],
-        $_POST['username'],
-        $_POST['email']
-    );
-}
-
 $students = getAllStudents($pdo);
 $classes = getAllClasses($pdo);
-$user_id = $_SESSION['user_id']; // Get from session
+$user_id = 1;
 $staff = getStaffInfo($pdo, $user_id);
 ?>
 
@@ -53,14 +29,14 @@ $staff = getStaffInfo($pdo, $user_id);
 <body>
     <header>
         <h2>Gibraltar AMS - Staff Portal</h2>
-        <img src="../style/logo.png" class="logo">
+        <img src="../../style/logo.png" class="logo">
     </header>
 
     <div class="container">
         <div class="sidebar">
             <a href="manage_students.php" onclick="show('students')">Students</a>
-            <a href="../forms/enrollment_form/enrollment.php" onclick="show('enroll')">Enroll</a>
-            <a href="#" onclick="show('profile')">Profile</a>
+            <a href="././forms/enrollment_form/enrollment.php" onclick="show('enroll')">Enroll</a>
+            <a href="teacher_dashboard.php" onclick="show('profile')">Profile</a>
             <a href="activities.php" onclick="show('activities')">Activities</a>
             <a href="subjects.php" onclick="show('subjects')">Subjects</a>
             <a href="scores.php" onclick="show('scores')">Scores</a>
@@ -86,30 +62,18 @@ $staff = getStaffInfo($pdo, $user_id);
                             <td><?= $s['first_name'] . ' ' . $s['last_name'] ?></td>
                             <td><?= $s['grade_level'] ?></td>
                             <td>
-                                <a href="?delete=<?= $s['student_id'] ?>" class="btn">Delete</a>
                                 <button class="btn" onclick="fillForm(
                                     '<?= $s['first_name'] ?>',
                                     '<?= $s['last_name'] ?>',
                                     '<?= $s['grade_level'] ?>'
                                 )">Edit</button>
+                                <button>
+                                    <a href="?delete=<?= $s['student_id'] ?>" class="btn">Delete</a>
+                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 </table>
-            </div>
-
-            <div id="profile" class="card section">
-                <h3>My Profile</h3>
-
-                <form method="POST">
-                    <label>Username</label>
-                    <input type="text" name="username" value="<?= $staff['username'] ?>">
-
-                    <label>Email</label>
-                    <input type="email" name="email" value="<?= $staff['email'] ?>">
-
-                    <button class="btn" name="updateProfile">Update</button>
-                </form>
             </div>
         </div>
     </div>

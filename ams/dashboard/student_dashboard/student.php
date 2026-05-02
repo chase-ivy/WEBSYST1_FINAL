@@ -35,7 +35,7 @@ $attendance = getAttendance($pdo, $student_id);
         <a href="activities.php">Activities</a>
         <a href="report.php">Report Card</a>
         <a href="classrecords.php">Class Record</a>
-        <a href="index.php">Logout</a>
+        <a href="../login/index.php">Logout</a>
     </div>
 
 
