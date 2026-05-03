@@ -1,521 +1,1005 @@
 <?php
-    include "enroll_config.php";
+    include "config.php";
+    include "enroll.php";
+    ob_start();
 ?>
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="../../style/style.css">
-    <title>Gibraltar AMS</title>
+    <title>Enrollment Form · Gibraltar AMES</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+        /* ── DESIGN TKENS ───────────────────────────────────────── */
+        :root {
+    --brand: #4e0303;
+    --brand-dark: #ec3f3f;
+    --brand-light: #e8f0f7;
+    --border: #d1d5db;
+    --text: #000000;
+    --muted: #6b7280;
+    --surface: #ffffff;
+    --canvas: #f5f7fa;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --transition: 180ms ease;
+}
+
+        /* ── RESET ───────────────────────────────────────────────── */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body { height: 100%; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--canvas);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* ── TOP NAV ─────────────────────────────────────────────── */
+        .topbar {
+            background: #4e0303;
+            padding: 12px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .topbar-logo img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+        }
+
+        .topbar-logo span {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .topbar a {
+            font-size: 12px;
+            color: rgba(255,255,255,.65);
+            border: 1px solid rgba(255,255,255,.2);
+            padding: 6px 13px;
+            border-radius: var(--radius-sm);
+            transition: background var(--t), color var(--t);
+        }
+
+        .topbar a:hover {
+            background: rgba(255,255,255,.1);
+            color: #fff;
+        }
+
+        /* ── PROGRESS STEPPER ────────────────────────────────────── */
+        .stepper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 28px 20px 0;
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: calc(50% + 18px);
+            right: calc(-50% + 18px);
+            height: 2px;
+            background: var(--border);
+            transition: background var(--t);
+        }
+
+        .step.done:not(:last-child)::after { background: var(--brand); }
+
+        .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            z-index: 1;
+            transition: all var(--t);
+        }
+
+        .step.active .step-dot {
+            border-color: var(--brand);
+            background: var(--brand);
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(21,96,168,.15);
+        }
+
+        .step.done .step-dot {
+            border-color: var(--brand);
+            background: var(--brand);
+            color: #fff;
+        }
+
+        .step-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: .3px;
+            white-space: nowrap;
+        }
+
+        .step.active .step-label,
+        .step.done   .step-label { color: var(--brand); }
+
+        /* ── MAIN WRAPPER / CARD ─────────────────────────────────── */
+        .wrap {
+            max-width: 700px;
+            width: 100%;
+            margin: 24px auto 40px;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .card-head {
+            padding: 24px 32px 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(160deg, #f0f5ff, #e8f0fb);
+        }
+
+        .card-head h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--brand);
+            margin-bottom: 2px;
+        }
+
+        .card-head p { font-size: 13px; color: var(--muted); }
+
+        .card-body { padding: 28px 32px; }
+
+        /* ── STEP PANELS ─────────────────────────────────────────── */
+        .panel         { display: none; }
+        .panel.active  { display: block; }
+
+        /* ── FORM GRID ───────────────────────────────────────────── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr;       gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr;   gap: 16px; }
+        .span-2 { grid-column: span 2; }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--canvas);
+            outline: none;
+            transition: border-color var(--t), box-shadow var(--t), background var(--t);
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: var(--brand);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(21,96,168,.10);
+        }
+
+        .field input::placeholder      { color: #b0b8c4; }
+        .field select option[value=""] { color: var(--muted); }
+
+        /* ── RADIO PILLS ─────────────────────────────────────────── */
+        .radio-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .radio-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all var(--t);
+        }
+
+        .radio-pill input { display: none; }
+
+        .radio-pill:has(input:checked) {
+            border-color: var(--brand);
+            background: var(--brand-light);
+            color: var(--brand);
+        }
+
+        /* ── SECTION DIVIDER ─────────────────────────────────────── */
+        .sec-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 24px 0 18px;
+        }
+
+        .sec-divider::before,
+        .sec-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .sec-divider span {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .7px;
+            white-space: nowrap;
+        }
+
+        /* ── COLLAPSIBLE SECTIONS ────────────────────────────────── */
+        .collapse {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height .3s ease;
+        }
+
+        .collapse.open { max-height: 600px; }
+
+        /* ── DISABILITY CHECKBOX GRID ────────────────────────────── */
+        .disability-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: background var(--t), border-color var(--t);
+        }
+
+        .check-item input {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--brand);
+            flex-shrink: 0;
+        }
+
+        .check-item:has(input:checked) {
+            background: var(--brand-light);
+            border-color: var(--brand);
+            color: var(--brand);
+        }
+
+        /* ── CARD FOOTER / BUTTONS ───────────────────────────────── */
+        .card-foot {
+            padding: 18px 32px;
+            border-top: 1px solid var(--border);
+            background: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all var(--t);
+        }
+
+        .btn-ghost {
+            background: var(--surface);
+            color: var(--muted);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--brand);
+            color: var(--brand);
+        }
+
+        .btn-primary { background: var(--brand); color: #fff; }
+
+        .btn-primary:hover {
+            background: var(--brand-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 16px rgba(21,96,168,.28);
+        }
+
+        .step-count {
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        /* ── PAGE FOOTER ─────────────────────────────────────────── */
+        footer {
+            background: #4e0303;
+            color: rgba(255,255,255,.5);
+            text-align: center;
+            padding: 18px;
+            font-size: 12px;
+            border-top: 3px solid var(--brand);
+            margin-top: auto;
+        }
+
+        footer strong { color: rgba(255,255,255,.8); }
+
+        /* ── RESPONSIVE ──────────────────────────────────────────── */
+        @media (max-width: 580px) {
+            .grid-2, .grid-3     { grid-template-columns: 1fr; }
+            .span-2              { grid-column: span 1; }
+            .card-body,
+            .card-head,
+            .card-foot           { padding: 20px; }
+            .topbar              { padding: 10px 16px; }
+        }
+
+    </style>
 </head>
 <body>
 
-<header>
-    <h2>Gibraltar - AMES</h2>
-    <img src="../../style/logo.png" alt="Logo" class="logo">
-</header>
+    <!-- TOP NAV -->
+    <div class="topbar">
+        <div class="topbar-logo">
+            <img src="images/logo.png" alt="Logo">
+            <span>Gibraltar Elementary School</span>
+        </div>
+        <a href="index.php">← Back to Home</a>
+    </div>
 
-<center><h1>Enrollment Form</h1></center>
+    <!-- PROGRESS STEPPER -->
+    <div class="stepper" id="stepper">
+        <div class="step active" id="s1">
+            <div class="step-dot">1</div>
+            <span class="step-label">Learner Info</span>
+        </div>
+        <div class="step" id="s2">
+            <div class="step-dot">2</div>
+            <span class="step-label">Address</span>
+        </div>
+        <div class="step" id="s3">
+            <div class="step-dot">3</div>
+            <span class="step-label">Parents</span>
+        </div>
+        <div class="step" id="s4">
+            <div class="step-dot">4</div>
+            <span class="step-label">Review</span>
+        </div>
+    </div>
 
-<div class="card">
-    <section>
-        <form method="post">
+    <div class="wrap">
+    <form method="POST" action="enrollment.php">
+
+        <!-- ═══════════════════════════════════════════════════════
+             STEP 1 — LEARNER INFORMATION
+        ════════════════════════════════════════════════════════ -->
+        <div class="panel active" id="panel-1">
             <div class="card">
-                <nav class="nav-card">
-                    <a href="../../login/index.php" class="select">BACK <</a><br><br>
-                    <p><strong>Enrollment Form</strong></p>
-                </nav>
-                <hr>
-                <center><h2>LEARNER INFORMATION</h2></center>
-                <hr>
 
-                <span>School Year</span><br>
-                <input style="width: 45%;" type="number" name="year_start">-<input style="width: 45%;" type="number" name="year_end">
-                <br><br>
-
-                <span>Grade Level</span><br>
-                <select name="Grade_Level" style="width: 100%">
-                    <option value="" hidden>Select Grade Level</option>
-                    <option value="Kinder">Kinder</option>
-                    <option value="Grade 1">Grade 1</option>
-                    <option value="Grade 2">Grade 2</option>
-                    <option value="Grade 3">Grade 3</option>
-                    <option value="Grade 4">Grade 4</option>
-                    <option value="Grade 5">Grade 5</option>
-                    <option value="Grade 6">Grade 6</option>
-                </select><br><br>
-
-                <span style="padding-right: 100px;">1. With LRN?</span><br>
-                <label><input type="radio" name="with_lrn" value="1"> Yes</label>
-                <label><input type="radio" name="with_lrn" value="0"> No</label>
-                <br><br>
-
-                <span>2. Returning(Babalik?)</span><br>
-                <label><input type="radio" name="returning" value="Yes" onchange="returningField()"> Yes</label>
-                <label><input type="radio" name="returning" value="No" onchange="returningField()"> No</label>
-                <br><br>
-
-                <span>PSA Birth Certificate No.(if available upon registration)</span><br>
-                <input type="number" name="PSA_Birth_Certificate_No"><br><br>
-
-                <span>Learner Reference No. (LRN)</span><br>
-                <input type="number" name="Learner_Reference_No"><br><br>
-
-                <span>Last Name</span><br>
-                <input type="text" name="Learner_Last_Name"><br><br>
-
-                <span>First Name</span><br>
-                <input type="text" name="Learner_First_Name"><br><br>
-
-                <span>Middle Name</span><br>
-                <input type="text" name="Learner_Middle_Name"><br><br>
-
-                <span>Extension Name</span><br>
-                <input type="text" name="Learner_Extension_Name"><br><br>
-
-                <span>Birth Date</span><br>
-                <input type="date" name="Birth_Date" id="birthDate"><br><br>
-
-                <span>Sex</span><br>
-                <label><input type="radio" name="sex" value="Male"> Male</label>
-                <label><input type="radio" name="sex" value="Female"> Female</label>
-                <br><br>
-
-                <span>Place of Birth</span><br>
-                <input type="text" name="Place_of_Birth" placeholder="Municipality/City"><br><br>
-
-                <span>Age</span><br>
-                <input type="number" name="Age" id="age"><br><br>
-
-                <span>Mother Tongue</span><br>
-                <input type="text" name="Mother_Tongue"><br><br>
-
-                <span>Belonging to any Indigenous Group (IP) Community/Indigenous Cultural Community</span><br>
-                <label><input type="radio" name="ip" value="Yes" onchange="ipField()"> Yes</label>
-                <label><input type="radio" name="ip" value="No" onchange="ipField()"> No</label>
-                <br><br>
-
-                <div id="ipDetails" style="display:none;">
-                    <span>If Yes, please specify:</span><br>
-                    <input type="text" name="IP_Specify">
+                <div class="card-head">
+                    <h2>Learner Information</h2>
+                    <p>Basic details about the student being enrolled</p>
                 </div>
-                <br>
 
-                <span>Is your family a beneficiary of 4Ps</span><br>
-                <label><input type="radio" name="fourps" value="Yes" onchange="fourPsField()"> Yes</label>
-                <label><input type="radio" name="fourps" value="No" onchange="fourPsField()"> No</label>
+                <div class="card-body">
 
-                <div id="fourPsDetails" style="display:none;">
-                    <span>If Yes, write the 4Ps Household ID Number below:</span><br>
-                    <input type="text" pattern="[a-zA-0-9]*"name="FourPs_Specify">
+                    <!-- School Year -->
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>School Year Start</label>
+                            <input type="number" name="year_start" placeholder="2025" min="2000" max="2099">
+                        </div>
+                        <div class="field">
+                            <label>School Year End</label>
+                            <input type="number" name="year_end" placeholder="2026" min="2000" max="2099">
+                        </div>
+                    </div>
+
+                    <div class="sec-divider"><span>Enrollment Details</span></div>
+
+                    <!-- Grade Level & LRN -->
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>Grade Level</label>
+                            <select name="Grade_Level">
+                                <option value="" hidden>Select grade</option>
+                                <option>Kinder</option>
+                                <option>Grade 1</option>
+                                <option>Grade 2</option>
+                                <option>Grade 3</option>
+                                <option>Grade 4</option>
+                                <option>Grade 5</option>
+                                <option>Grade 6</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>LRN (if available)</label>
+                            <input type="number" name="Learner_Reference_No" placeholder="12-digit LRN">
+                        </div>
+                    </div>
+
+                    <!-- With LRN / Returning -->
+                    <div class="grid-2" style="margin-top:16px;">
+                        <div class="field">
+                            <label>With LRN?</label>
+                            <div class="radio-group">
+                                <label class="radio-pill">
+                                    <input type="radio" name="with_lrn" value="Yes" required> Yes
+                                </label>
+                                <label class="radio-pill">
+                                    <input type="radio" name="with_lrn" value="No"> No
+                                </label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Returning Learner?</label>
+                            <div class="radio-group">
+                                <label class="radio-pill">
+                                    <input type="radio" name="returning" value="Yes" onchange="toggle('returningBox', true)"> Yes
+                                </label>
+                                <label class="radio-pill">
+                                    <input type="radio" name="returning" value="No"  onchange="toggle('returningBox', false)"> No
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Returning Learner (collapsible) -->
+                    <div class="collapse" id="returningBox">
+                        <div class="sec-divider"><span>Returning / Transfer Learner</span></div>
+                        <div class="grid-2">
+                            <div class="field">
+                                <label>Last Grade Level Completed</label>
+                                <select name="Returning_Grade_Level">
+                                    <option value="" hidden>Select</option>
+                                    <option>Kinder</option>
+                                    <option>Grade 1</option>
+                                    <option>Grade 2</option>
+                                    <option>Grade 3</option>
+                                    <option>Grade 4</option>
+                                    <option>Grade 5</option>
+                                    <option>Grade 6</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Last School Year Completed</label>
+                                <input type="number" name="Last_School_Year_Completed" placeholder="e.g. 2024">
+                            </div>
+                            <div class="field span-2">
+                                <label>Last School Attended</label>
+                                <input type="text" name="Last_School_Attended" placeholder="School name">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sec-divider"><span>Personal Information</span></div>
+
+                    <!-- PSA -->
+                    <div class="field">
+                        <label>PSA Birth Certificate No. (if available)</label>
+                        <input type="number" name="PSA_Birth_Certificate_No" placeholder="PSA number">
+                    </div>
+
+                    <!-- Name -->
+                    <div class="grid-3" style="margin-top:16px;">
+                        <div class="field">
+                            <label>Last Name</label>
+                            <input type="text" name="Learner_Last_Name" placeholder="Dela Cruz">
+                        </div>
+                        <div class="field">
+                            <label>First Name</label>
+                            <input type="text" name="Learner_First_Name" placeholder="Juan">
+                        </div>
+                        <div class="field">
+                            <label>Middle Name</label>
+                            <input type="text" name="Learner_Middle_Name" placeholder="Santos">
+                        </div>
+                    </div>
+
+                    <!-- Extension / Birth Date / Age -->
+                    <div class="grid-3" style="margin-top:16px;">
+                        <div class="field">
+                            <label>Extension (Jr./III)</label>
+                            <input type="text" name="Learner_Extension_Name" placeholder="Jr.">
+                        </div>
+                        <div class="field">
+                            <label>Birth Date</label>
+                            <input type="date" name="Birth_Date" id="birthDate">
+                        </div>
+                        <div class="field">
+                            <label>Age</label>
+                            <input type="number" name="Age" min="3" max="20" placeholder="6" id="ageField" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Sex / Place of Birth -->
+                    <div class="grid-2" style="margin-top:16px;">
+                        <div class="field">
+                            <label>Sex</label>
+                            <div class="radio-group">
+                                <label class="radio-pill">
+                                    <input type="radio" name="sex" value="Male"> Male
+                                </label>
+                                <label class="radio-pill">
+                                    <input type="radio" name="sex" value="Female"> Female
+                                </label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Place of Birth</label>
+                            <input type="text" name="Place_of_Birth" placeholder="Municipality / City">
+                        </div>
+                    </div>
+
+                    <!-- Mother Tongue -->
+                    <div class="grid-2" style="margin-top:16px;">
+                        <div class="field">
+                            <label>Mother Tongue</label>
+                            <input type="text" name="Mother_Tongue" placeholder="e.g. Ilocano">
+                        </div>
+                    </div>
+
+                    <div class="sec-divider"><span>Additional Classification</span></div>
+
+                    <!-- IP / 4Ps -->
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>Indigenous People (IP)?</label>
+                            <div class="radio-group">
+                                <label class="radio-pill">
+                                    <input type="radio" name="ip" value="Yes" onchange="toggle('ipBox', true)"> Yes
+                                </label>
+                                <label class="radio-pill">
+                                    <input type="radio" name="ip" value="No"  onchange="toggle('ipBox', false)"> No
+                                </label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>4Ps Beneficiary?</label>
+                            <div class="radio-group">
+                                <label class="radio-pill">
+                                    <input type="radio" name="fourps" value="Yes" onchange="toggle('fourpsBox', true)"> Yes
+                                </label>
+                                <label class="radio-pill">
+                                    <input type="radio" name="fourps" value="No"  onchange="toggle('fourpsBox', false)"> No
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- IP Specify (collapsible) -->
+                    <div class="collapse" id="ipBox" style="margin-top:10px;">
+                        <div class="field">
+                            <label>IP Community / Cultural Group</label>
+                            <input type="text" name="IP_Specify" placeholder="Specify IP group">
+                        </div>
+                    </div>
+
+                    <!-- 4Ps Specify (collapsible) -->
+                    <div class="collapse" id="fourpsBox" style="margin-top:10px;">
+                        <div class="field">
+                            <label>4Ps Household ID Number</label>
+                            <input type="number" name="FourPs_Specify" placeholder="Household ID">
+                        </div>
+                    </div>
+
+                    <!-- Disability -->
+                    <div class="field" style="margin-top:16px;">
+                        <label>Learner with Disability?</label>
+                        <div class="radio-group">
+                            <label class="radio-pill">
+                                <input type="radio" name="disability" value="Yes" onchange="toggle('disabilityBox', true)"> Yes
+                            </label>
+                            <label class="radio-pill">
+                                <input type="radio" name="disability" value="No"  onchange="toggle('disabilityBox', false)"> No
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Disability Types (collapsible) -->
+                    <div class="collapse" id="disabilityBox">
+                        <div class="disability-grid" style="margin-top:10px;">
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Visual_Impairment"> Visual Impairment
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Hearing_Impairment"> Hearing Impairment
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Autism"> Autism Spectrum Disorder
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Speech_Language_Disorder"> Speech / Language Disorder
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Learning_Disability"> Learning Disability
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Intellectual_Disability"> Intellectual Disability
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Cerebral_Palsy"> Cerebral Palsy
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Multiple_Disorder"> Multiple Disabilities
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Orthopedic_Physical_Handicap"> Orthopedic / Physical Handicap
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="Special_Health_Problem"> Special Health Problem
+                            </label>
+                        </div>
+                    </div>
+
+                </div><!-- /.card-body -->
+
+                <div class="card-foot">
+                    <span class="step-count">Step 1 of 4</span>
+                    <button type="button" class="btn btn-primary" onclick="goTo(2)">Next: Address →</button>
                 </div>
-                <br><br>
 
-                <span>Is the child a Learner with Disability</span><br>
-                <label><input type="radio" name="disability" value="Yes" onchange="disabilityField()"> Yes</label>
-                <label><input type="radio" name="disability" value="No" onchange="disabilityField()"> No</label>
-                <br><br>
+            </div><!-- /.card -->
+        </div><!-- /#panel-1 -->
 
-                <div id="disabilityDetails" style="display:none;">
-                    <table>
-                        <tr>
-                            <td>
-                                <input type="checkbox" id="visual_impairment" name="disabilityDetails[]" value="1"> Visual Impairment
-                                
-                                <div id="visualOptions" style="display:none; margin-left:15px;">
-                                    <input type="checkbox" name="disabilityDetails[]" value="2"> a. blind<br>
-                                    <input type="checkbox" name="disabilityDetails[]" value="3"> b. low vision
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="4"> Hearing Impairment</td>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="5"> Autism Spectrum Disorder</td>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="6"> Speech / Language Disorder</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="7"> Learning Disability</td>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="8"> Emotional / Behavioral Disorder</td>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="9"> Cerebral Palsy</td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="10"> Intellectual Disability</td>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="11"> Orthopedic / Physical Handicap</td>
-                            <td><input type="checkbox" name="disabilityDetails[]" value="14"> Multiple Disorder</td>
-                            
-                        </tr>
-                        <tr>
-                            <td>
-                                <input type="checkbox" id="special_health" name="disabilityDetails[]" value="12"> Special Health Problem
-                                
-                                <div id="healthOptions" style="display:none; margin-left:15px;">
-                                    <input type="checkbox" name="disabilityDetails[]" value="13"> a. Cancer
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+
+        <!-- ═══════════════════════════════════════════════════════
+             STEP 2 — ADDRESS INFORMATION
+        ════════════════════════════════════════════════════════ -->
+        <div class="panel" id="panel-2">
+            <div class="card">
+
+                <div class="card-head">
+                    <h2>Address Information</h2>
+                    <p>Current and permanent address of the learner</p>
                 </div>
-                <br><br>
-// WORKING
-                <hr>
-                <h3>Current Address</h3>
-                <hr><br>
 
-                <span>House No.</span><br>
-                <input type="number" name="Current_House_No"><br><br>
+                <div class="card-body">
 
-                <span>Street Name</span><br>
-                <input type="text" name="Current_Street_Name"><br><br>
+                    <div class="sec-divider"><span>Current Address</span></div>
 
-                <span>Barangay</span><br>
-                <input type="text" name="Current_Barangay"><br><br>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>House No.</label>
+                            <input type="number" name="Current_House_No" placeholder="123">
+                        </div>
+                        <div class="field">
+                            <label>Street Name</label>
+                            <input type="text" name="Current_Street_Name" placeholder="Rizal St.">
+                        </div>
+                        <div class="field">
+                            <label>Barangay</label>
+                            <input type="text" name="Current_Barangay" placeholder="Brgy. Name">
+                        </div>
+                        <div class="field">
+                            <label>Municipality / City</label>
+                            <input type="text" name="Current_Municipality_City" placeholder="Baguio City">
+                        </div>
+                        <div class="field">
+                            <label>Province</label>
+                            <input type="text" name="Current_Province" placeholder="Benguet">
+                        </div>
+                        <div class="field">
+                            <label>Country</label>
+                            <input type="text" name="Current_Country" placeholder="Philippines">
+                        </div>
+                        <div class="field">
+                            <label>Zip Code</label>
+                            <input type="number" name="Current_Zip_Code" placeholder="2600">
+                        </div>
+                    </div>
 
-                <span>Municipality / City</span><br>
-                <input type="text" name="Current_Municipality_City"><br><br>
+                    <div class="sec-divider"><span>Permanent Address</span></div>
 
-                <span>Province</span><br>
-                <input type="text" name="Current_Province"><br><br>
+                    <!-- Same as current toggle -->
+                    <div class="field" style="margin-bottom:14px;">
+                        <label>Same as Current Address?</label>
+                        <div class="radio-group">
+                            <label class="radio-pill">
+                                <input type="radio" name="same_address" value="Yes" onchange="sameAddr(true)"> Yes
+                            </label>
+                            <label class="radio-pill">
+                                <input type="radio" name="same_address" value="No"  onchange="sameAddr(false)"> No
+                            </label>
+                        </div>
+                    </div>
 
-                <span>Country</span><br>
-                <input type="text" name="Current_Country" value="Philippines"><br><br>
+                    <div id="permBox">
+                        <div class="grid-2">
+                            <div class="field">
+                                <label>House No.</label>
+                                <input type="number" name="Permanent_House_No" placeholder="123">
+                            </div>
+                            <div class="field">
+                                <label>Street Name</label>
+                                <input type="text" name="Permanent_Street_Name" placeholder="Rizal St.">
+                            </div>
+                            <div class="field">
+                                <label>Barangay</label>
+                                <input type="text" name="Permanent_Barangay" placeholder="Brgy. Name">
+                            </div>
+                            <div class="field">
+                                <label>Municipality / City</label>
+                                <input type="text" name="Permanent_Municipality_City" placeholder="Baguio City">
+                            </div>
+                            <div class="field">
+                                <label>Province</label>
+                                <input type="text" name="Permanent_Province" placeholder="Benguet">
+                            </div>
+                            <div class="field">
+                                <label>Country</label>
+                                <input type="text" name="Permanent_Country" placeholder="Philippines">
+                            </div>
+                            <div class="field">
+                                <label>Zip Code</label>
+                                <input type="number" name="Permanent_Zip_Code" placeholder="2600">
+                            </div>
+                        </div>
+                    </div><!-- /#permBox -->
 
-                <span>Zip Code</span><br>
-                <input type="number" name="Current_Zip_Code"><br><br>
+                </div><!-- /.card-body -->
 
-                <hr>
-                <h3>Permanent Address</h3>
-                <hr><br>
-
-                <span>Same with your Current Address?  </span>
-                <label><input type="radio" name="same_address" value="Yes"> Yes</label>
-                <label><input type="radio" name="same_address" value="No"> No</label>
-                <br><br>
-
-                <span>House No.</span><br>
-                <input type="number" name="Permanent_House_No"><br><br>
-
-                <span>Street Name</span><br>
-                <input type="text" name="Permanent_Street_Name"><br><br>
-
-                <span>Barangay</span><br>
-                <input type="text" name="Permanent_Barangay"><br><br>
-
-                <span>Municipality / City</span><br>
-                <input type="text" name="Permanent_Municipality_City"><br><br>
-
-                <span>Province</span><br>
-                <input type="text" name="Permanent_Province"><br><br>
-
-                <span>Country</span><br>
-                <input type="text" name="Permanent_Country"><br><br>
-
-                <span>Zip Code</span><br>
-                <input type="number" name="Permanent_Zip_Code"><br><br>
-
-                <hr>
-                <center><h2>PARENT'S/GUARDIAN'S INFORMATION</h2></center>
-                <hr>
-
-                <span>Father's Last Name</span><br>
-                <input type="text" name="Father_Last_Name"><br><br>
-
-                <span>Father's First Name</span><br>
-                <input type="text" name="Father_First_Name"><br><br>
-
-                <span>Father's Middle Name</span><br>
-                <input type="text" name="Father_Middle_Name"><br><br>
-
-                <span>Father's Contact Number</span><br>
-                <input type="tel" pattern="^(09)\d{9}$" placeholder="09XXXXXXXXX" name="Father_Contact_Number"><br><br>
-
-                <span>Mother's Last Name</span><br>
-                <input type="text" name="Mother_Last_Name"><br><br>
-
-                <span>Mother's First Name</span><br>
-                <input type="text" name="Mother_First_Name"><br><br>
-
-                <span>Mother's Middle Name</span><br>
-                <input type="text" name="Mother_Middle_Name"><br><br>
-
-                <span>Mother's Contact Number</span><br>
-                <input type="tel" pattern="^(09)\d{9}$" placeholder="09XXXXXXXXX" name="Mother_Contact_Number"><br><br>
-
-                <span>Guardian's Last Name</span><br>
-                <input type="text" name="Guardian_Last_Name"><br><br>
-
-                <span>Guardian's First Name</span><br>
-                <input type="text" name="Guardian_First_Name"><br><br>  
-
-                <span>Guardian's Middle Name</span><br>
-                <input type="text" name="Guardian_Middle_Name"><br><br>
-
-                <span>Guardian's Contact Number</span><br>
-                <input type="tel" pattern="^(09)\d{9}$" placeholder="09XXXXXXXXX" name="Guardian_Contact_Number"><br><br>
-                
-
-                <div id="returningDetails" style="display:none;">
-                    <hr>
-                    <center><h2>For Returning Learner (Balik-Aral) And Those Who will Transfer/Move In</h2></center>
-                    <hr>
-
-                    <span>Last Grade Level Completed</span><br>
-                    <select name="Last_Grade_Level_Completed" style="width: 100%">
-                        <option value="" hidden>Select Grade Level</option>
-                        <option value="Kinder">Kinder</option>
-                        <option value="Grade 1">Grade 1</option>
-                        <option value="Grade 2">Grade 2</option>
-                        <option value="Grade 3">Grade 3</option>
-                        <option value="Grade 4">Grade 4</option>
-                        <option value="Grade 5">Grade 5</option>
-                        <option value="Grade 6">Grade 6</option>
-                    </select><br><br>
-
-                    <span>Last School Attended</span><br>
-                    <input type="text" name="Last_School_Attended"><br><br>
-
-                    <span>Last School Year Completed</span><br>
-                    <input type="text" name="Last_School_Year_Completed" placeholder="e.g., 2020-2021"><br><br>
-
-                    <span>School ID</span><br>
-                    <input type="number" name="school_ID"><br><br>
+                <div class="card-foot">
+                    <button type="button" class="btn btn-ghost"   onclick="goTo(1)">← Back</button>
+                    <span class="step-count">Step 2 of 4</span>
+                    <button type="button" class="btn btn-primary" onclick="goTo(3)">Next: Parents →</button>
                 </div>
-            </div>
-            <center><h1>Medical Form</h1></center>
-            <div>
-                <div class="card">
-			<hr>
 
-                <label>Name of Parent/Guardian:</label>
-                <input type="text" name="parent_guardian_name">
-
-                <label>Contact Number:</label>
-                <input type="tel" pattern="^(09)\d{9}$" placeholder="09XXXXXXXXX" name="contact_number">
-                <hr>
-                <strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
-                <h4>1. Does your child/ward have any allergies?</h4>	
-
-                        <select id="field" onchange="showField()" name="has_allergies" style="width:100%;">
-                            <option hidden selected>Choose</option>
-                            <option value="1">Yes</option>
-                            <option value="0">No</option>
-                        </select>
-
-                    <div id="fieldDetails"></div>
-
-                <h4>2. Does your child/ward have any ongoing medical condition?</h4>
-                        <select id="Q2" onchange="showQ2()" name="has_medical_condition" style="width:100%;">
-                            <option hidden selected>Choose</option>
-                            <option value="1">Yes</option>
-                            <option value="0">No</option>
-                        </select>
-
-                    <div id="q2"></div>
+            </div><!-- /.card -->
+        </div><!-- /#panel-2 -->
 
 
-                <h4>3. Did your child/ward ever have surgery / hospitalization?</h4>
-                        <select id="Q3" onchange="showQ3()" name="has_surgery_hospitalization" style="width:100%;">
-                            <option hidden selected>Choose</option>
-                            <option value="1">Yes</option>
-                            <option value="0">No</option>
-                        </select>
+        <!-- ═══════════════════════════════════════════════════════
+             STEP 3 — PARENT / GUARDIAN INFORMATION
+        ════════════════════════════════════════════════════════ -->
+        <div class="panel" id="panel-3">
+            <div class="card">
 
-                    <div id="q3"></div>
+                <div class="card-head">
+                    <h2>Parent / Guardian Information</h2>
+                    <p>Contact details of the learner's parents or guardians</p>
+                </div>
 
-                <h4>4. Is your  child currently taking treatment / medicines?</h4>
-                        <select id="Q4" onchange="showQ4()" name="is_currently_taking_treatment" style="width:100%;">
-                            <option hidden selected>Choose</option>
-                            <option value="1">Yes</option>
-                            <option value="0">No</option>
-                        </select>
+                <div class="card-body">
 
-                    <div id="q4"></div>
+                    <div class="sec-divider"><span>Father's Information</span></div>
 
-                <h4>5. Does your family have a history of the following conditions:</h4>
-                        <select id="Q5" onchange="showQ5()" name="has_family_history" style="width:100%;">
-                            <option hidden selected>Choose</option>
-                            <option value="1">Yes</option>
-                            <option value="0">No</option>
-                        </select>
+                    <div class="grid-3">
+                        <div class="field">
+                            <label>Last Name</label>
+                            <input type="text" name="Father_Last_Name" placeholder="Dela Cruz">
+                        </div>
+                        <div class="field">
+                            <label>First Name</label>
+                            <input type="text" name="Father_First_Name" placeholder="Juan">
+                        </div>
+                        <div class="field">
+                            <label>Middle Name</label>
+                            <input type="text" name="Father_Middle_Name" placeholder="Santos">
+                        </div>
+                    </div>
 
-                    <div id="q5"></div>
+                    <div class="field" style="margin-top:14px; max-width:300px;">
+                        <label>Contact Number</label>
+                        <input type="text" name="Father_Contact_Number" placeholder="09XX XXX XXXX">
+                    </div>
 
-                <h4>6. Does your child/ward have exposure to cigarette/vape smoke at home?:</h4>
-                        <select name="exposed_to_cigarette_vape_smoke" style="width:100%;">
-                            <option hidden selected>Choose</option>
-                            <option value="1">Yes</option>
-                            <option value="0">No</option>
-                        </select>
+                    <div class="sec-divider"><span>Mother's Information</span></div>
 
-                    <div id="q5"></div>
+                    <div class="grid-3">
+                        <div class="field">
+                            <label>Last Name</label>
+                            <input type="text" name="Mother_Last_Name" placeholder="Dela Cruz">
+                        </div>
+                        <div class="field">
+                            <label>First Name</label>
+                            <input type="text" name="Mother_First_Name" placeholder="Maria">
+                        </div>
+                        <div class="field">
+                            <label>Middle Name</label>
+                            <input type="text" name="Mother_Middle_Name" placeholder="Reyes">
+                        </div>
+                    </div>
 
-                <h4>7. Other pertinent learner information:</h4>
-                        <input type="text" name="other_pertinent_information" placeholder="Please specify">
+                    <div class="field" style="margin-top:14px; max-width:300px;">
+                        <label>Contact Number</label>
+                        <input type="text" name="Mother_Contact_Number" placeholder="09XX XXX XXXX">
+                    </div>
 
-            </div>
+                </div><!-- /.card-body -->
 
-            <button type="submit" class="button">Submit</button>
-        </form>
-    </section>
-</div>
- 
+                <div class="card-foot">
+                    <button type="button" class="btn btn-ghost"   onclick="goTo(2)">← Back</button>
+                    <span class="step-count">Step 3 of 4</span>
+                    <button type="button" class="btn btn-primary" onclick="goTo(4)">Review →</button>
+                </div>
 
-<script>
-    document.getElementById('visual_impairment').addEventListener('change', function() {
-        document.getElementById('visualOptions').style.display = this.checked ? 'block' : 'none';
-    });
+            </div><!-- /.card -->
+        </div><!-- /#panel-3 -->
 
-    document.getElementById('special_health').addEventListener('change', function() {
-        document.getElementById('healthOptions').style.display = this.checked ? 'block' : 'none';
-    });
 
-    document.getElementById("birthDate").addEventListener("change", function() {
-    const birthDate = new Date(this.value);
-    const today = new Date();
+        <!-- ═══════════════════════════════════════════════════════
+             STEP 4 — REVIEW AND SUBMIT
+        ════════════════════════════════════════════════════════ -->
+        <div class="panel" id="panel-4">
+            <div class="card">
 
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+                <div class="card-head">
+                    <h2>Review and Submit</h2>
+                    <p>Please confirm the information before submitting</p>
+                </div>
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
+                <div class="card-body">
 
-    document.getElementById("age").value = age;
-});
-document.addEventListener("DOMContentLoaded", function () {
+                    <!-- Info notice -->
+                    <div style="background:var(--brand-light); border:1px solid #b3cce8; border-radius:var(--radius-md); padding:16px 18px; font-size:13px; color:#1560a8; line-height:1.65; margin-bottom:20px; display:flex; gap:10px; align-items:flex-start;">
+                        <svg style="width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; flex-shrink:0; margin-top:1px;" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8"  x2="12"    y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <span>By submitting this form, you confirm that all information provided is accurate and complete to the best of your knowledge.</span>
+                    </div>
 
-    const sameYes = document.querySelector('input[name="same_address"][value="Yes"]');
-    const sameNo  = document.querySelector('input[name="same_address"][value="No"]');
+                    <!-- Declaration box -->
+                    <div style="border:1.5px solid var(--brand); border-radius:var(--radius-md); overflow:hidden;">
 
-    const currentFields = {
-        house: document.querySelector('[name="Current_House_No"]'),
-        street: document.querySelector('[name="Current_Street_Name"]'),
-        barangay: document.querySelector('[name="Current_Barangay"]'),
-        city: document.querySelector('[name="Current_Municipality_City"]'),
-        province: document.querySelector('[name="Current_Province"]'),
-        country: document.querySelector('[name="Current_Country"]'),
-        zip: document.querySelector('[name="Current_Zip_Code"]')
-    };
+                        <div style="background:var(--brand); color:#fff; padding:10px 16px; font-size:13px; font-weight:600;">
+                            Declaration of Parents / Guardians
+                        </div>
 
-    const permanentFields = {
-        house: document.querySelector('[name="Permanent_House_No"]'),
-        street: document.querySelector('[name="Permanent_Street_Name"]'),
-        barangay: document.querySelector('[name="Permanent_Barangay"]'),
-        city: document.querySelector('[name="Permanent_Municipality_City"]'),
-        province: document.querySelector('[name="Permanent_Province"]'),
-        country: document.querySelector('[name="Permanent_Country"]'),
-        zip: document.querySelector('[name="Permanent_Zip_Code"]')
-    };
+                        <div style="padding:16px; font-size:13px; color:#333; line-height:1.7; background:#fff;">
+                            <p>I hereby certify that the information provided in this enrollment form is true and correct. I understand that providing false information may result in the cancellation of the enrollment.</p>
+                        </div>
 
-    function copyAddress() {
-        permanentFields.house.value = currentFields.house.value;
-        permanentFields.street.value = currentFields.street.value;
-        permanentFields.barangay.value = currentFields.barangay.value;
-        permanentFields.city.value = currentFields.city.value;
-        permanentFields.province.value = currentFields.province.value;
-        permanentFields.country.value = currentFields.country.value;
-        permanentFields.zip.value = currentFields.zip.value;
-    }
+                        <div style="background:#f5f5f5; border-top:1px solid var(--border); padding:12px 16px;">
+                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                                <input type="checkbox" name="declaration" required style="width:15px; height:15px; accent-color:var(--brand);">
+                                I agree to the above declaration
+                            </label>
+                        </div>
 
-    function clearPermanent() {
-        for (let key in permanentFields) {
-            permanentFields[key].value = '';
+                    </div><!-- /.declaration box -->
+
+                </div><!-- /.card-body -->
+
+                <div class="card-foot">
+                    <button type="button" class="btn btn-ghost"  onclick="goTo(3)">← Back</button>
+                    <span class="step-count">Step 4 of 4</span>
+                    <button type="submit" name="next" class="btn btn-primary">Submit Enrollment</button>
+                </div>
+
+            </div><!-- /.card -->
+        </div><!-- /#panel-4 -->
+
+    </form>
+    </div><!-- /.wrap -->
+
+    <footer>
+        &copy; 2025 <strong>Gibraltar Elementary School — AMES</strong>. All rights reserved.
+    </footer>
+
+    <script>
+        let current = 1;
+
+        function goTo(n) {
+            document.getElementById('panel-' + current).classList.remove('active');
+            document.getElementById('s' + current).classList.remove('active');
+            document.getElementById('s' + current).classList.add('done');
+
+            current = n;
+
+            document.getElementById('panel-' + n).classList.add('active');
+            document.querySelectorAll('#stepper .step').forEach((s, i) => {
+                if (i + 1 <  n) { s.classList.add('done');    s.classList.remove('active'); }
+                if (i + 1 === n) { s.classList.add('active');  s.classList.remove('done');   }
+                if (i + 1 >  n) { s.classList.remove('done', 'active'); }
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-    }
 
-    sameYes.addEventListener("change", function () {
-        if (this.checked) {
-            copyAddress();
+        function toggle(id, open) {
+            document.getElementById(id).classList.toggle('open', open);
         }
-    });
 
-    sameNo.addEventListener("change", function () {
-        if (this.checked) {
-            clearPermanent();
+        function sameAddr(yes) {
+            document.getElementById('permBox').style.opacity       = yes ? '.4'    : '1';
+            document.getElementById('permBox').style.pointerEvents = yes ? 'none'  : 'auto';
         }
-    });
 
-    Object.values(currentFields).forEach(field => {
-        field.addEventListener("input", function () {
-            if (sameYes.checked) {
-                copyAddress();
+        // Auto-calculate Age when Birth Date changes — replaces enroll.js birthDate listener
+        document.getElementById('birthDate').addEventListener('change', function () {
+            const birthDate = new Date(this.value);
+            const today     = new Date();
+
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
             }
+
+            document.getElementById('ageField').value = age;
         });
-    });
+    </script>
 
-});
-</script>
-
-<script src="enrollment.js"></script> 
-<script src="../../forms/medical_form/medical.js"></script>
 </body>
 </html>
-
-
-<style>
-    .pass-card .toggle {
-        position: static;
-        transform: none;
-    }
-    input[type="checkbox"] {
-        width: auto;
-        padding: 0;
-        margin-right: 5px;
-    }
-    input[type="radio"] {
-        width: auto;
-        padding: 0;
-        margin-right: 5px;
-    }
-
-    /* Declaration Box */
-    .declaration-box {
-        border: 1.5px solid #1560a8;
-        border-radius: 8px;
-        margin-top: 30px;
-        overflow: hidden;
-    }
-    .declaration-header {
-        background: #1560a8;
-        color: white;
-        padding: 10px 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-}
-    .declaration-header span {
-        color: white;   
-    }
-    .declaration-body {
-        padding: 16px;
-        font-size: 0.88rem;
-        color: #333;
-        line-height: 1.7;
-        background: white;
-}
-    .declaration-body ol {
-        padding-left: 20px;
-        margin: 8px 0;
-    }
-    .declaration-body ol li {
-        margin-bottom: 6px;
-    }
-    .declaration-body p {
-        margin: 0 0 10px;
-    }
-    .declaration-check {
-        background: #f5f5f5;
-        border-top: 1px solid #ccc;
-        padding: 12px 16px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        color: #333;
-}
-    .declaration-check label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-    }
-</style>
