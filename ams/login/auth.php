@@ -10,15 +10,20 @@ function is_logged_in() {
 }
 
 function redirect_to_dashboard($role) {
+    // Get the base URL
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $basePath = dirname($_SERVER['SCRIPT_NAME'], 2); // Get /WEBSYST1_FINAL/ams
+    
     switch ($role) {
         case 'admin':
-            return '../dashboard/admin_dashboard/admin_dashboard.php';
+            return $protocol . '://' . $host . $basePath . '/dashboard/admin_dashboard/admin_dashboard.php';
         case 'teacher':
-            return '../dashboard/teacher_dashboard/teacher_dashboard.php';
+            return $protocol . '://' . $host . $basePath . '/dashboard/teacher_dashboard/teacher_dashboard.php';
         case 'parent':
-            return '../dashboard/student_dashboard/student_dashboard.php';
+            return $protocol . '://' . $host . $basePath . '/dashboard/student_dashboard/student_dashboard.php';
         default:
-            return '../login/index.php';
+            return $protocol . '://' . $host . $basePath . '/login/login.php';
     }
 }
 

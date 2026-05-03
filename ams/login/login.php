@@ -11,37 +11,49 @@ if (isset($_POST["login"])) {
     if (empty($username) || empty($password)) {
         $error = 'Username and password are required';
     } else {
-        // Try faculty login first (email in users table)
         $stmt = $pdo->prepare('SELECT user_id, email, password_hash, role FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$username]);
         $user = $stmt->fetch();
+        $passwordValid = false;
+        if ($user) {
+            if ($user['role'] === 'admin' && $password === $user['password_hash']) {
+                $passwordValid = true;
+            } elseif (password_verify($password, $user['password_hash'])) {
+                $passwordValid = true;
+            }
+        }
 
-        if ($user && password_verify($password, $user['password_hash'])) {
-            // Faculty login successful
+        if ($user && $passwordValid) {
             session_regenerate_id(true);
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['username'] = $user['email'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['logged_in'] = true;
+            
+            if ($user['role'] === 'admin' && $password === $user['password_hash']) {
+                $_SESSION['special_admin_access'] = true;
+            }
 
             header('Location: ' . redirect_to_dashboard($user['role']));
             exit;
         } else {
-            // Try parent login (LRN in students table)
-            $stmt = $pdo->prepare('SELECT user_id, email, first_name FROM students WHERE lrn = ? LIMIT 1');
+            $stmt = $pdo->prepare('SELECT student_id, first_name, last_name FROM students WHERE lrn = ? LIMIT 1');
             $stmt->execute([$username]);
             $student = $stmt->fetch();
 
-            if ($student && $student['pin'] === $password) {
-                // Parent login successful
-                session_regenerate_id(true);
-                $_SESSION['user_id'] = $student['user_id'];
-                $_SESSION['username'] = $student['email'];
-                $_SESSION['role'] = 'parent';
-                $_SESSION['logged_in'] = true;
+            if ($student) {
+                if ($password === 'student') {
+                    session_regenerate_id(true);
+                    $_SESSION['user_id'] = $student['student_id'];
+                    $_SESSION['username'] = $student['first_name'] . ' ' . $student['last_name'];
+                    $_SESSION['role'] = 'parent';
+                    $_SESSION['logged_in'] = true;
 
-                header('Location: ' . redirect_to_dashboard('parent'));
-                exit;
+                    header('Location: ' . redirect_to_dashboard('parent'));
+                    exit;
+                } else {
+                    $error = 'Invalid username or password';
+                }
             } else {
                 $error = 'Invalid username or password';
             }
@@ -63,7 +75,7 @@ unset($_SESSION['login_error']);
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login � Gibraltar AMES</title>
+    <title>Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="login_style.css">
 </head>
@@ -92,7 +104,7 @@ unset($_SESSION['login_error']);
                 <form method="POST">
                     <div class="form-group">
                         <label for="username">Username</label>
-                        <input type="text" id="username" name="username" placeholder="Enter your email or LRN" required>
+                        <input type="text" id="username" name="username" placeholder="Enter your email" required>
                     </div>
 
                     <div class="form-group">

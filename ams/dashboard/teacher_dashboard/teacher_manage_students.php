@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/teacher_config.php';
 require_once __DIR__ . '/../../login/auth.php';
 require_once __DIR__ . '/teacher_nav.php';
 

@@ -3,13 +3,13 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
 
     $items = [
         'dashboard'  => ['Dashboard', 'teacher_dashboard.php'],
-        'students'   => ['Students', 'manage_students.php'],
+        'students'   => ['Students', 'teacher_manage_students.php'],
         'enroll'     => ['Enroll', '../../forms/enrollment_form/enrollment.php'],
-        'activities' => ['Activities', 'activities.php'],
-        'subjects'   => ['Subjects', 'subjects.php'],
-        'scores'     => ['Scores', 'scores.php'],
-        'grades'     => ['Grades', 'grades.php'],
-        'attendance' => ['Attendance', 'attendance.php'],
+        'activities' => ['Activities', 'teacher_activities.php'],
+        'subjects'   => ['Subjects', 'teacher_subjects.php'],
+        'scores'     => ['Scores', 'teacher_scores.php'],
+        'grades'     => ['Grades', 'teacher_grades.php'],
+        'attendance' => ['Attendance', 'teacher_attendance.php'],
         'logout' => ['Logout', '../../login/login.php'],
     ];
 
