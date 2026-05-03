@@ -59,7 +59,7 @@ $staff = getStaffInfo($pdo, $user_id);
 
     <div class="sidebar">
         <a href="#" onclick="show('students')">Students</a>
-        <a href="../forms/enrollment_form/enrollment.php">Enroll</a>
+        <a href="../../forms/enrollment_form/enrollment.php">Enroll</a>
         <a href="#" onclick="show('profile')">Profile</a>
         <a href="activities.php">Activities</a>
         <a href="subjects.php">Subjects</a>

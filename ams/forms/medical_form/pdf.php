@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../pdf/vendor/autoload.php';
 
 use Classes\GeneratePDF;
 
-include "enroll_config.php";
+require_once __DIR__ . '/../../config/config.php';
 
 // if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['student_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {

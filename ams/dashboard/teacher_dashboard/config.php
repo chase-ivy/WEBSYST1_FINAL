@@ -3,7 +3,7 @@ include '../../config/config.php';
 function requireTeacher()
 {
     if (!is_logged_in() || $_SESSION['role'] !== 'teacher') {
-        header('Location: ../../auth/login.php');
+        header('Location: ../../login/index.php');
         exit();
     }
 }

@@ -27,7 +27,7 @@ $subjects = getSubjects($pdo);
 
     <div class="sidebar">
             <a href="manage_students.php" onclick="show('students')">Students</a>
-            <a href="././forms/enrollment_form/enrollment.php" onclick="show('enroll')">Enroll</a>
+            <a href="../../forms/enrollment_form/enrollment.php" onclick="show('enroll')">Enroll</a>
             <a href="teacher_dashboard.php" onclick="show('profile')">Profile</a>
             <a href="activities.php" onclick="show('activities')">Activities</a>
             <a href="subjects.php" onclick="show('subjects')">Subjects</a>

@@ -420,7 +420,7 @@
             <img src="../../style/logo.png" alt="Logo">
             <span>Gibraltar Elementary School</span>
         </div>
-        <a href="index.php">← Back to Home</a>
+        <a href="../../login/index.php">← Back to Home</a>
     </div>
 
     <!-- PROGRESS STEPPER -->

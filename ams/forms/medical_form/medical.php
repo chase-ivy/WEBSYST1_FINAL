@@ -1,8 +1,8 @@
 <?php
-include "config.php";
+require_once __DIR__ . '/../../config/config.php';
 
 if(isset($_POST['submit'])){
-    header("Location: teacher_dashboard.php");
+    header("Location: ../../dashboard/teacher_dashboard/teacher_dashboard.php");
     exit;
 }
 ?>
