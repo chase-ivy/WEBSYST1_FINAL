@@ -1,6 +1,5 @@
 <?php
-include '../../config/config.php';
-include '../enrollment_form/enroll.php';
+include "config.php";
 
 if(isset($_POST['submit'])){
     header("Location: teacher_dashboard.php");
