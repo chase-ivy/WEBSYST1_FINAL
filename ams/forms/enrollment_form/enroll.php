@@ -121,23 +121,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['next'])) {
     ]);
 
     // ── PARENT / GUARDIAN ─────────────────────────────────────────
-    $state3 = $pdo->prepare('INSERT INTO parents (
-        student_id,
-        father_last_name, father_first_name, father_middle_name, father_contact_number,
-        mother_last_name, mother_first_name, mother_middle_name, mother_contact_number
-    ) VALUES (?,?,?,?,?,?,?,?,?)');
+    function insertParent($pdo, $student_id, $type, $last, $first, $middle, $contact) {
+        // Check if all fields are empty, skip if so
+        if (empty($last) && empty($first) && empty($middle) && empty($contact)) {
+            return;
+        }
 
-    $state3->execute([
-        $student_id,
-        $_POST['Father_Last_Name'] ?? '',
-        $_POST['Father_First_Name'] ?? '',
-        $_POST['Father_Middle_Name'] ?? '',
-        $_POST['Father_Contact_Number'] ?? '',
-        $_POST['Mother_Last_Name'] ?? '',
-        $_POST['Mother_First_Name'] ?? '',
-        $_POST['Mother_Middle_Name'] ?? '',
-        $_POST['Mother_Contact_Number'] ?? ''
-    ]);
+        $stmt = $pdo->prepare("
+            INSERT INTO parents (last_name, first_name, middle_name, contact_number, parent_type)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([$last, $first, $middle, $contact, $type]);
+        $parent_id = $pdo->lastInsertId();
+
+        // Link to student
+        $link = $pdo->prepare("
+            INSERT INTO student_parents (student_id, parent_id)
+            VALUES (?, ?)
+        ");
+        $link->execute([$student_id, $parent_id]);
+    }
+
+    insertParent($pdo, $student_id, 'father',
+        $_POST['father_last_name'],
+        $_POST['father_first_name'],
+        $_POST['father_middle_name'],
+        $_POST['father_contact_number']
+    );
+
+    insertParent($pdo, $student_id, 'mother',
+        $_POST['mother_last_name'],
+        $_POST['mother_first_name'],
+        $_POST['mother_middle_name'],
+        $_POST['mother_contact_number']
+    );
+
+    insertParent($pdo, $student_id, 'guardian',
+        $_POST['guardian_last_name'],
+        $_POST['guardian_first_name'],
+        $_POST['guardian_middle_name'],
+        $_POST['guardian_contact_number']
+    );
 
     // ── RETURNING LEARNER ─────────────────────────────────────────
     $state4 = $pdo->prepare('INSERT INTO returning_learner_information (
