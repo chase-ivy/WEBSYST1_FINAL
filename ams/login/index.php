@@ -259,7 +259,7 @@
 
         <a href="index.php" class="nav-logo">
             <div class="logo-box">
-             <img src="images/logo.png" alt="Logo">
+             <img src="../style/logo.png" alt="Logo">
             </div>
             <span class="logo-name">Gibraltar Elementary School</span>
         </a>
