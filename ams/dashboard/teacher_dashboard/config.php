@@ -17,6 +17,23 @@ function getAllStudents($pdo) {
     return $stmt->fetchAll();
 }
 
+function getStudentsWithEnrollments($pdo) {
+    $stmt = $pdo->query("
+        SELECT 
+            e.enrollment_id,
+            e.class_id,
+            s.student_id,
+            s.first_name,
+            s.last_name,
+            s.grade_level,
+            s.sex
+        FROM students s
+        LEFT JOIN enrollments e ON s.student_id = e.student_id
+        ORDER BY s.last_name ASC
+    ");
+    return $stmt->fetchAll();
+}
+
 function getStudentById($pdo, $student_id) {
     $stmt = $pdo->prepare("
         SELECT *
@@ -243,4 +260,27 @@ function getEnrollmentsByClass($pdo, $class_id) {
     $stmt->execute([$class_id]);
     return $stmt->fetchAll();
 }
+
+function updateSubject($pdo, $id, $name, $desc) {
+    $stmt = $pdo->prepare("
+        UPDATE subjects
+        SET subject_name = ?, description = ?
+        WHERE subject_id = ?
+    ");
+    return $stmt->execute([$name, $desc, $id]);
+}
+
+function deleteSubject($pdo, $id) {
+    $stmt = $pdo->prepare("DELETE FROM subjects WHERE subject_id = ?");
+    return $stmt->execute([$id]);
+}
+
+function assignSubjectToClass($pdo, $subject_id, $grade_level, $section, $teacher_id) {
+    $stmt = $pdo->prepare("
+        INSERT INTO classes (subject_id, grade_level, section, teacher_id)
+        VALUES (?, ?, ?, ?)
+    ");
+    return $stmt->execute([$subject_id, $grade_level, $section, $teacher_id]);
+}
+
 ?>

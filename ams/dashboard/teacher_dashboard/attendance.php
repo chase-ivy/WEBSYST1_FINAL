@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../../login/auth.php';
+require_once __DIR__ . '/teacher_nav.php';
 
 require_role(['teacher']);
 
@@ -32,16 +33,7 @@ $students = getEnrollmentsByClass($pdo, $class_id);
         <img src="../../style/logo.png" class="logo">
     </header>
     <div class="container">
-        <div class="sidebar">
-            <a href="manage_students.php" onclick="show('students')">Students</a>
-            <a href="../../forms/enrollment_form/enrollment.php" onclick="show('enroll')">Enroll</a>
-            <a href="teacher_dashboard.php" onclick="show('profile')">Profile</a>
-            <a href="activities.php" onclick="show('activities')">Activities</a>
-            <a href="subjects.php" onclick="show('subjects')">Subjects</a>
-            <a href="scores.php" onclick="show('scores')">Scores</a>
-            <a href="grades.php" onclick="show('grades')">Grades</a>
-            <a href="attendance.php" onclick="show('attendance')">Attendance</a>
-        </div>
+        <?php renderTeacherSidebar('dashboard'); ?>
 
         <div class="content">
             <div class="card">

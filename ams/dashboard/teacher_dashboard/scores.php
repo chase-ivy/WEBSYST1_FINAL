@@ -1,74 +1,170 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../../login/auth.php';
+require_once __DIR__ . '/teacher_nav.php';
 
 require_role(['teacher']);
 
 $teacher_id = $_SESSION['user_id'];
 
+$stmt = $pdo->prepare("
+    SELECT a.activity_id, a.activity_name, a.max_score
+    FROM activities a
+    JOIN classes c ON a.class_id = c.class_id
+    WHERE c.teacher_id = ?
+");
+$stmt->execute([$teacher_id]);
+$activities = $stmt->fetchAll();
+
+$selectedActivity = $_GET['activity_id'] ?? null;
+$maxScore = null;
+$enrollments = [];
+$scores = [];
+
+if ($selectedActivity) {
+
+    foreach ($activities as $a) {
+        if ($a['activity_id'] == $selectedActivity) {
+            $maxScore = $a['max_score'];
+            break;
+        }
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT 
+            e.enrollment_id,
+            s.first_name,
+            s.last_name
+        FROM enrollments e
+        JOIN students s ON e.student_id = s.student_id
+        JOIN classes c ON e.class_id = c.class_id
+        JOIN activities a ON a.class_id = c.class_id
+        WHERE a.activity_id = ?
+    ");
+    $stmt->execute([$selectedActivity]);
+    $enrollments = $stmt->fetchAll();
+
+    $stmt = $pdo->prepare("
+        SELECT enrollment_id, score
+        FROM student_activity_scores
+        WHERE activity_id = ?
+    ");
+    $stmt->execute([$selectedActivity]);
+
+    foreach ($stmt->fetchAll() as $row) {
+        $scores[$row['enrollment_id']] = $row['score'];
+    }
+}
+
 if (isset($_POST['saveScores'])) {
+
+    $activity_id = $_POST['activity_id'];
+    $max_score = $_POST['max_score'];
+
     foreach ($_POST['score'] as $enrollment_id => $score) {
+
+        if ($score === '') continue;
+
+        // ✅ Prevent over-scoring
+        if ($score > $max_score) {
+            continue; // skip invalid
+        }
+
         addOrUpdateStudentScore(
             $pdo,
-            $_POST['activity_id'],
+            $activity_id,
             $enrollment_id,
             $score
         );
     }
-}
 
-$students = getAllStudents($pdo);
+    header("Location: scores.php?activity_id=" . $activity_id);
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="../../style/style.css">
+    <link rel="stylesheet" href="../../style/style.css">
     <title>Scores</title>
 </head>
+
 <body>
-    <header>
-        <h2>Gibraltar AMS - Staff Portal</h2>
-        <img src="../../style/logo.png" class="logo">
-    </header>
 
-    <div class="sidebar">
-            <a href="manage_students.php" onclick="show('students')">Students</a>
-            <a href="../../forms/enrollment_form/enrollment.php" onclick="show('enroll')">Enroll</a>
-            <a href="teacher_dashboard.php" onclick="show('profile')">Profile</a>
-            <a href="activities.php" onclick="show('activities')">Activities</a>
-            <a href="subjects.php" onclick="show('subjects')">Subjects</a>
-            <a href="scores.php" onclick="show('scores')">Scores</a>
-            <a href="grades.php" onclick="show('grades')">Grades</a>
-            <a href="attendance.php" onclick="show('attendance')">Attendance</a>
-        </div>
+<header>
+    <h2>Gibraltar AMS - Teacher Portal</h2>
+    <a class="action-link" href="../../login/logout.php">Logout</a>
+</header>
 
-    <div class="card">
-        <h3>Score Entry</h3>
+<div class="container">
 
-        <form method="POST">
-            <label>Activity ID</label>
-            <input type="number" name="activity_id" required>
+<?php renderTeacherSidebar('scores'); ?>
 
-            <table>
+<div class="content">
+
+<div class="card">
+    <h3>Select Activity</h3>
+
+
+    <form method="GET">
+        <select name="activity_id" onchange="this.form.submit()" required>
+            <option value="">-- Select Activity --</option>
+            <?php foreach ($activities as $a): ?>
+                <option value="<?= $a['activity_id'] ?>"
+                    <?= ($selectedActivity == $a['activity_id']) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($a['activity_name']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </form>
+</div>
+
+<?php if ($selectedActivity): ?>
+
+<div class="card">
+    <h3>Score Entry</h3>
+
+    <p><strong>Max Score:</strong> <?= $maxScore ?></p>
+
+    <form method="POST">
+
+        <input type="hidden" name="activity_id" value="<?= $selectedActivity ?>">
+        <input type="hidden" name="max_score" value="<?= $maxScore ?>">
+
+        <table>
+            <tr>
+                <th>Student</th>
+                <th>Score</th>
+            </tr>
+
+            <?php foreach ($enrollments as $e): ?>
                 <tr>
-                    <th>Student</th>
-                    <th>Score</th>
+                    <td>
+                        <?= htmlspecialchars($e['first_name'] . ' ' . $e['last_name']) ?>
+                    </td>
+                    <td>
+                        <input 
+                            type="number"
+                            name="score[<?= $e['enrollment_id'] ?>]"
+                            value="<?= $scores[$e['enrollment_id']] ?? '' ?>"
+                            max="<?= $maxScore ?>"
+                            min="0"
+                        >
+                    </td>
                 </tr>
+            <?php endforeach; ?>
+        </table>
 
-                <?php foreach ($students as $s): ?>
-                    <tr>
-                        <td><?= $s['first_name'] . ' ' . $s['last_name'] ?></td>
-                        <td>
-                            <input type="number" name="score[<?= $s['student_id'] ?>]">
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </table>
+        <button class="btn" name="saveScores">Save Scores</button>
 
-            <button class="btn" name="saveScores">Save Scores</button>
-        </form>
-    </div>
+    </form>
+</div>
+
+<?php endif; ?>
+
+</div>
+</div>
+
 </body>
 </html>
-````

@@ -1,7 +1,7 @@
-
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../../login/auth.php';
+require_once __DIR__ . '/teacher_nav.php';
 
 require_role(['teacher']);
 
@@ -19,7 +19,7 @@ if (isset($_POST['saveGrades'])) {
     }
 }
 
-$students = getAllStudents($pdo);
+$students = getStudentsWithEnrollments($pdo);
 ?>
 
 <!DOCTYPE html>
@@ -33,17 +33,8 @@ $students = getAllStudents($pdo);
         <h2>Gibraltar AMS - Staff Portal</h2>
         <img src="../../style/logo.png" class="logo">
     </header>
-
-    <div class="sidebar">
-            <a href="manage_students.php" onclick="show('students')">Students</a>
-            <a href="../../forms/enrollment_form/enrollment.php" onclick="show('enroll')">Enroll</a>
-            <a href="teacher_dashboard.php" onclick="show('profile')">Profile</a>
-            <a href="activities.php" onclick="show('activities')">Activities</a>
-            <a href="subjects.php" onclick="show('subjects')">Subjects</a>
-            <a href="scores.php" onclick="show('scores')">Scores</a>
-            <a href="grades.php" onclick="show('grades')">Grades</a>
-            <a href="attendance.php" onclick="show('attendance')">Attendance</a>
-        </div>
+    <div class="container">
+        <?php renderTeacherSidebar('dashboard'); ?>
 
     <div class="card">
         <h3>Grade Encoder</h3>
@@ -67,8 +58,20 @@ $students = getAllStudents($pdo);
                 <?php foreach ($students as $s): ?>
                     <tr>
                         <td><?= $s['first_name'] . ' ' . $s['last_name'] ?></td>
-                        <td><input type="number" name="grade[<?= $s['student_id'] ?>]"></td>
-                        <td><input type="text" name="remarks[<?= $s['student_id'] ?>]"></td>
+                        <td>
+                            <?php if ($s['enrollment_id']): ?>
+                                <input type="number" name="grade[<?= $s['enrollment_id'] ?>]" min="0" max="100">
+                            <?php else: ?>
+                                <span style="color: #999;">Not enrolled</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($s['enrollment_id']): ?>
+                                <input type="text" name="remarks[<?= $s['enrollment_id'] ?>]">
+                            <?php else: ?>
+                                <span style="color: #999;">-</span>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </table>
@@ -76,6 +79,7 @@ $students = getAllStudents($pdo);
             <button class="btn" name="saveGrades">Save Grades</button>
         </form>
     </div>
+    </div>
+</div>
 </body>
 </html>
-````

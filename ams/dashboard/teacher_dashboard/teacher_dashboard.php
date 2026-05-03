@@ -1,45 +1,44 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/../../login/auth.php';
+require_once __DIR__ . '/teacher_nav.php';
 
 require_role(['teacher']);
 
 $teacher_id = $_SESSION['user_id'];
 
-if (isset($_GET['delete'])) {
-    $student_id = intval($_GET['delete']);
-    deleteStudent($pdo, $student_id);
-    header("Location: teacher_dashboard.php");
-    exit();
-}
+$staff = getStaffInfo($pdo, $teacher_id);
 
-if (isset($_POST['updateStudent'])) {
-    updateStudent(
-        $pdo,
-        $_POST['student_id'],
-        $_POST['fname'],
-        $_POST['lname'],
-        $_POST['grade'],
-        $_POST['sex']
-    );
-}
+$stmt = $pdo->prepare("
+    SELECT c.class_id, s.subject_name, c.section
+    FROM classes c
+    JOIN subjects s ON c.subject_id = s.subject_id
+    WHERE c.teacher_id = ?
+");
+$stmt->execute([$teacher_id]);
+$classes = $stmt->fetchAll();
 
-if (isset($_POST['enroll'])) {
-    enrollStudent($pdo, $_POST['student_id'], $_POST['class_id']);
-}
+$totalSections = count($classes);
 
-if (isset($_POST['updateProfile'])) {
-    updateStaffInfo(
-        $pdo,
-        $_SESSION['user_id'],
-        $_POST['email'] 
-    );
-}
+$subjects = array_unique(array_column($classes, 'subject_name'));
 
-$students = getAllStudents($pdo);
-$classes = getAllClasses($pdo);
-$user_id = $_SESSION['user_id'];
-$staff = getStaffInfo($pdo, $user_id);
+$stmt = $pdo->prepare("
+    SELECT COUNT(DISTINCT e.student_id) as total_students
+    FROM enrollments e
+    JOIN classes c ON e.class_id = c.class_id
+    WHERE c.teacher_id = ?
+");
+$stmt->execute([$teacher_id]);
+$totalStudents = $stmt->fetch()['total_students'];
+
+$stmt = $pdo->prepare("
+    SELECT COUNT(*) as total_activities
+    FROM activities a
+    JOIN classes c ON a.class_id = c.class_id
+    WHERE c.teacher_id = ?
+");
+$stmt->execute([$teacher_id]);
+$totalActivities = $stmt->fetch()['total_activities'];
 ?>
 
 <!DOCTYPE html>
@@ -50,90 +49,77 @@ $staff = getStaffInfo($pdo, $user_id);
 </head>
 
 <body>
+
 <header>
     <h2>Gibraltar AMS - Teacher Portal</h2>
     <a class="action-link" href="../../login/logout.php">Logout</a>
 </header>
 
 <div class="container">
-
-    <div class="sidebar">
-        <a href="#" onclick="show('students')">Students</a>
-        <a href="../../forms/enrollment_form/enrollment.php">Enroll</a>
-        <a href="#" onclick="show('profile')">Profile</a>
-        <a href="activities.php">Activities</a>
-        <a href="subjects.php">Subjects</a>
-        <a href="scores.php">Scores</a>
-        <a href="grades.php">Grades</a>
-        <a href="attendance.php">Attendance</a>
-    </div>
+<?php renderTeacherSidebar('dashboard'); ?>
 
     <div class="content">
 
-        <div id="students" class="card section">
-            <div class="card-header">
-                <h3>Students</h3>
+        <div class="card">
+            <h3>Welcome, <?= htmlspecialchars($staff['username']) ?> 👋</h3>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="card">
+            <h3>Dashboard Summary</h3>
+
+            <div class="grid">
+
+                <div class="card">
+                    <h4>Total Students</h4>
+                    <p><?= $totalStudents ?></p>
+                </div>
+
+                <div class="card">
+                    <h4>Total Sections</h4>
+                    <p><?= $totalSections ?></p>
+                </div>
+
+                <div class="card">
+                    <h4>Total Activities</h4>
+                    <p><?= $totalActivities ?></p>
+                </div>
+
             </div>
+        </div>
+
+        <!-- SUBJECTS -->
+        <div class="card">
+            <h3>Subjects Handled</h3>
+
+            <ul>
+                <?php foreach ($subjects as $subject): ?>
+                    <li><?= htmlspecialchars($subject) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+
+        <!-- CLASSES -->
+        <div class="card">
+            <h3>Your Sections</h3>
 
             <table>
                 <tr>
-                    <th>Name</th>
-                    <th>Grade</th>
-                    <th>Action</th>
+                    <th>Subject</th>
+                    <th>Section</th>
                 </tr>
 
-                <?php foreach ($students as $s): ?>
+                <?php foreach ($classes as $c): ?>
                     <tr>
-                        <td>
-                            <?= htmlspecialchars($s['first_name'] . ' ' . $s['last_name']) ?>
-                        </td>
-                        <td><?= htmlspecialchars($s['grade_level']) ?></td>
-                        <td>
-                            <a href="?delete=<?= $s['student_id'] ?>" class="btn">Delete</a>
-
-                            <button class="btn" onclick="fillForm(
-                                '<?= $s['student_id'] ?>',
-                                '<?= $s['first_name'] ?>',
-                                '<?= $s['last_name'] ?>',
-                                '<?= $s['grade_level'] ?>',
-                                '<?= $s['sex'] ?>'
-                            )">Edit</button>
-                        </td>
+                        <td><?= htmlspecialchars($c['subject_name']) ?></td>
+                        <td><?= htmlspecialchars($c['section']) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </table>
         </div>
 
-        <div id="profile" class="card section" style="display:none;">
-            <h3>My Profile</h3>
-
-            <form method="POST">
-                <label>Username</label>
-                <input type="text" value="<?= htmlspecialchars($staff['username']) ?>" disabled>
-
-                <label>Email</label>
-                <input type="email" name="email" value="<?= htmlspecialchars($staff['email']) ?>">
-
-                <button class="btn" name="updateProfile">Update</button>
-            </form>
-        </div>
-
     </div>
 </div>
-
-<script>
-function show(id) {
-    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
-}
-
-// default view
-show('students');
-
-function fillForm(id, f, l, g, s) {
-    console.log(id, f, l, g, s);
-}
-</script>
 
 </body>
 </html>
