@@ -10,7 +10,7 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
         'scores'     => ['Scores', 'scores.php'],
         'grades'     => ['Grades', 'grades.php'],
         'attendance' => ['Attendance', 'attendance.php'],
-        'logout' => ['Logout', '../../login/logout.php'],
+        'logout' => ['Logout', '../../login/login.php'],
     ];
 
     echo '<aside class="sidebar">';

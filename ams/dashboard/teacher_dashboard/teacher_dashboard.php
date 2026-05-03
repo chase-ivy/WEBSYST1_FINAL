@@ -52,7 +52,6 @@ $totalActivities = $stmt->fetch()['total_activities'];
 
 <header>
     <h2>Gibraltar AMS - Teacher Portal</h2>
-    <a class="action-link" href="../../login/logout.php">Logout</a>
 </header>
 
 <div class="container">
