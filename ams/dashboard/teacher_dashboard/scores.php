@@ -65,9 +65,8 @@ if (isset($_POST['saveScores'])) {
 
         if ($score === '') continue;
 
-        // ✅ Prevent over-scoring
         if ($score > $max_score) {
-            continue; // skip invalid
+            continue; 
         }
 
         addOrUpdateStudentScore(
@@ -135,21 +134,29 @@ if (isset($_POST['saveScores'])) {
         <table>
             <tr>
                 <th>Student</th>
-                <th>Score</th>
+                <th>Current / Max</th>
+                <th>New Score</th>
             </tr>
 
             <?php foreach ($enrollments as $e): ?>
+                <?php $currentScore = $scores[$e['enrollment_id']] ?? null; ?>
                 <tr>
                     <td>
                         <?= htmlspecialchars($e['first_name'] . ' ' . $e['last_name']) ?>
                     </td>
                     <td>
+                        <span style="display:inline-block; min-width:120px;">
+                            <?= $currentScore !== null ? htmlspecialchars($currentScore) : '0' ?> / <?= htmlspecialchars($maxScore) ?>
+                        </span>
+                    </td>
+                    <td>
                         <input 
                             type="number"
                             name="score[<?= $e['enrollment_id'] ?>]"
-                            value="<?= $scores[$e['enrollment_id']] ?? '' ?>"
+                            value="<?= $currentScore !== null ? htmlspecialchars($currentScore) : '' ?>"
                             max="<?= $maxScore ?>"
                             min="0"
+                            style="width:80px; margin-left:12px;"
                         >
                     </td>
                 </tr>

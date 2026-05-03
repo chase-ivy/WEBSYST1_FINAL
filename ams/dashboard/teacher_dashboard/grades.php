@@ -6,20 +6,32 @@ require_once __DIR__ . '/teacher_nav.php';
 require_role(['teacher']);
 
 $teacher_id = $_SESSION['user_id'];
+$classes = getTeacherClasses($pdo, $teacher_id);
+$selectedPeriod = isset($_POST['period']) ? $_POST['period'] : '1st';
+$selectedClass = isset($_POST['class_id']) ? intval($_POST['class_id']) : null;
+
+if ($selectedClass === null && !empty($classes)) {
+    $selectedClass = $classes[0]['class_id'];
+}
 
 if (isset($_POST['saveGrades'])) {
     foreach ($_POST['grade'] as $enrollment_id => $grade) {
+        $computedRemarks = '';
+        if (is_numeric($grade) && $grade !== '') {
+            $computedRemarks = $grade >= 75 ? 'PASSED' : 'FAILED';
+        }
+
         updateGrade(
             $pdo,
             $enrollment_id,
-            $_POST['period'],
+            $selectedPeriod,
             $grade,
-            $_POST['remarks'][$enrollment_id]
+            $computedRemarks
         );
     }
 }
 
-$students = getStudentsWithEnrollments($pdo);
+$students = getTeacherStudentEnrollments($pdo, $teacher_id, $selectedPeriod, $selectedClass);
 ?>
 
 <!DOCTYPE html>
@@ -40,37 +52,49 @@ $students = getStudentsWithEnrollments($pdo);
         <h3>Grade Encoder</h3>
 
         <form method="POST">
+            <label>Class / Subject</label>
+            <select name="class_id" onchange="this.form.submit()">
+                <?php foreach ($classes as $class): ?>
+                    <option value="<?= $class['class_id'] ?>" <?= $selectedClass === intval($class['class_id']) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($class['subject_name'] . ' — ' . $class['section']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
             <label>Grading Period</label>
-            <select name="period">
-                <option>1st</option>
-                <option>2nd</option>
-                <option>3rd</option>
-                <option>4th</option>
+            <select name="period" onchange="this.form.submit()">
+                <?php foreach (['1st', '2nd', '3rd', '4th'] as $period): ?>
+                    <option value="<?= $period ?>" <?= $selectedPeriod === $period ? 'selected' : '' ?>><?= $period ?></option>
+                <?php endforeach; ?>
             </select>
 
             <table>
                 <tr>
                     <th>Student</th>
+                    <th>Subject</th>
                     <th>Grade</th>
                     <th>Remarks</th>
                 </tr>
 
                 <?php foreach ($students as $s): ?>
                     <tr>
-                        <td><?= $s['first_name'] . ' ' . $s['last_name'] ?></td>
+                        <td><?= htmlspecialchars($s['first_name'] . ' ' . $s['last_name']) ?></td>
+                        <td><?= htmlspecialchars($s['subject_name']) ?></td>
                         <td>
-                            <?php if ($s['enrollment_id']): ?>
-                                <input type="number" name="grade[<?= $s['enrollment_id'] ?>]" min="0" max="100">
-                            <?php else: ?>
-                                <span style="color: #999;">Not enrolled</span>
-                            <?php endif; ?>
+                            <input
+                                type="number"
+                                name="grade[<?= $s['enrollment_id'] ?>]"
+                                min="0"
+                                max="100"
+                                value="<?= isset($s['final_grade']) ? htmlspecialchars($s['final_grade']) : '' ?>"
+                            >
                         </td>
                         <td>
-                            <?php if ($s['enrollment_id']): ?>
-                                <input type="text" name="remarks[<?= $s['enrollment_id'] ?>]">
-                            <?php else: ?>
-                                <span style="color: #999;">-</span>
-                            <?php endif; ?>
+                            <input
+                                type="text"
+                                name="remarks[<?= $s['enrollment_id'] ?>]"
+                                value="<?= isset($s['remarks']) ? htmlspecialchars($s['remarks']) : '' ?>"
+                            >
                         </td>
                     </tr>
                 <?php endforeach; ?>

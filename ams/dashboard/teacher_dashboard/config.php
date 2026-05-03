@@ -34,6 +34,55 @@ function getStudentsWithEnrollments($pdo) {
     return $stmt->fetchAll();
 }
 
+function getTeacherStudentEnrollments($pdo, $teacher_id, $grading_period = '1st', $class_id = null) {
+    $sql = "
+        SELECT 
+            e.enrollment_id,
+            s.student_id,
+            s.first_name,
+            s.last_name,
+            s.grade_level,
+            c.class_id,
+            c.section,
+            c.school_year,
+            sub.subject_name,
+            g.final_grade,
+            g.remarks
+        FROM enrollments e
+        JOIN students s ON e.student_id = s.student_id
+        JOIN classes c ON e.class_id = c.class_id
+        JOIN subjects sub ON c.subject_id = sub.subject_id
+        LEFT JOIN grades g ON e.enrollment_id = g.enrollment_id AND g.grading_period = ?
+        WHERE c.teacher_id = ?";
+
+    if ($class_id !== null) {
+        $sql .= " AND c.class_id = ?";
+    }
+
+    $sql .= " ORDER BY s.last_name ASC, s.first_name ASC";
+
+    $stmt = $pdo->prepare($sql);
+    $params = [$grading_period, $teacher_id];
+    if ($class_id !== null) {
+        $params[] = $class_id;
+    }
+
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+function getTeacherClasses($pdo, $teacher_id) {
+    $stmt = $pdo->prepare("
+        SELECT c.class_id, s.subject_name, c.grade_level, c.section, c.school_year
+        FROM classes c
+        JOIN subjects s ON c.subject_id = s.subject_id
+        WHERE c.teacher_id = ?
+        ORDER BY s.subject_name ASC, c.section ASC
+    ");
+    $stmt->execute([$teacher_id]);
+    return $stmt->fetchAll();
+}
+
 function getStudentById($pdo, $student_id) {
     $stmt = $pdo->prepare("
         SELECT *
@@ -112,11 +161,35 @@ function getStudentEnrollments($pdo, $student_id) {
 
 
 function removeEnrollment($pdo, $student_id, $class_id) {
-    $stmt = $pdo->prepare("
-        DELETE FROM enrollments
-        WHERE student_id = ? AND class_id = ?
-    ");
-    return $stmt->execute([$student_id, $class_id]);
+    try {
+        $pdo->beginTransaction();
+
+        $stmt = $pdo->prepare("SELECT enrollment_id FROM enrollments WHERE student_id = ? AND class_id = ?");
+        $stmt->execute([$student_id, $class_id]);
+        $enrollment = $stmt->fetch();
+
+        if ($enrollment) {
+            $enrollment_id = $enrollment['enrollment_id'];
+
+            $stmt = $pdo->prepare("DELETE FROM attendance WHERE enrollment_id = ?");
+            $stmt->execute([$enrollment_id]);
+
+            $stmt = $pdo->prepare("DELETE FROM grades WHERE enrollment_id = ?");
+            $stmt->execute([$enrollment_id]);
+
+            $stmt = $pdo->prepare("DELETE FROM student_activity_scores WHERE enrollment_id = ?");
+            $stmt->execute([$enrollment_id]);
+
+            $stmt = $pdo->prepare("DELETE FROM enrollments WHERE enrollment_id = ?");
+            $stmt->execute([$enrollment_id]);
+        }
+
+        $pdo->commit();
+        return true;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 }
 
 
