@@ -1,10 +1,11 @@
+// DONT CHANGE ANYTHING
 function ipField() {
   const selected = document.querySelector('input[name="ip"]:checked');
   const card = document.getElementById("ipDetails");
 
   if (!selected) return;
 
-  card.style.display = selected.value === "Yes" ? "block" : "none";
+  card.style.display = selected.value === "1" ? "block" : "none";
 }
 
 function fourPsField() {
@@ -13,7 +14,7 @@ function fourPsField() {
 
   if (!selected) return;
 
-  card.style.display = selected.value === "Yes" ? "block" : "none";
+  card.style.display = selected.value === "1" ? "block" : "none";
 }
 
 function disabilityField() {
@@ -22,7 +23,7 @@ function disabilityField() {
 
   if (!selected) return;
 
-  card.style.display = selected.value === "Yes" ? "block" : "none";
+  card.style.display = selected.value === "1" ? "block" : "none";
 }
 
 function returningField() {
@@ -31,7 +32,7 @@ function returningField() {
 
   if (!selected) return;
 
-  card.style.display = selected.value === "Yes" ? "block" : "none";
+  card.style.display = selected.value === "1" ? "block" : "none";
 }
 document.getElementById("birthDate").addEventListener("change", function() {
     const birthDate = new Date(this.value);

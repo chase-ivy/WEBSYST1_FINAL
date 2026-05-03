@@ -228,7 +228,7 @@
                 <input type="text" name="Father_Middle_Name"><br><br>
 
                 <span>Father's Contact Number</span><br>
-                <input type="text" name="Father_Contact_Number"><br><br>
+                <input type="tel" pattern="^(09)\d{9}$" placeholder="09XXXXXXXXX" name="Father_Contact_Number"><br><br>
 
                 <span>Mother's Last Name</span><br>
                 <input type="text" name="Mother_Last_Name"><br><br>
@@ -240,7 +240,20 @@
                 <input type="text" name="Mother_Middle_Name"><br><br>
 
                 <span>Mother's Contact Number</span><br>
-                <input type="text" name="Mother_Contact_Number"><br><br>
+                <input type="tel" pattern="^(09)\d{9}$" placeholder="09XXXXXXXXX" name="Mother_Contact_Number"><br><br>
+
+                <span>Guardian's Last Name</span><br>
+                <input type="text" name="Guardian_Last_Name"><br><br>
+
+                <span>Guardian's First Name</span><br>
+                <input type="text" name="Guardian_First_Name"><br><br>  
+
+                <span>Guardian's Middle Name</span><br>
+                <input type="text" name="Guardian_Middle_Name"><br><br>
+
+                <span>Guardian's Contact Number</span><br>
+                <input type="tel" pattern="^(09)\d{9}$" placeholder="09XXXXXXXXX" name="Guardian_Contact_Number"><br><br>
+                
 
                 <div id="returningDetails" style="display:none;">
                     <hr>
@@ -278,7 +291,7 @@
                 <input type="text" name="parent_guardian_name">
 
                 <label>Contact Number:</label>
-                <input type="tel" name="contact_number">
+                <input type="tel" pattern="^(09)\d{9}$" placeholder="09XXXXXXXXX" name="contact_number">
                 <hr>
                 <strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
                 <h4>1. Does your child/ward have any allergies?</h4>	
@@ -435,7 +448,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <script src="enrollment.js"></script> 
-<script src="medical.js"></script>
+<script src="../../forms/medical_form/medical.js"></script>
 </body>
 </html>
 
