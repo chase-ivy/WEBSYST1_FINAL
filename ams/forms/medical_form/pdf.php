@@ -10,6 +10,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     $student_id = $_GET['student_id'] ?? 1;
 
+    function fetchParents($pdo, $student_id) {
+        $stmt = $pdo->prepare("
+            SELECT p.* 
+            FROM parents p
+            JOIN student_parents sp ON p.parent_id = sp.parent_id
+            WHERE sp.student_id = ?
+        ");
+        $stmt->execute([$student_id]);
+        
+        $result = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $result[$row['parent_type']] = $row;
+        }
+        return $result;
+    }
+
     function fetchOne($pdo, $table, $student_id) {
         $stmt = $pdo->prepare("SELECT * FROM $table WHERE student_id = ? LIMIT 1");
         $stmt->execute([$student_id]);
@@ -17,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     $students = fetchOne($pdo, 'students', $student_id);
-    $parents = fetchOne($pdo, 'parent_guardian_information', $student_id);
+    $parents = fetchParents($pdo, $student_id);  
     $allergies = fetchOne($pdo, 'medical_allergies', $student_id);
-    $address = fetchOne($pdo, 'current_address', $student_id);
+    $addresses = fetchOne($pdo, 'current_address', $student_id);
     $conditions = fetchOne($pdo, 'medical_conditions', $student_id);
     $surguries = fetchOne($pdo, 'medical_surgery_hospitalization', $student_id);
     $treatments = fetchOne($pdo, 'medical_treatment_medicines', $student_id);
@@ -37,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     print_r($allergies);
 
     echo "\nADDRESS:\n";
-    print_r($address);
+    print_r($addresses);
 
     echo "\nCONDITIONS:\n";
     print_r($conditions);
@@ -100,13 +116,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     $data = [
         // '' => $(''),
-        'lrn' => $student['lrn'],
-        'school_year' => $student['school_year'],
-
+        'full_name' => strtoupper($students['last_name']) . ', ' . strtoupper($students['first_name']) . ' ' . strtoupper($students['middle_name']) . ' ' . strtoupper($students['extension_name']),
         'grade_level' => $formattedGrade,
+        'birth_date' => $students['birth_date'],
+        'age' => $students['age'],
+        'sex' => $students['sex'],
+        //parentguardian name anc contact number needs an arr list
 
-        'with_lrn_yes' => $student['with_lrn'] == 1 ? 'Yes' : '',
-        'with_lrn_no' => $student['with_lrn'] == 0 ? 'Yes' : '',
+        'with_lrn_yes' => $allergies['has_allergies'] == 1 ? 'Yes' : '',
+        'with_lrn_no' => $allergies['has_allergies'] == 0 ? 'Yes' : '',
+        
         'returning_yes' => $student['returning'] == 1 ? 'Yes' : '',
         'returning_no' => $student['returning'] == 0 ? 'Yes' : '',
         'psa_bcn' => $student['psa_bcn'],
@@ -114,7 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         'first_name' => strtoupper($student['first_name']),
         'middle_name' => strtoupper($student['middle_name']),
         'extension_name' => strtoupper($student['extension_name']),
-        'birth_date' => $student['birth_date'],
         'sex_male' => $student['sex'] == 'male' ? 'Yes' : '',
         'sex_female' => $student['sex'] == 'female' ? 'Yes' : '',
         'place_of_birth' => strtoupper($student['place_of_birth']),
@@ -126,65 +144,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         'indigenous_group' => strtoupper($student['indigenous_group']),
         'ip_yes' => !empty($student['indigenous_group']) ? 'Yes' : '',
         'ip_no' => empty($student['indigenous_group']) ? 'Yes' : '',
-        'is_learner_with_disability_yes' => !empty($student['mental_disability']) ? 'Yes' : '',
-        'is_learner_with_disability_no' => empty($student['mental_disability']) ? 'Yes' : '',
 
-        // 'disab_12' => in_array('12', $mental_disability) ? 'Yes' : '',
-        'low_vision'        => isset($has['3']) ? 'Yes' : '',
-        'blind'             => isset($has['2']) ? 'Yes' : '',
-        'visual_impairment' => (isset($has['1']) || isset($has['3'])) ? 'Yes' : '',
+        'father_last_name' => strtoupper($parents['father']['last_name']),
+        'father_first_name' => strtoupper($parents['father']['first_name']),
+        'father_middle_name' => strtoupper($parents['father']['middle_name']),
+        'father_contact_number' => $parents['father']['contact_number'],
 
-        'hearing_impairment' => isset($has['4']) ? 'Yes' : '',
-        'autism_spectrum_disorder' => isset($has['5']) ? 'Yes' : '',
-        'speech_language_disorder' => isset($has['6']) ? 'Yes' : '',
-        'learning_disorder' => isset($has['7']) ? 'Yes' : '',
-        'emotional_behavioral_disorder' => isset($has['8']) ? 'Yes' : '',
-        'cerebral_palsy' => isset($has['9']) ? 'Yes' : '',
-        'intellectual_disorder' => isset($has['10']) ? 'Yes' : '',
-        'orthopedic_physical_handicap' => isset($has['11']) ? 'Yes' : '',
+        'mother_last_name' => strtoupper($parents['mother']['last_name']),
+        'mother_first_name' => strtoupper($parents['mother']['first_name']),
+        'mother_middle_name' => strtoupper($parents['mother']['middle_name']),
+        'mother_contact_number' => $parents['mother']['contact_number'],
 
-        'cancer' => isset($has['13']) ? 'Yes' : '',
-        'special_health_problem' => (isset($has['12']) || isset($has['13'])) ? 'Yes' : '',
+        'guardian_last_name' => strtoupper($parents['guardian']['last_name']),
+        'guardian_first_name' => strtoupper($parents['guardian']['first_name']),
+        'guardian_middle_name' => strtoupper($parents['guardian']['middle_name']),
+        'guardian_contact_number' => $parents['guardian']['contact_number']
 
-        'multiple_disorder' => count($mental_disability) > 1 ? 'Yes' : '',
-
-        'same_address_yes' => $sameAddress ? 'Yes' : '',
-        'same_address_no' => !$sameAddress ? 'Yes' : '',
-        'house_no' => $current['house_no'],
-        'street_name' => strtoupper($current['street_name']),
-        'barangay' => strtoupper($current['barangay']),
-        'municipality_city' => strtoupper($current['municipality_city']),
-        'province' => strtoupper($current['province']),
-        'country' => strtoupper($current['country']),
-        'zip_code' => $current['zip_code'],
-
-        'house_nop' => $permanent['house_no'],
-        'street_namep' => strtoupper($permanent['street_name']),
-        'barangayp' => strtoupper($permanent['barangay']),
-        'municipality_cityp' => strtoupper($permanent['municipality_city']),
-        'provincep' => strtoupper($permanent['province']),
-        'countryp' => strtoupper($permanent['country']),
-        'zip_codep' => $permanent['zip_code'],
-
-        'father_last_name' => strtoupper($parents['father_last_name']),
-        'father_first_name' => strtoupper($parents['father_first_name']),
-        'father_middle_name' => strtoupper($parents['father_middle_name']),
-        'father_contact_number' => $parents['father_contact_number'],
-
-        'mother_last_name' => strtoupper($parents['mother_last_name']),
-        'mother_first_name' => strtoupper($parents['mother_first_name']),
-        'mother_middle_name' => strtoupper($parents['mother_middle_name']),
-        'mother_contact_number' => $parents['mother_contact_number'],
-
-        'guardian_last_name' => strtoupper($parents['guardian_last_name']),
-        'guardian_first_name' => strtoupper($parents['guardian_first_name']),
-        'guardian_middle_name' => strtoupper($parents['guardian_middle_name']),
-        'guardian_contact_number' => $parents['guardian_contact_number'],
-
-        'last_grade_level_completed' => $returning_formattedGrade,
-        'last_school_attended' => strtoupper($returning_learner['last_school_attended']),
-        'last_school_year_completed' => $returning_learner['last_school_year_completed'],
-        'school_id' => $returning_learner['school_id']
     ];
 
     $pdf = new GeneratePDF;

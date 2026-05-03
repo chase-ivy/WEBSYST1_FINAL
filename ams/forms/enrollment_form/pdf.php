@@ -3,12 +3,28 @@ require_once __DIR__ . '/../../pdf/vendor/autoload.php';
 
 use Classes\GeneratePDF;
 
-include "enroll_config.php";
+include __DIR__ . '/../../config/config.php';
 
 // if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['student_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     $student_id = $_GET['student_id'] ?? 1;
+    
+    function fetchParents($pdo, $student_id) {
+        $stmt = $pdo->prepare("
+            SELECT p.* 
+            FROM parents p
+            JOIN student_parents sp ON p.parent_id = sp.parent_id
+            WHERE sp.student_id = ?
+        ");
+        $stmt->execute([$student_id]);
+        
+        $result = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $result[$row['parent_type']] = $row;
+        }
+        return $result;
+    }
 
     function fetchOne($pdo, $table, $student_id) {
         $stmt = $pdo->prepare("SELECT * FROM $table WHERE student_id = ? LIMIT 1");
@@ -20,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $enrollment = fetchOne($pdo, 'enrollments', $student_id);
     $current = fetchOne($pdo, 'current_address', $student_id);
     $permanent = fetchOne($pdo, 'permanent_address', $student_id);
-    $parents = fetchOne($pdo, 'parent_guardian_information', $student_id);
+    $parents = fetchParents($pdo, $student_id);
     $returning_learner = fetchOne($pdo, 'returning_learner_information', $student_id);
 
     $mental_disability = array_map('trim', explode(',', $student['is_learner_with_disability']));
@@ -28,6 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 echo '<pre>';
 echo "STUDENT:\n";
 print_r($student);
+
+echo "\nPARENTS:\n";
+print_r($parents);
 
 echo "\nSELECTED DISABILITIES:\n";
 print_r($mental_disability);
@@ -156,21 +175,21 @@ $data = [
     'provincep' => strtoupper($permanent['province']),
     'countryp' => strtoupper($permanent['country']),
     'zip_codep' => $permanent['zip_code'],
+    
+    'father_last_name' => strtoupper($parents['father']['last_name'] ?? ''),
+    'father_first_name' => strtoupper($parents['father']['first_name'] ?? ''),
+    'father_middle_name' => strtoupper($parents['father']['middle_name'] ?? ''),
+    'father_contact_number' => $parents['father']['contact_number'] ?? '',
 
-    'father_last_name' => strtoupper($parents['father_last_name']),
-    'father_first_name' => strtoupper($parents['father_first_name']),
-    'father_middle_name' => strtoupper($parents['father_middle_name']),
-    'father_contact_number' => $parents['father_contact_number'],
+    'mother_last_name' => strtoupper($parents['mother']['last_name'] ?? ''),
+    'mother_first_name' => strtoupper($parents['mother']['first_name'] ?? ''),
+    'mother_middle_name' => strtoupper($parents['mother']['middle_name'] ?? ''),
+    'mother_contact_number' => $parents['mother']['contact_number'] ?? '',
 
-    'mother_last_name' => strtoupper($parents['mother_last_name']),
-    'mother_first_name' => strtoupper($parents['mother_first_name']),
-    'mother_middle_name' => strtoupper($parents['mother_middle_name']),
-    'mother_contact_number' => $parents['mother_contact_number'],
-
-    'guardian_last_name' => strtoupper($parents['guardian_last_name']),
-    'guardian_first_name' => strtoupper($parents['guardian_first_name']),
-    'guardian_middle_name' => strtoupper($parents['guardian_middle_name']),
-    'guardian_contact_number' => $parents['guardian_contact_number'],
+    'guardian_last_name' => strtoupper($parents['guardian']['last_name'] ?? ''),
+    'guardian_first_name' => strtoupper($parents['guardian']['first_name'] ?? ''),
+    'guardian_middle_name' => strtoupper($parents['guardian']['middle_name'] ?? ''),
+    'guardian_contact_number' => $parents['guardian']['contact_number'] ?? '',
 
     'last_grade_level_completed' => $returning_formattedGrade,
     'last_school_attended' => strtoupper($returning_learner['last_school_attended']),

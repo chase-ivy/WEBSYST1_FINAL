@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['next'])) {
     ]);
 
     // ── PARENT / GUARDIAN ─────────────────────────────────────────
-    $state3 = $pdo->prepare('INSERT INTO parent_guardian_information (
+    $state3 = $pdo->prepare('INSERT INTO parents (
         student_id,
         father_last_name, father_first_name, father_middle_name, father_contact_number,
         mother_last_name, mother_first_name, mother_middle_name, mother_contact_number
