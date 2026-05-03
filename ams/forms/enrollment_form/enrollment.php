@@ -445,6 +445,7 @@
 
     <div class="wrap">
     <form method="POST" action="enrollment.php">
+        <input type="hidden" name="next" value="1">
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 1 — LEARNER INFORMATION
@@ -843,21 +844,21 @@
                     <div class="grid-3">
                         <div class="field">
                             <label>Last Name</label>
-                            <input type="text" name="Father_Last_Name" placeholder="Dela Cruz">
+                            <input type="text" name="father_last_name" placeholder="Dela Cruz">
                         </div>
                         <div class="field">
                             <label>First Name</label>
-                            <input type="text" name="Father_First_Name" placeholder="Juan">
+                            <input type="text" name="father_first_name" placeholder="Juan">
                         </div>
                         <div class="field">
                             <label>Middle Name</label>
-                            <input type="text" name="Father_Middle_Name" placeholder="Santos">
+                            <input type="text" name="father_middle_name" placeholder="Santos">
                         </div>
                     </div>
 
                     <div class="field" style="margin-top:14px; max-width:300px;">
                         <label>Contact Number</label>
-                        <input type="text" name="Father_Contact_Number" placeholder="09XX XXX XXXX">
+                        <input type="text" name="father_contact_number" placeholder="09XX XXX XXXX">
                     </div>
 
                     <div class="sec-divider"><span>Mother's Information</span></div>
@@ -865,21 +866,43 @@
                     <div class="grid-3">
                         <div class="field">
                             <label>Last Name</label>
-                            <input type="text" name="Mother_Last_Name" placeholder="Dela Cruz">
+                            <input type="text" name="mother_last_name" placeholder="Dela Cruz">
                         </div>
                         <div class="field">
                             <label>First Name</label>
-                            <input type="text" name="Mother_First_Name" placeholder="Maria">
+                            <input type="text" name="mother_first_name" placeholder="Maria">
                         </div>
                         <div class="field">
                             <label>Middle Name</label>
-                            <input type="text" name="Mother_Middle_Name" placeholder="Reyes">
+                            <input type="text" name="mother_middle_name" placeholder="Reyes">
                         </div>
                     </div>
 
                     <div class="field" style="margin-top:14px; max-width:300px;">
                         <label>Contact Number</label>
-                        <input type="text" name="Mother_Contact_Number" placeholder="09XX XXX XXXX">
+                        <input type="text" name="mother_contact_number" placeholder="09XX XXX XXXX">
+                    </div>
+
+                    <div class="sec-divider"><span>Guardian's Information</span></div>
+
+                    <div class="grid-3">
+                        <div class="field">
+                            <label>Last Name</label>
+                            <input type="text" name="guardian_last_name" placeholder="Dela Cruz">
+                        </div>
+                        <div class="field">
+                            <label>First Name</label>
+                            <input type="text" name="guardian_first_name" placeholder="Maria">
+                        </div>
+                        <div class="field">
+                            <label>Middle Name</label>
+                            <input type="text" name="guardian_middle_name" placeholder="Reyes">
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-top:14px; max-width:300px;">
+                        <label>Contact Number</label>
+                        <input type="text" name="guardian_contact_number" placeholder="09XX XXX XXXX">
                     </div>
 
                 </div><!-- /.card-body -->

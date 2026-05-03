@@ -8,7 +8,7 @@ include __DIR__ . '/../../config/config.php';
 // if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['student_id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-    $student_id = $_GET['student_id'] ?? 1;
+    $student_id = $_GET['student_id'] ?? 5;
     
     function fetchParents($pdo, $student_id) {
         $stmt = $pdo->prepare("
@@ -130,7 +130,7 @@ $data = [
     'place_of_birth' => strtoupper($student['place_of_birth']),
     'age' => $student['age'],
     'mother_tongue' => strtoupper($student['mother_tongue'])   ,
-    '4ps_benificiary' => strtoupper($student['4p_benificiary']),
+    '4ps_benificiary' => strtoupper($student['4p_beneficiary']),
     '4ps_yes' => !empty($student['4p_benificiary']) ? 'Yes' : '',
     '4ps_no' => empty($student['4p_benificiary']) ? 'Yes' : '',
     'indigenous_group' => strtoupper($student['indigenous_group']),
