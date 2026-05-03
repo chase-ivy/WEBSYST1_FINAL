@@ -1,6 +1,10 @@
+
 <?php
 session_start();
 include '../config/config.php';
+include '../functions/oop.php';
+
+$oop = new oopPHP($pdo);
 
 $error = '';
 
