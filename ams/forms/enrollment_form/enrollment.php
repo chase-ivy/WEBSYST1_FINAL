@@ -1,7 +1,6 @@
 <?php
-    include "config.php";
-    include "enroll.php";
-    ob_start();
+    include '../../config/config.php';
+    include 'enroll.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -418,7 +417,7 @@
     <!-- TOP NAV -->
     <div class="topbar">
         <div class="topbar-logo">
-            <img src="images/logo.png" alt="Logo">
+            <img src="../../style/logo.png" alt="Logo">
             <span>Gibraltar Elementary School</span>
         </div>
         <a href="index.php">← Back to Home</a>
