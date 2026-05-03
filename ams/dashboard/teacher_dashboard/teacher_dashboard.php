@@ -52,6 +52,7 @@ $staff = getStaffInfo($pdo, $user_id);
 <body>
 <header>
     <h2>Gibraltar AMS - Teacher Portal</h2>
+    <a class="action-link" href="../../login/logout.php">Logout</a>
 </header>
 
 <div class="container">
