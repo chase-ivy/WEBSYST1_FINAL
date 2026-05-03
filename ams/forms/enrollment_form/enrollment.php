@@ -1,7 +1,6 @@
 <?php
     include '../../config/config.php';
     include 'enroll.php';
-    include '../../functions/oop.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
