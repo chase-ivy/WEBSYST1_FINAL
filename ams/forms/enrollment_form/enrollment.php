@@ -564,7 +564,7 @@ footer strong { color: rgba(255,255,255,.8); }
                     <!-- PSA -->
                     <div class="field">
                         <label>PSA Birth Certificate No. (if available)</label>
-                        <input type="number" name="PSA_Birth_Certificate_No" placeholder="PSA number">
+                        <input type="number" name="psa_bcn" placeholder="PSA number">
                     </div>
 
                     <!-- Name -->
@@ -684,37 +684,49 @@ footer strong { color: rgba(255,255,255,.8); }
                     </div>
 
                     <!-- Disability Types (collapsible) -->
-   <div class="collapse" id="disabilityBox">
+        <div class="collapse" id="disabilityBox">
                         <div class="disability-grid" style="margin-top:10px;">
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="3"> Low Vision
+                                <input type="checkbox" id="visual_impairment" name="disabilityDetails[1][]" value="1"> Visual Impairment
+
+                                <div id="visualOptionsBox" style="display:none; margin-left:15px;">
+                                    <input type="checkbox" name="disability_sub[1][]" value="1"> Blind<br>
+                                    <input type="checkbox" name="disability_sub[1][]" value="2"> Low Vision
+                                </div>
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="4"> Hearing Impairment
+                                <input type="checkbox" name="disabilityDetails[2][]" value="2"> Hearing Impairment
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="2"> Blind
+                                <input type="checkbox" name="disabilityDetails[3][]" value="3"> Learning Disability
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="5"> Autism Spectrum Disorder
+                                <input type="checkbox" name="disabilityDetails[4][]" value="4"> Intellectual Disability
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="6"> Speech / Language Disorder
+                                <input type="checkbox" name="disabilityDetails[5][]" value="5"> Autism Spectrum Disorder
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="7"> Learning Disability
+                                <input type="checkbox" name="disabilityDetails[6][]" value="6"> Emotional / Behavioral Disorder
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="8"> Intellectual Disability
+                                <input type="checkbox" name="disabilityDetails[7][]" value="7"> Speech / Language Disorder
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="9"> Cerebral Palsy
+                                <input type="checkbox" name="disabilityDetails[8][]" value="8"> Cerebral Palsy  
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="10"> Orthopedic / Physical Handicap
+                                <input type="checkbox" name="disabilityDetails[9][]" value="9"> Orthopedic / Physical Handicap
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="11"> Special Health Problem
+                                <input type="checkbox" id="special_health" name="disabilityDetails[10][]" value="10"> Special Health Problem
+
+                                <div id="healthOptionsBox" style="display:none; margin-left:15px;">
+                                    <input type="checkbox" name="disability_sub[10][]" value="3"> Cancer
+                                </div>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disabilityDetails[11][]" value="11"> Multiple Disorder
                             </label>
                         </div>
                     </div>
@@ -920,7 +932,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 <div class="card-foot">
                     <button type="button" class="btn btn-ghost"   onclick="goTo(2)">← Back</button>
                     <span class="step-count">Step 3 of 5</span>
-                    <button type="button" class="btn btn-primary" onclick="goTo(4)">Medical →</button>
+                    <button type="button" class="btn btn-primary" onclick="goTo(5)">Medical →</button>
                 </div>
 
             </div><!-- /.card -->
@@ -930,7 +942,7 @@ footer strong { color: rgba(255,255,255,.8); }
         <!-- ═══════════════════════════════════════════════════════
              STEP 4 — MEDICAL INFORMATION   
         ════════════════════════════════════════════════════════ -->
-        <div class="panel" id="panel-4">
+        <!-- <div class="panel" id="panel-4">
             <div class="card">
 
                 <div class="card-head">
@@ -940,7 +952,7 @@ footer strong { color: rgba(255,255,255,.8); }
 
                 <div class="card-body">
 
-                <div class="card-body">
+                <div class="card-body"> -->
 
                 <!-- Parent Info -->
 
@@ -955,9 +967,9 @@ footer strong { color: rgba(255,255,255,.8); }
                     <input type="text" name="contact">
                 </div> -->
 
-                <hr><br>
+                <!-- <hr><br>
                 <strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
-                <!-- Q1 -->
+
                 <div class="field">
                 <label>1. Does your child/ward have any allergies?</label>
 					<select id="field" onchange="showField()" name="has_allergies" style="width:100%;">
@@ -969,7 +981,7 @@ footer strong { color: rgba(255,255,255,.8); }
 				<div id="fieldDetails"></div>
 </div>
 
-                <!-- Q2 -->
+
                 <div class="field">
                 <label>2. Does your child/ward have any ongoing medical condition?</label>
 					<select id="Q2" onchange="showQ2()" name="has_medical_condition" style="width:100%;">
@@ -982,7 +994,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 </div>
 
 
-                <!-- Q3 -->
+
                 <div class="field">
                 <label>3. Did your child/ward ever have surgery / hospitalization?</label>
 					<select id="Q3" onchange="showQ3()" name="has_surgery_hospitalization" style="width:100%;">
@@ -995,10 +1007,9 @@ footer strong { color: rgba(255,255,255,.8); }
                 </div>
 
 
-                <!-- Q4 -->
                 <div class="field">
                 <label>4. Is your  child currently taking treatment / medicines</label>
-                    <select id="Q4" onchange="showQ4()" name="is_currently_taking_treatment" style="width:100%;">
+                    <select id="Q4" onchange="showQ4()" name="is_taking_treatment" style="width:100%;">
 						<option hidden selected>Choose</option>
 						<option value="1">Yes</option>
 						<option value="0">No</option>
@@ -1007,10 +1018,10 @@ footer strong { color: rgba(255,255,255,.8); }
 				<div id="q4"></div>
 </div>
 
-                <!-- Q5 -->
+
                 <div class="field">
                 <label>5. Does your family have a history of medical conditions?</label>
-                <!--SELECTION-->
+
                     <select id="Q5" onchange="showQ5()" name="family_medical_history" style="width:100%;">
                         <option hidden selected>Choose</option>
                         <option value="1">Yes</option>
@@ -1020,7 +1031,6 @@ footer strong { color: rgba(255,255,255,.8); }
                     <div id="q5"></div> 
                 </div>
 
-                <!-- Q6 -->
                 <div class="field">
                 <label>6. Does your child/ward have exposure to cigarette/vape smoke at home?</label>
 					<select name="exposed_to_cigarette_vape_smoke" style="width:100%;">
@@ -1031,7 +1041,7 @@ footer strong { color: rgba(255,255,255,.8); }
 
                 </div>
 
-                <!-- Q7 -->
+
                 <div class="field">
                 <label>7. Other pertinent learner information:</label>
                 <input type="text" name="other_pertinent_information" placeholder="Optional">
@@ -1050,8 +1060,8 @@ footer strong { color: rgba(255,255,255,.8); }
                     <button type="button" class="btn btn-primary" onclick="goTo(5)">Submit →</button>
                 </div>
 
-            </div><!-- /.card -->
-        </div><!-- /#panel-4 -->
+            </div>
+        </div> -->
 
 
                <!-- ═══════════════════════════════════════════════════════
@@ -1100,7 +1110,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 </div><!-- /.card-body -->
 
                 <div class="card-foot">
-                    <button type="button" class="btn btn-ghost"  onclick="goTo(4)">← Back</button>
+                    <button type="button" class="btn btn-ghost"  onclick="goTo(3)">← Back</button>
                     <span class="step-count">Step 5 of 5</span>
                     <button type="submit" name="next" class="btn btn-primary">Submit Enrollment</button>
                 </div>
@@ -1117,12 +1127,12 @@ footer strong { color: rgba(255,255,255,.8); }
 
     <script src="medical.js"></script>
     <script>
-        document.getElementById('visual_impairment').addEventListener('change', function() {
-        document.getElementById('visualOptions').style.display = this.checked ? 'block' : 'none';
+    document.getElementById('visual_impairment').addEventListener('change', function() {
+        document.getElementById('visualOptionsBox').style.display = this.checked ? 'block' : 'none';
     });
 
-        document.getElementById('special_health').addEventListener('change', function() {
-        document.getElementById('healthOptions').style.display = this.checked ? 'block' : 'none';
+    document.getElementById('special_health').addEventListener('change', function() {
+        document.getElementById('healthOptionsBox').style.display = this.checked ? 'block' : 'none';
     });
     </script>
     <script>
