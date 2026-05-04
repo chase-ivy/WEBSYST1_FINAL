@@ -7,7 +7,7 @@ include __DIR__ . '/../../config/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-    $student_id = $_GET['student_id'] ?? 11;
+    $student_id = $_GET['student_id'] ?? 12;
 
     // ── FETCH HELPERS ─────────────────────────────────────────────
 

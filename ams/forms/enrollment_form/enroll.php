@@ -1,11 +1,5 @@
 <?php
-
-// ================================================================
-// enroll_process.php
-// Include this at the top of enrollment.php.
-// Handles all INSERT logic when the form is submitted.
-// Requires $pdo from config.php to be already included.
-// ================================================================
+require_once __DIR__ . '/../../config/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -27,30 +21,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($disability === 'Yes' && !empty($_POST['disability_type'])) {
         $disability_types = array_map('intval', $_POST['disability_type']);
     }
-    // debug
-    // echo '<pre>';
-    // var_dump($disability);
-    // var_dump($_POST['disability_type'] ?? 'NOT SET');
-    // var_dump($disability_types);
-    // echo '</pre>';
-    // die();
+
+    $birth_date = $_POST['Birth_Date'] ?? null;
+    $age = null;
+    if ($birth_date) {
+        $birth = new DateTime($birth_date);
+        $today = new DateTime();
+        $age = $today->diff($birth)->y;
+    }
+
+    $with_lrn = (($_POST['with_lrn'] ?? 'No') === 'Yes') ? 1 : 0;
+    $returning = (($_POST['returning'] ?? 'No') === 'Yes') ? 1 : 0;
+    $sex = strtolower($_POST['sex'] ?? '');
+    $fourps_value = ($fourps === 'Yes') ? ($_POST['FourPs_Specify'] ?? '') : 'No';
+    $learner_with_disability = !empty($disability_types) ? 'Yes' : 'No';
 
     // ── STUDENTS ──────────────────────────────────────────────────
-    $birth_date = $_POST['Birth_Date'] ?? null;
-
     $state = $pdo->prepare('INSERT INTO students (
         school_year, grade_level, with_lrn, `returning`,
         psa_bcn, lrn, last_name, first_name, middle_name,
         extension_name, birth_date, sex, place_of_birth,
-        mother_tongue, indigenous_group, `4p_beneficiary`,
+        age, mother_tongue, indigenous_group, `4p_beneficiary`,
         is_learner_with_disability
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
 
     $state->execute([
         $school_year,
         $_POST['Grade_Level']               ?? '',
-        $_POST['with_lrn']                  ?? 0,
-        $_POST['returning']                 ?? 0,
+        $with_lrn,
+        $returning,
         $_POST['PSA_Birth_Certificate_No']  ?? '',
         $_POST['Learner_Reference_No']      ?? '',
         $_POST['Learner_Last_Name']         ?? '',
@@ -58,12 +57,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_POST['Learner_Middle_Name']       ?? null,
         $_POST['Learner_Extension_Name']    ?? null,
         $birth_date,
-        $_POST['sex']                       ?? '',
+        $sex,
         $_POST['Place_of_Birth']            ?? '',
+        $age ?? 0,
         $_POST['Mother_Tongue']             ?? '',
         $ip_value,
         $fourps_value,
-        !empty($disability_types) ? 1 : 0
+        $learner_with_disability
     ]);
 
     $student_id = $pdo->lastInsertId();
