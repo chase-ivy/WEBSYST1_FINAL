@@ -101,6 +101,7 @@ require_role(['staff']);
 </div>
 </div>
 
+<script src="../../api/client.js"></script>
 <script>
 let currentClassId = null;
 let gradeData = [];
@@ -108,18 +109,21 @@ let gradeData = [];
 
    //LOAD CLASSES (teacher)
 async function loadClasses() {
-    const res = await fetch('../../api/classes.php?action=teacher_classes');
-    const json = await res.json();
-
-    if (!json.success) return;
-
-    const select = document.getElementById('classSelect');
-    select.innerHTML = '<option value="">-- Choose Class --</option>' +
-        json.data.map(c =>
-            `<option value="${c.class_id}">
-                ${c.grade_level} ${c.section} - ${c.subject}
-            </option>`
-        ).join('');
+    try {
+        const response = await API.teacher.classes();
+        if (response.success) {
+            const select = document.getElementById('classSelect');
+            select.innerHTML = '<option value="">-- Choose Class --</option>' +
+                response.data.map(c =>
+                    `<option value="${c.class_id}">
+                        ${c.grade_level} ${c.section} - ${c.subject_name}
+                    </option>`
+                ).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load classes:', error);
+        showMessage('error', 'Failed to load classes');
+    }
 }
 
 
@@ -127,13 +131,20 @@ async function loadClasses() {
 async function loadGrades() {
     if (!currentClassId) return;
 
-    const res = await fetch(`../../api/grades.php?action=class&class_id=${currentClassId}`);
-    const json = await res.json();
+    document.getElementById('gradeTable').innerHTML = '<tr><td colspan="4" class="loading">Loading grades...</td></tr>';
 
-    if (!json.success) return;
-
-    gradeData = json.data;
-    renderGrades();
+    try {
+        const response = await API.grades.getClassGrades(currentClassId);
+        if (response.success) {
+            gradeData = response.data;
+            renderGrades();
+        } else {
+            showMessage('error', 'Failed to load grades');
+        }
+    } catch (error) {
+        console.error('Failed to load grades:', error);
+        showMessage('error', 'Failed to load grades');
+    }
 }
 
 
@@ -172,7 +183,7 @@ function renderGrades() {
 
 
    //SAVE GRADE (API MATCHED)
-async function saveGrade(class_student_id, class_subject_id) {
+async function saveGrade(class_student_id, grade_id) {
 
     const input = document.querySelector(
         `input[id^="grade-${class_student_id}-"]`
@@ -181,29 +192,28 @@ async function saveGrade(class_student_id, class_subject_id) {
     const grade = parseFloat(input.value);
     const grading_period = document.getElementById('gradingPeriod').value;
 
-    if (isNaN(grade)) {
-        showMessage('error', 'Invalid grade');
+    if (isNaN(grade) || grade < 0 || grade > 100) {
+        showMessage('error', 'Grade must be between 0 and 100');
         return;
     }
 
-    const res = await fetch('../../api/grades.php?action=save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
+    try {
+        const response = await API.grades.save({
             class_student_id,
-            class_subject_id,
+            grade_id,
             grading_period,
             grade
-        })
-    });
+        });
 
-    const json = await res.json();
-
-    if (json.success) {
-        showMessage('success', 'Grade saved');
-        loadGrades();
-    } else {
-        showMessage('error', json.error || 'Failed to save');
+        if (response.success) {
+            showMessage('success', 'Grade saved successfully');
+            loadGrades();
+        } else {
+            showMessage('error', response.error || 'Failed to save grade');
+        }
+    } catch (error) {
+        console.error('Failed to save grade:', error);
+        showMessage('error', 'Failed to save grade');
     }
 }
 

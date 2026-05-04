@@ -748,6 +748,23 @@ footer strong { color: rgba(255,255,255,.8); }
                         </div>
                     </div>
 
+                    <div class="sec-divider"><span>User Account (Optional)</span></div>
+
+                    <div style="background: var(--brand-light); border: 1px solid #b3cce8; border-radius: var(--radius-md); padding: 14px 16px; font-size: 12px; color: #1560a8; margin-bottom: 16px; line-height: 1.6;">
+                        <strong>Account Information:</strong> Leave blank to auto-generate credentials. You can update these later through admin/teacher dashboard. A user account will be created regardless to ensure login access.
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>Email Address (Optional)</label>
+                            <input type="email" name="user_email" placeholder="student@example.com">
+                        </div>
+                        <div class="field">
+                            <label>Password (Optional)</label>
+                            <input type="password" name="user_password" placeholder="Leave blank for auto-generated">
+                        </div>
+                    </div>
+
                 </div><!-- /.card-body -->
 
                 <div class="card-foot">
@@ -1285,7 +1302,13 @@ footer strong { color: rgba(255,255,255,.8); }
             try {
                 const payload = serializeForm(event.target);
                 const response = await API.enroll.create(payload);
-                showMessage('success', 'Enrollment submitted successfully. Student ID: ' + response.student_id + (response.enrollment_id ? ', Enrollment ID: ' + response.enrollment_id : ''));
+                showMessage('success', 'Enrollment submitted successfully. Student ID: ' + response.student_id + (response.enrollment_id ? ', Enrollment ID: ' + response.enrollment_id : '') + '. Redirecting to teacher dashboard...');
+                
+                // Redirect to teacher dashboard after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '../../dashboard/teacher_dashboard/teacher_dashboard.php';
+                }, 2000);
+                
                 event.target.reset();
                 goTo(1);
                 document.getElementById('ageField').value = '';

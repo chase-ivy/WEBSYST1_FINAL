@@ -1,92 +1,8 @@
 <?php
-require_once __DIR__ . '/teacher_config.php';
 require_once __DIR__ . '/../../login/auth.php';
 require_once __DIR__ . '/teacher_nav.php';
 
 require_role(['staff']);
-
-$teacher_id = $_SESSION['user_id'];
-
-   //GET ACTIVITIES (FIXED)
-$stmt = $pdo->prepare("
-    SELECT 
-        a.activity_id,
-        a.title,
-        a.max_score
-    FROM activities a
-    JOIN class_subjects cs ON a.class_subject_id = cs.class_subject_id
-    WHERE cs.teacher_id = ?
-");
-$stmt->execute([$teacher_id]);
-$activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$selectedActivity = $_GET['activity_id'] ?? null;
-$maxScore = null;
-$classStudents = [];
-$scores = [];
-
-
-   //LOAD STUDENTS + SCORES
-if ($selectedActivity) {
-
-    // get max score
-    foreach ($activities as $a) {
-        if ($a['activity_id'] == $selectedActivity) {
-            $maxScore = $a['max_score'];
-            break;
-        }
-    }
-
-    /* GET STUDENTS IN CLASS (FIXED PROPER RELATION) */
-    $stmt = $pdo->prepare("
-        SELECT 
-            cs.class_student_id,
-            s.first_name,
-            s.last_name
-        FROM class_students cs
-        JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
-        JOIN students s ON e.student_id = s.student_id
-        JOIN class_subjects csub ON cs.class_id = csub.class_id
-        WHERE csub.teacher_id = ?
-    ");
-    $stmt->execute([$teacher_id]);
-    $classStudents = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    /* GET SCORES (FIXED TABLE) */
-    $stmt = $pdo->prepare("
-        SELECT class_student_id, score
-        FROM activity_scores
-        WHERE activity_id = ?
-    ");
-    $stmt->execute([$selectedActivity]);
-
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $scores[$row['class_student_id']] = $row['score'];
-    }
-}
-
-   //SAVE SCORES (FIXED)
-if (isset($_POST['saveScores'])) {
-
-    $activity_id = $_POST['activity_id'];
-    $max_score = $_POST['max_score'];
-
-    foreach ($_POST['score'] as $class_student_id => $score) {
-
-        if ($score === '') continue;
-        if ($score > $max_score) continue;
-
-        addOrUpdateStudentScore(
-            $pdo,
-            $activity_id,
-            $class_student_id,
-            $score
-        );
-    }
-
-    header("Location: scores.php?activity_id=" . $activity_id);
-    exit();
-}
 ?>
 
 <!DOCTYPE html>
@@ -94,6 +10,14 @@ if (isset($_POST['saveScores'])) {
 <head>
     <link rel="stylesheet" href="../../style/style.css">
     <title>Scores</title>
+    <style>
+        .card { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; }
+        input { padding: 6px; width: 80px; }
+        button { padding: 6px 10px; cursor: pointer; }
+        .loading { color: #999; font-style: italic; }
+    </style>
 </head>
 
 <body>
@@ -110,75 +34,169 @@ if (isset($_POST['saveScores'])) {
 
 <div class="card">
     <h3>Select Activity</h3>
-
-    <form method="GET">
-        <select name="activity_id" onchange="this.form.submit()" required>
-            <option value="">-- Select Activity --</option>
-            <?php foreach ($activities as $a): ?>
-                <option value="<?= $a['activity_id'] ?>"
-                    <?= ($selectedActivity == $a['activity_id']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($a['title']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </form>
+    <select id="activitySelect" onchange="loadActivityScores()">
+        <option value="">-- Select Activity --</option>
+    </select>
 </div>
 
-<?php if ($selectedActivity): ?>
-
+<div id="scoresContainer" style="display: none;">
 <div class="card">
-    <h3>Score Entry</h3>
+    <h3 id="activityTitle">Score Entry</h3>
+    <p><strong>Max Score:</strong> <span id="maxScore">-</span></p>
 
-    <p><strong>Max Score:</strong> <?= $maxScore ?></p>
-
-    <form method="POST">
-
-        <input type="hidden" name="activity_id" value="<?= $selectedActivity ?>">
-        <input type="hidden" name="max_score" value="<?= $maxScore ?>">
+    <form id="scoresForm">
+        <input type="hidden" id="activityId" name="activity_id">
+        <input type="hidden" id="maxScoreInput" name="max_score">
 
         <table>
-            <tr>
-                <th>Student</th>
-                <th>Current / Max</th>
-                <th>New Score</th>
-            </tr>
-
-            <?php foreach ($classStudents as $s): ?>
-                <?php $currentScore = $scores[$s['class_student_id']] ?? null; ?>
-
+            <thead>
                 <tr>
-                    <td>
-                        <?= htmlspecialchars($s['first_name'] . ' ' . $s['last_name']) ?>
-                    </td>
-
-                    <td>
-                        <?= $currentScore !== null ? $currentScore : '0' ?> / <?= $maxScore ?>
-                    </td>
-
-                    <td>
-                        <input 
-                            type="number"
-                            name="score[<?= $s['class_student_id'] ?>]"
-                            value="<?= $currentScore !== null ? $currentScore : '' ?>"
-                            max="<?= $maxScore ?>"
-                            min="0"
-                            style="width:80px;"
-                        >
-                    </td>
+                    <th>Student</th>
+                    <th>Current / Max</th>
+                    <th>New Score</th>
                 </tr>
-
-            <?php endforeach; ?>
+            </thead>
+            <tbody id="scoresTable">
+                <tr><td colspan="3" class="loading">Loading students...</td></tr>
+            </tbody>
         </table>
 
-        <button class="btn" name="saveScores">Save Scores</button>
-
+        <button type="submit" class="btn">Save Scores</button>
     </form>
 </div>
-
-<?php endif; ?>
+</div>
 
 </div>
 </div>
+
+<script src="../../api/client.js"></script>
+<script>
+let currentActivity = null;
+let maxScore = 0;
+
+async function loadActivities() {
+    try {
+        const response = await API.teacher.classes();
+        if (response.success) {
+            const select = document.getElementById('activitySelect');
+            select.innerHTML = '<option value="">-- Select Activity --</option>';
+
+            // For now, we'll load activities for the first class
+            // In a full implementation, you'd select class first, then activities
+            if (response.data.length > 0) {
+                const firstClass = response.data[0];
+                const activitiesResponse = await API.activities.listByClass(firstClass.class_id);
+
+                if (activitiesResponse.success) {
+                    activitiesResponse.data.forEach(activity => {
+                        const option = document.createElement('option');
+                        option.value = activity.activity_id;
+                        option.textContent = activity.title;
+                        option.dataset.maxScore = activity.max_score;
+                        select.appendChild(option);
+                    });
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load activities:', error);
+    }
+}
+
+async function loadActivityScores() {
+    const activityId = document.getElementById('activitySelect').value;
+    if (!activityId) {
+        document.getElementById('scoresContainer').style.display = 'none';
+        return;
+    }
+
+    currentActivity = activityId;
+    const select = document.getElementById('activitySelect');
+    const option = select.querySelector(`option[value="${activityId}"]`);
+    maxScore = parseInt(option.dataset.maxScore) || 0;
+
+    document.getElementById('activityId').value = activityId;
+    document.getElementById('maxScoreInput').value = maxScore;
+    document.getElementById('maxScore').textContent = maxScore;
+
+    try {
+        // Load students and their current scores
+        const scoresResponse = await API.activities.getScores(activityId);
+        const studentsResponse = await API.teacher.students();
+
+        if (scoresResponse.success && studentsResponse.success) {
+            renderScoresTable(studentsResponse.data, scoresResponse.data);
+            document.getElementById('scoresContainer').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Failed to load scores:', error);
+        document.getElementById('scoresTable').innerHTML = '<tr><td colspan="3">Failed to load scores</td></tr>';
+    }
+}
+
+function renderScoresTable(students, scores) {
+    const tbody = document.getElementById('scoresTable');
+    const scoresMap = {};
+    scores.forEach(score => {
+        scoresMap[score.class_student_id] = score.score;
+    });
+
+    tbody.innerHTML = students.map(student => {
+        const currentScore = scoresMap[student.class_student_id] || 0;
+        return `
+            <tr>
+                <td>${escapeHtml(student.first_name + ' ' + student.last_name)}</td>
+                <td>${currentScore} / ${maxScore}</td>
+                <td>
+                    <input
+                        type="number"
+                        name="score[${student.class_student_id}]"
+                        value="${currentScore || ''}"
+                        max="${maxScore}"
+                        min="0"
+                    >
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+document.getElementById('scoresForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const data = {
+        activity_id: formData.get('activity_id'),
+        scores: {}
+    };
+
+    for (let [key, value] of formData.entries()) {
+        if (key.startsWith('score[')) {
+            const classStudentId = key.match(/score\[(\d+)\]/)[1];
+            if (value && parseFloat(value) <= maxScore) {
+                data.scores[classStudentId] = parseFloat(value);
+            }
+        }
+    }
+
+    try {
+        await API.activities.saveScore(data);
+        alert('Scores saved successfully!');
+        loadActivityScores(); // Reload to show updated scores
+    } catch (error) {
+        alert('Failed to save scores: ' + error.message);
+    }
+});
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load activities on page load
+loadActivities();
+</script>
 
 </body>
 </html>

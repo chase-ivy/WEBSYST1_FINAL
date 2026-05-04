@@ -81,6 +81,58 @@ function insertParent(PDO $pdo, int $enrollmentId, string $relationship, string 
     return $parentId > 0 ? $parentId : null;
 }
 
+function createUserForStudent(PDO $pdo, int $studentId, string $firstName, string $lastName, string $lrn, ?string $email = null, ?string $password = null): ?int {
+    $email = trim($email ?? '');
+    $password = trim($password ?? '');
+    
+    // Generate username from first name + last name + random suffix
+    $baseUsername = strtolower(str_replace(' ', '.', $firstName . '.' . $lastName));
+    $baseUsername = preg_replace('/[^a-z0-9._-]/', '', $baseUsername);
+    
+    // Ensure unique username
+    $username = $baseUsername;
+    $suffix = 1;
+    while (true) {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE username = ?');
+        $stmt->execute([$username]);
+        if ($stmt->fetchColumn() === 0) {
+            break;
+        }
+        $username = $baseUsername . $suffix;
+        $suffix++;
+    }
+    
+    // Use provided email or generate one from username
+    if ($email === '') {
+        $email = $username . '@student.local';
+    }
+    
+    // Generate password if not provided
+    if ($password === '') {
+        // Use LRN if available, otherwise generate random password
+        if (!empty($lrn) && strlen(trim($lrn)) > 0) {
+            $password = $lrn; // Use LRN as default password
+        } else {
+            // Generate random 8-character password
+            $password = bin2hex(random_bytes(4)); // 8 hex chars
+        }
+    }
+    
+    // Hash password
+    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    
+    // Create user account
+    try {
+        $stmt = $pdo->prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)');
+        $stmt->execute([$username, $email, $passwordHash, 'student']);
+        
+        $userId = intval($pdo->lastInsertId());
+        return $userId > 0 ? $userId : null;
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
 try {
     $pdo->beginTransaction();
 
@@ -109,6 +161,21 @@ try {
     ]);
 
     $studentId = intval($pdo->lastInsertId());
+    
+    // Create user account for the student
+    $firstName = trim($data['Learner_First_Name'] ?? '');
+    $lastName = trim($data['Learner_Last_Name'] ?? '');
+    $lrn = trim($data['Learner_Reference_No'] ?? '');
+    $userEmail = trim($data['user_email'] ?? '');
+    $userPassword = trim($data['user_password'] ?? '');
+    
+    $userId = createUserForStudent($pdo, $studentId, $firstName, $lastName, $lrn, $userEmail, $userPassword);
+    
+    // Link user account to student if user was created successfully
+    if ($userId !== null && $userId > 0) {
+        $updateStmt = $pdo->prepare('UPDATE students SET user_id = ? WHERE student_id = ?');
+        $updateStmt->execute([$userId, $studentId]);
+    }
 
     $enrollmentStmt = $pdo->prepare('INSERT INTO enrollments (
         student_id, school_year, grade_level, with_lrn, psa_bcn,
@@ -208,7 +275,9 @@ try {
     echo json_encode([
         'success' => true,
         'student_id' => $studentId,
-        'enrollment_id' => $enrollmentId
+        'enrollment_id' => $enrollmentId,
+        'user_id' => $userId,
+        'message' => $userId ? 'Student enrolled successfully with user account created.' : 'Student enrolled but user account creation failed. Please check admin dashboard.'
     ]);
 } catch (Exception $e) {
     if ($pdo->inTransaction()) {

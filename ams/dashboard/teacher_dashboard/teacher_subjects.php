@@ -56,48 +56,55 @@ require_role(['staff']);
 </div>
 </div>
 
+<script src="../../api/client.js"></script>
 <script>
 
 async function loadSubjects() {
-    const res = await fetch('../../api/subjects.php?action=list');
-    const json = await res.json();
+    try {
+        const response = await API.subjects.list();
+        if (response.success) {
+            let html = '<table>';
+            html += '<tr><th>Name</th><th>Action</th></tr>';
 
-    if (!json.success) {
+            response.data.forEach(s => {
+                html += `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>
+                            <button onclick="editSubject(${s.subject_id}, '${escapeHtml(s.name)}')">Edit</button>
+                            <button onclick="deleteSubject(${s.subject_id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</table>';
+
+            document.getElementById('subjectList').innerHTML = html;
+        } else {
+            document.getElementById('subjectList').innerHTML = 'Failed to load';
+        }
+    } catch (error) {
+        console.error('Failed to load subjects:', error);
         document.getElementById('subjectList').innerHTML = 'Failed to load';
-        return;
     }
-
-    let html = '<table>';
-    html += '<tr><th>Name</th><th>Action</th></tr>';
-
-    json.data.forEach(s => {
-        html += `
-            <tr>
-                <td>${s.name}</td>
-                <td>
-                    <button onclick="editSubject(${s.subject_id}, '${escapeHtml(s.name)}')">Edit</button>
-                    <button onclick="deleteSubject(${s.subject_id})">Delete</button>
-                </td>
-            </tr>
-        `;
-    });
-
-    html += '</table>';
-
-    document.getElementById('subjectList').innerHTML = html;
 }
 
 async function createSubject() {
     const name = document.getElementById('newSubject').value;
 
-    await fetch('../../api/subjects.php?action=create', {
-        method: 'POST',
-        body: JSON.stringify({ name }),
-        headers: { 'Content-Type': 'application/json' }
-    });
-
-    document.getElementById('newSubject').value = '';
-    loadSubjects();
+    try {
+        const response = await API.subjects.create({ name });
+        if (response.success) {
+            document.getElementById('newSubject').value = '';
+            loadSubjects();
+        } else {
+            alert('Failed to create subject');
+        }
+    } catch (error) {
+        console.error('Failed to create subject:', error);
+        alert('Failed to create subject');
+    }
 }
 
 function editSubject(id, name) {
@@ -109,25 +116,33 @@ async function updateSubject() {
     const subject_id = document.getElementById('edit_id').value;
     const name = document.getElementById('edit_name').value;
 
-    await fetch('../../api/subjects.php?action=update', {
-        method: 'POST',
-        body: JSON.stringify({ subject_id, name }),
-        headers: { 'Content-Type': 'application/json' }
-    });
-
-    loadSubjects();
+    try {
+        const response = await API.subjects.update({ subject_id, name });
+        if (response.success) {
+            loadSubjects();
+        } else {
+            alert('Failed to update subject');
+        }
+    } catch (error) {
+        console.error('Failed to update subject:', error);
+        alert('Failed to update subject');
+    }
 }
 
 async function deleteSubject(id) {
     if (!confirm('Delete this subject?')) return;
 
-    await fetch('../../api/subjects.php?action=delete', {
-        method: 'POST',
-        body: JSON.stringify({ subject_id: id }),
-        headers: { 'Content-Type': 'application/json' }
-    });
-
-    loadSubjects();
+    try {
+        const response = await API.subjects.delete({ subject_id: id });
+        if (response.success) {
+            loadSubjects();
+        } else {
+            alert('Failed to delete subject');
+        }
+    } catch (error) {
+        console.error('Failed to delete subject:', error);
+        alert('Failed to delete subject');
+    }
 }
 
 function escapeHtml(text) {

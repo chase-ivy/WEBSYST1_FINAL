@@ -83,12 +83,13 @@ $staff = $stmt->fetch();
 <script>
     async function loadDashboard() {
         try {
-            // Load classes
-            const classesResponse = await api.getClasses();
-            if (classesResponse.success) {
-                renderClasses(classesResponse.data);
-                renderSubjects(classesResponse.data);
-                renderSummary(classesResponse.data);
+            // Load teacher dashboard data
+            const dashboardResponse = await API.teacher.dashboard();
+            if (dashboardResponse.success) {
+                const data = dashboardResponse.data;
+                renderClasses(data.classes);
+                renderSubjects(data.subjects);
+                renderSummary(data);
             }
         } catch (error) {
             console.error('Dashboard load error:', error);
@@ -108,27 +109,27 @@ $staff = $stmt->fetch();
                 <td>${escapeHtml(c.subject_name)}</td>
                 <td>${c.grade_level}</td>
                 <td>${c.section}</td>
-                <td><a href="manage_students.php?class_id=${c.class_id}">Manage</a></td>
+                <td><a href="teacher_manage_students.php?class_id=${c.class_id}">Manage (${c.student_count})</a></td>
             </tr>
         `).join('');
     }
 
-    function renderSubjects(classes) {
-        const subjects = [...new Set(classes.map(c => c.subject_name))];
+    function renderSubjects(subjects) {
         const subjectsList = document.getElementById('subjectsList');
-        
+
         if (subjects.length === 0) {
             subjectsList.innerHTML = '<li>No subjects assigned</li>';
             return;
         }
 
-        subjectsList.innerHTML = subjects.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+        subjectsList.innerHTML = subjects.map(s => `<li>${escapeHtml(s.name)}</li>`).join('');
     }
 
-    function renderSummary(classes) {
-        const totalClasses = classes.length;
-        const totalStudents = classes.reduce((sum, c) => sum + (parseInt(c.students) || 0), 0);
-        
+    function renderSummary(data) {
+        const totalClasses = data.classes.length;
+        const totalStudents = data.total_students;
+        const totalSubjects = data.subjects.length;
+
         const summaryCards = document.getElementById('summaryCards');
         summaryCards.innerHTML = `
             <div class="summary-card">
@@ -138,6 +139,10 @@ $staff = $stmt->fetch();
             <div class="summary-card">
                 <h4>Students</h4>
                 <p>${totalStudents}</p>
+            </div>
+            <div class="summary-card">
+                <h4>Subjects</h4>
+                <p>${totalSubjects}</p>
             </div>
         `;
     }

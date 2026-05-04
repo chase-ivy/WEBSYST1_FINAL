@@ -199,6 +199,25 @@ const API = {
             return API.call('activities', 'save_score', data, 'POST');
         }
     },
+
+    // Teacher API
+    teacher: {
+        dashboard: async function() {
+            return API.call('teacher', 'dashboard');
+        },
+        classes: async function() {
+            return API.call('teacher', 'classes');
+        },
+        students: async function() {
+            return API.call('teacher', 'students');
+        },
+        subjects: async function() {
+            return API.call('teacher', 'subjects');
+        },
+        assignSubject: async function(data) {
+            return API.call('teacher', 'assign_subject', data, 'POST');
+        }
+    },
     
     // Medical API
     medical: {
