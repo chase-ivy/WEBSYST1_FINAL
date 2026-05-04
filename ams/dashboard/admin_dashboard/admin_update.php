@@ -72,8 +72,8 @@ $staffList = getStaffList($pdo);
                     <input id="email" type="email" name="email" value="<?php echo htmlspecialchars($editStaff['email'], ENT_QUOTES, 'UTF-8'); ?>" required>
                     <label for="role">Role</label>
                     <select id="role" name="role" required>
-                        <option value="teacher" <?php echo $editStaff['role'] === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
-                        <option value="parent" <?php echo $editStaff['role'] === 'parent' ? 'selected' : ''; ?>>Parent</option>
+                        <option value="staff" <?php echo $editStaff['role'] === 'staff' ? 'selected' : ''; ?>>Staff</option>
+                        <option value="student" <?php echo $editStaff['role'] === 'student' ? 'selected' : ''; ?>>Student</option>
                     </select>
                     <label for="password">New Password <small>(leave blank to keep current)</small></label>
                     <input id="password" type="password" name="password">
@@ -116,8 +116,8 @@ $staffList = getStaffList($pdo);
                         <input id="email" type="email" name="email" required>
                         <label for="role">Role</label>
                         <select id="role" name="role" required>
-                            <option value="teacher">Teacher</option>
-                            <option value="parent">Parent</option>
+                            <option value="staff">Staff</option>
+                            <option value="student">Student</option>
                         </select>
                         <label for="password">New Password <small>(leave blank to keep current)</small></label>
                         <input id="password" type="password" name="password">

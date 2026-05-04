@@ -33,7 +33,7 @@ $staffList = getStaffList($pdo);
                 </div>
                 <div class="card">
                     <h3>Create Staff</h3>
-                    <p>Open the create page to add new teacher or parent accounts.</p>
+                    <p>Open the create page to add new staff or student accounts.</p>
                     <a class="btn" href="admin_create.php">Go to Create</a>
                 </div>
                 <div class="card">

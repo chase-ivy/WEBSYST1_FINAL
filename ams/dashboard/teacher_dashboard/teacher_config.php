@@ -2,7 +2,7 @@
 include '../../config/config.php';
 function requireTeacher()
 {
-    if (!is_logged_in() || $_SESSION['role'] !== 'teacher') {
+    if (!is_logged_in() || $_SESSION['role'] !== 'staff') {
         header('Location: ../../login/index.php');
         exit();
     }

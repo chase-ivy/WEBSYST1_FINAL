@@ -46,10 +46,10 @@ if (isset($_POST["login"])) {
                     session_regenerate_id(true);
                     $_SESSION['user_id'] = $student['student_id'];
                     $_SESSION['username'] = $student['first_name'] . ' ' . $student['last_name'];
-                    $_SESSION['role'] = 'parent';
+                    $_SESSION['role'] = 'student';
                     $_SESSION['logged_in'] = true;
 
-                    header('Location: ' . redirect_to_dashboard('parent'));
+                    header('Location: ' . redirect_to_dashboard('student'));
                     exit;
                 } else {
                     $error = 'Invalid username or password';

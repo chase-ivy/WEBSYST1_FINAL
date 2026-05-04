@@ -17,11 +17,11 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 try {
     if ($action === 'list') {
-        $stmt = $pdo->query('SELECT user_id, username, email, COALESCE(NULLIF(role, ''), \'Unassigned\') AS role, created_at FROM users WHERE role <> \'admin\' OR role IS NULL ORDER BY created_at DESC');
+        $stmt = $pdo->query("SELECT user_id, username, email, COALESCE(NULLIF(role, ''), 'Unassigned') AS role, created_at FROM users WHERE role <> 'admin' OR role IS NULL ORDER BY created_at DESC");
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     } elseif ($action === 'get') {
         $user_id = intval($_GET['user_id'] ?? 0);
-        $stmt = $pdo->prepare('SELECT user_id, username, email, COALESCE(NULLIF(role, ''), \'Unassigned\') AS role FROM users WHERE user_id = ? AND (role <> ? OR role IS NULL) LIMIT 1');
+        $stmt = $pdo->prepare("SELECT user_id, username, email, COALESCE(NULLIF(role, ''), 'Unassigned') AS role FROM users WHERE user_id = ? AND (role <> ? OR role IS NULL) LIMIT 1");
         $stmt->execute([$user_id, 'admin']);
         echo json_encode(['success' => true, 'data' => $stmt->fetch(PDO::FETCH_ASSOC)]);
     } elseif ($action === 'create') {
@@ -38,8 +38,8 @@ try {
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'A valid email address is required.';
         }
-        if ($role === '' || !in_array($role, ['teacher', 'parent'], true)) {
-            $errors[] = 'Role must be teacher or parent.';
+        if ($role === '' || !in_array($role, ['staff', 'student'], true)) {
+            $errors[] = 'Role must be staff or student.';
         }
         if ($password === '') {
             $errors[] = 'Password is required.';
@@ -79,8 +79,8 @@ try {
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'A valid email address is required.';
         }
-        if ($role === '' || !in_array($role, ['teacher', 'parent'], true)) {
-            $errors[] = 'Role must be teacher or parent.';
+        if ($role === '' || !in_array($role, ['staff', 'student'], true)) {
+            $errors[] = 'Role must be staff or student.';
         }
         if (!empty($errors)) {
             echo json_encode(['success' => false, 'errors' => $errors]);
