@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$student_id = intval($_GET['student_id'] ?? 1);
+$student_id = intval($_GET['student_id'] ?? 2);
 
 // ── FETCH HELPERS ─────────────────────────────────────────────
 
