@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/teacher_config.php';
 require_once __DIR__ . '/../../login/auth.php';
 require_once __DIR__ . '/teacher_nav.php';
 
@@ -99,6 +98,7 @@ require_role(['staff']);
 </div>
 </div>
 
+<script src="../../api/client.js"></script>
 <script>
 
 let currentClassId = null;
@@ -109,20 +109,20 @@ document.getElementById('attendanceDate').valueAsDate = new Date();
 
 /* LOAD CLASSES */
 async function loadClasses() {
-
-    const res = await fetch('../../api/teacher_classes.php?action=teacher_classes');
-    const json = await res.json();
-
-    if (!json.success) return;
-
-    const select = document.getElementById('classSelect');
-
-    json.data.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.class_id;
-        opt.textContent = `${c.subject} - ${c.grade_level} ${c.section}`;
-        select.appendChild(opt);
-    });
+    try {
+        const response = await API.teacher.classes();
+        if (response.success) {
+            const select = document.getElementById('classSelect');
+            select.innerHTML = '<option value="">-- Choose a class --</option>' +
+                response.data.map(c =>
+                    `<option value="${c.class_id}">
+                        ${c.subject_name} - ${c.grade_level} ${c.section}
+                    </option>`
+                ).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load classes:', error);
+    }
 }
 
 /* CLASS CHANGE */
@@ -148,16 +148,17 @@ document.getElementById('attendanceDate').addEventListener('change', async funct
 
 /* LOAD ATTENDANCE */
 async function loadAttendance() {
-
     const date = document.getElementById('attendanceDate').value;
 
-    const res = await fetch(`../../api/attendance.php?action=class&class_id=${currentClassId}&date=${date}`);
-    const json = await res.json();
-
-    if (!json.success) return;
-
-    attendanceRecords = json.data;
-    renderTable();
+    try {
+        const response = await API.attendance.getClassAttendance(currentClassId, date);
+        if (response.success) {
+            attendanceRecords = response.data;
+            renderTable();
+        }
+    } catch (error) {
+        console.error('Failed to load attendance:', error);
+    }
 }
 
 /* RENDER TABLE */
@@ -191,34 +192,30 @@ function renderTable() {
 
 /* SAVE SINGLE */
 async function save(class_student_id) {
-
     const status = document.getElementById(`status-${class_student_id}`).value;
     const date = document.getElementById('attendanceDate').value;
 
     if (!status) return showMessage('error', 'Select status first');
 
-    const res = await fetch('../../api/attendance.php?action=record', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
+    try {
+        const response = await API.attendance.record({
             class_student_id,
             date,
             status
-        })
-    });
-
-    const json = await res.json();
-
-    if (json.success) {
-        showMessage('success', 'Saved successfully');
-    } else {
-        showMessage('error', json.error || 'Error saving');
+        });
+        if (response.success) {
+            showMessage('success', 'Saved successfully');
+        } else {
+            showMessage('error', response.error || 'Error saving');
+        }
+    } catch (error) {
+        console.error('Failed to save attendance:', error);
+        showMessage('error', 'Error saving');
     }
 }
 
 /* MARK ALL PRESENT */
 async function markAllPresent() {
-
     const date = document.getElementById('attendanceDate').value;
 
     for (let r of attendanceRecords) {
@@ -231,7 +228,6 @@ async function markAllPresent() {
 
 /* MARK ALL ABSENT */
 async function markAllAbsent() {
-
     const date = document.getElementById('attendanceDate').value;
 
     for (let r of attendanceRecords) {
@@ -244,18 +240,24 @@ async function markAllAbsent() {
 
 /* AUTO SAVE */
 async function saveAuto(class_student_id, date, status) {
-
-    await fetch('../../api/attendance.php?action=record', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ class_student_id, date, status })
-    });
+    try {
+        await API.attendance.record({
+            class_student_id,
+            date,
+            status
+        });
+    } catch (error) {
+        console.error('Failed to record attendance:', error);
+    }
 }
 
 /* MESSAGE */
 function showMessage(type, text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    const msg = div.innerHTML;
     document.getElementById('statusMessage').innerHTML =
-        `<div class="alert alert-${type}">${text}</div>`;
+        `<div class="alert alert-${type}">${msg}</div>`;
 }
 
 /* INIT */

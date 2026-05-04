@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/teacher_config.php';
 require_once __DIR__ . '/../../login/auth.php';
 require_once __DIR__ . '/teacher_nav.php';
 
@@ -164,26 +163,27 @@ require_role(['staff']);
 </div>
 </div>
 
+<script src="../../api/client.js"></script>
 <script>
 
 let currentClassId = null;
 
    //LOAD CLASSES
 async function loadClasses() {
-
-    const res = await fetch('../../api/classes.api.php?action=teacher_classes');
-    const json = await res.json();
-
-    if (!json.success) return;
-
-    const select = document.getElementById('classSelect');
-
-    select.innerHTML = '<option value="">-- Choose Class --</option>' +
-        json.data.map(c =>
-            `<option value="${c.class_id}">
-                ${c.subject} - ${c.grade_level} ${c.section}
-            </option>`
-        ).join('');
+    try {
+        const response = await API.teacher.classes();
+        if (response.success) {
+            const select = document.getElementById('classSelect');
+            select.innerHTML = '<option value="">-- Choose Class --</option>' +
+                response.data.map(c =>
+                    `<option value="${c.class_id}">
+                        ${c.subject_name} - ${c.grade_level} ${c.section}
+                    </option>`
+                ).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load classes:', error);
+    }
 }
 
 document.getElementById('classSelect').addEventListener('change', function () {
@@ -196,15 +196,21 @@ document.getElementById('classSelect').addEventListener('change', function () {
 
    //LOAD ACTIVITIES
 async function loadActivities() {
+    try {
+        const response = await API.activities.listByClass(currentClassId);
+        if (response.success) {
+            renderActivities(response.data);
+        }
+    } catch (error) {
+        console.error('Failed to load activities:', error);
+    }
+}
 
-    const res = await fetch(`../../api/classes.api.php?action=activities&class_id=${currentClassId}`);
-    const json = await res.json();
-
-    if (!json.success) return;
+function renderActivities(data) {
 
     const list = document.getElementById('activityList');
 
-    if (json.data.length === 0) {
+    if (data.length === 0) {
         list.innerHTML = "No activities yet.";
         return;
     }
@@ -216,7 +222,7 @@ async function loadActivities() {
                 <th>Due</th>
                 <th>Action</th>
             </tr>
-            ${json.data.map(a => `
+            ${data.map(a => `
                 <tr>
                     <td>${a.title}</td>
                     <td>${a.due_date ?? ''}</td>
@@ -239,37 +245,41 @@ async function createActivity() {
     }
 
     const data = {
-        class_id: currentClassId,
+        class_subject_id: currentClassId,
         title: document.getElementById('title').value,
         description: document.getElementById('description').value,
         due_date: document.getElementById('due_date').value
     };
 
-    await fetch('../../api/classes.api.php?action=create_activity', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-
-    loadActivities();
+    try {
+        const response = await API.activities.create(data);
+        if (response.success) {
+            document.getElementById('title').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('due_date').value = '';
+            loadActivities();
+        } else {
+            alert('Failed to create activity');
+        }
+    } catch (error) {
+        console.error('Failed to create activity:', error);
+        alert('Failed to create activity');
+    }
 }
 
 
    //EDIT
-function editActivity(a) {
-
+function editActivity(activity) {
     document.getElementById('editCard').style.display = 'block';
-
-    document.getElementById('edit_id').value = a.activity_id;
-    document.getElementById('edit_title').value = a.title;
-    document.getElementById('edit_due_date').value = a.due_date ?? '';
-    document.getElementById('edit_description').value = a.description ?? '';
+    document.getElementById('edit_id').value = activity.activity_id;
+    document.getElementById('edit_title').value = activity.title;
+    document.getElementById('edit_due_date').value = activity.due_date;
+    document.getElementById('edit_description').value = activity.description;
 }
 
 
    //UPDATE
 async function updateActivity() {
-
     const data = {
         activity_id: document.getElementById('edit_id').value,
         title: document.getElementById('edit_title').value,
@@ -277,28 +287,35 @@ async function updateActivity() {
         due_date: document.getElementById('edit_due_date').value
     };
 
-    await fetch('../../api/classes.api.php?action=update_activity', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-
-    document.getElementById('editCard').style.display = 'none';
-    loadActivities();
+    try {
+        const response = await API.call('activities', 'update', data, 'POST');
+        if (response.success) {
+            document.getElementById('editCard').style.display = 'none';
+            loadActivities();
+        } else {
+            alert('Failed to update activity');
+        }
+    } catch (error) {
+        console.error('Failed to update activity:', error);
+        alert('Failed to update activity');
+    }
 }
 
    //DELETE
-async function deleteActivity(id) {
+async function deleteActivity(activity_id) {
+    if (!confirm('Delete this activity?')) return;
 
-    if (!confirm("Delete this activity?")) return;
-
-    await fetch('../../api/classes.api.php?action=delete_activity', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ activity_id: id })
-    });
-
-    loadActivities();
+    try {
+        const response = await API.call('activities', 'delete', { activity_id }, 'POST');
+        if (response.success) {
+            loadActivities();
+        } else {
+            alert('Failed to delete activity');
+        }
+    } catch (error) {
+        console.error('Failed to delete activity:', error);
+        alert('Failed to delete activity');
+    }
 }
 
 /* INIT */
