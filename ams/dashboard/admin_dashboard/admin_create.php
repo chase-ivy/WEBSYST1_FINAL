@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card-header">
                 <h3>Create New Staff Member</h3>
             </div>
+            <div id="create-alert"></div>
             <?php if ($success !== ''): ?>
                 <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
             <?php endif; ?>
@@ -55,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </ul>
                 </div>
             <?php endif; ?>
-            <form method="post">
+            <form id="create-staff-form" method="post">
                 <label for="username">Username</label>
                 <input id="username" type="text" name="username" required>
                 <label for="email">Email</label>
@@ -73,5 +74,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </main>
 </div>
+<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
+<script>
+    const createForm = document.getElementById('create-staff-form');
+    const createAlert = document.getElementById('create-alert');
+
+    function showCreateMessage(message, isError = false) {
+        createAlert.innerHTML = `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${message}</div>`;
+    }
+
+    createForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        createAlert.innerHTML = '';
+
+        const data = {
+            username: document.getElementById('username').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            role: document.getElementById('role').value,
+            password: document.getElementById('password').value.trim()
+        };
+
+        if (data.role === '') {
+            showCreateMessage('Role is required.', true);
+            return;
+        }
+
+        try {
+            const response = await API.users.create(data);
+            if (response.success) {
+                showCreateMessage(response.message || 'Staff created successfully.');
+                createForm.reset();
+            } else {
+                showCreateMessage((response.errors || []).join('<br>') || 'Could not create staff.', true);
+            }
+        } catch (error) {
+            showCreateMessage(error.message || 'Create request failed.', true);
+        }
+    });
+</script>
 </body>
 </html>

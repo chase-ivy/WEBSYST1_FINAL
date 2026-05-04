@@ -29,7 +29,7 @@ $staffList = getStaffList($pdo);
             <div class="grid">
                 <div class="card">
                     <h3>Total Staff</h3>
-                    <p><?php echo count($staffList); ?> active accounts</p>
+                    <p><span id="staff-count"><?php echo count($staffList); ?></span> active accounts</p>
                 </div>
                 <div class="card">
                     <h3>Create Staff</h3>
@@ -53,6 +53,7 @@ $staffList = getStaffList($pdo);
             <div class="card-header">
                 <h3>Recent Staff Accounts</h3>
             </div>
+            <div id="staff-error" class="alert alert-error" style="display:none;"></div>
             <table>
                 <thead>
                     <tr>
@@ -62,22 +63,59 @@ $staffList = getStaffList($pdo);
                         <th>Created At</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="staff-tbody">
                     <?php if (empty($staffList)): ?>
                         <tr><td colspan="4">No staff accounts found.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($staffList as $staff): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo htmlspecialchars($staff['role'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo htmlspecialchars($staff['created_at'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
                     <?php endif; ?>
-                    <?php foreach ($staffList as $staff): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($staff['role'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($staff['created_at'], ENT_QUOTES, 'UTF-8'); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
     </main>
 </div>
+<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
+<script>
+    async function loadAdminStaff() {
+        try {
+            const response = await API.users.list();
+            const rows = response.data || [];
+            const tbody = document.getElementById('staff-tbody');
+            const count = document.getElementById('staff-count');
+
+            count.textContent = rows.length;
+
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No staff accounts found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map(staff => `
+                <tr>
+                    <td>${staff.username}</td>
+                    <td>${staff.email}</td>
+                    <td>${staff.role || 'Unassigned'}</td>
+                    <td>${staff.created_at}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            const errorContainer = document.getElementById('staff-error');
+            if (errorContainer) {
+                errorContainer.textContent = error.message || 'Unable to load staff list.';
+                errorContainer.style.display = 'block';
+            }
+            console.error('Unable to load staff list', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAdminStaff);
+</script>
 </body>
 </html>

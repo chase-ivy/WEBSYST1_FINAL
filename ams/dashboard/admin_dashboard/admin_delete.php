@@ -38,6 +38,7 @@ $staffList = getStaffList($pdo);
             <div class="card-header">
                 <h3>Delete Staff Accounts</h3>
             </div>
+            <div id="delete-alert"></div>
             <?php if ($success !== ''): ?>
                 <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
             <?php endif; ?>
@@ -59,7 +60,7 @@ $staffList = getStaffList($pdo);
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="delete-staff-tbody">
                     <?php if (empty($staffList)): ?>
                         <tr><td colspan="4">No staff accounts found.</td></tr>
                     <?php endif; ?>
@@ -67,13 +68,9 @@ $staffList = getStaffList($pdo);
                         <tr>
                             <td><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
                             <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($staff['role'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars($staff['role'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8'); ?></td>
                             <td>
-                                <form method="post" onsubmit="return confirm('Delete this staff member?');" style="display:inline; margin:0;">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($staff['user_id'], ENT_QUOTES, 'UTF-8'); ?>">
-                                    <button type="submit" class="action-link" style="background:none; border:none; padding:0;">Delete</button>
-                                </form>
+                                <button type="button" class="action-link delete-user" data-user-id="<?php echo htmlspecialchars($staff['user_id'], ENT_QUOTES, 'UTF-8'); ?>">Delete</button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -82,5 +79,65 @@ $staffList = getStaffList($pdo);
         </div>
     </main>
 </div>
+<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
+<script>
+    const deleteAlert = document.getElementById('delete-alert');
+
+    function showDeleteMessage(message, isError = false) {
+        deleteAlert.innerHTML = `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${message}</div>`;
+    }
+
+    async function loadDeleteUsers() {
+        try {
+            const response = await API.users.list();
+            const rows = response.data || [];
+            const tbody = document.getElementById('delete-staff-tbody');
+            if (!tbody) return;
+
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No staff accounts found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map(staff => `
+                <tr>
+                    <td>${staff.username}</td>
+                    <td>${staff.email}</td>
+                    <td>${staff.role}</td>
+                    <td><button type="button" class="action-link delete-user" data-user-id="${staff.user_id}">Delete</button></td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.delete-user').forEach(button => {
+                button.addEventListener('click', async () => {
+                    if (!confirm('Delete this staff member?')) {
+                        return;
+                    }
+                    try {
+                        const response = await API.users.delete(parseInt(button.dataset.userId, 10));
+                        if (response.success) {
+                            showDeleteMessage(response.message || 'Staff deleted successfully.');
+                            loadDeleteUsers();
+                        } else {
+                            showDeleteMessage((response.errors || []).join('<br>') || 'Delete failed.', true);
+                        }
+                    } catch (error) {
+                        showDeleteMessage(error.message || 'Delete request failed.', true);
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('Unable to load delete list', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const tbody = document.querySelector('tbody');
+        if (tbody) {
+            tbody.id = 'delete-staff-tbody';
+        }
+        loadDeleteUsers();
+    });
+</script>
 </body>
 </html>

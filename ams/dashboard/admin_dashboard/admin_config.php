@@ -2,17 +2,18 @@
 include '../../config/config.php';
 
 function getStaffList(PDO $pdo): array {
-    $stmt = $pdo->query("SELECT user_id, username, email, role, created_at FROM users WHERE role IN ('teacher', 'parent') ORDER BY created_at DESC");
+    $stmt = $pdo->query("SELECT user_id, username, email, COALESCE(NULLIF(role, ''), 'Unassigned') AS role, created_at FROM users WHERE role <> 'admin' OR role IS NULL ORDER BY created_at DESC");
     return $stmt->fetchAll();
 }
 
 function getStaffById(PDO $pdo, int $userId): ?array {
-    $stmt = $pdo->prepare('SELECT user_id, username, email, role FROM users WHERE user_id = ? AND role IN ("teacher", "parent") LIMIT 1');
-    $stmt->execute([$userId]);
+    $stmt = $pdo->prepare('SELECT user_id, username, email, COALESCE(NULLIF(role, \'\'), \'Unassigned\') AS role FROM users WHERE user_id = ? AND (role <> ? OR role IS NULL) LIMIT 1');
+    $stmt->execute([$userId, 'admin']);
     return $stmt->fetch() ?: null;
 }
 
 function createStaff(PDO $pdo, string $username, string $email, string $password, string $role): array {
+    $role = strtolower(trim($role));
     $errors = [];
     if ($username === '') {
         $errors[] = 'Username is required.';
@@ -20,7 +21,7 @@ function createStaff(PDO $pdo, string $username, string $email, string $password
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'A valid email address is required.';
     }
-    if (!in_array($role, ['teacher', 'parent'], true)) {
+    if ($role === '' || !in_array($role, ['teacher', 'parent'], true)) {
         $errors[] = 'Role must be teacher or parent.';
     }
     if ($password === '') {
@@ -44,6 +45,7 @@ function createStaff(PDO $pdo, string $username, string $email, string $password
 }
 
 function updateStaff(PDO $pdo, int $userId, string $username, string $email, string $role, ?string $password = null): array {
+    $role = strtolower(trim($role));
     $errors = [];
     if ($userId <= 0) {
         $errors[] = 'Invalid staff ID.';
@@ -54,7 +56,7 @@ function updateStaff(PDO $pdo, int $userId, string $username, string $email, str
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'A valid email address is required.';
     }
-    if (!in_array($role, ['teacher', 'parent'], true)) {
+    if ($role === '' || !in_array($role, ['teacher', 'parent'], true)) {
         $errors[] = 'Role must be teacher or parent.';
     }
     if (!empty($errors)) {
@@ -73,8 +75,9 @@ function updateStaff(PDO $pdo, int $userId, string $username, string $email, str
         $sql .= ', password_hash = ?';
         $params[] = password_hash($password, PASSWORD_DEFAULT);
     }
-    $sql .= ' WHERE user_id = ? AND role IN ("teacher", "parent")';
+    $sql .= ' WHERE user_id = ? AND (role <> ? OR role IS NULL)';
     $params[] = $userId;
+    $params[] = 'admin';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
@@ -87,8 +90,8 @@ function deleteStaff(PDO $pdo, int $userId): array {
         return ['success' => false, 'errors' => ['Invalid staff ID.']];
     }
 
-    $stmt = $pdo->prepare('DELETE FROM users WHERE user_id = ? AND role IN ("teacher", "parent")');
-    $stmt->execute([$userId]);
+    $stmt = $pdo->prepare('DELETE FROM users WHERE user_id = ? AND (role <> ? OR role IS NULL)');
+    $stmt->execute([$userId, 'admin']);
 
     return ['success' => true, 'message' => 'Staff member deleted successfully.'];
 }
