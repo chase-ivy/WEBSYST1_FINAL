@@ -1,7 +1,7 @@
 <?php    
     include '../../config/config.php';
     include 'enroll.php';
-    include '../../functions/oop.php';
+    // include '../../functions/oop.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,385 +31,386 @@
     --transition: 180ms ease;
 }
 
-        /* ── RESET ───────────────────────────────────────────────── */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+/* ── RESET ───────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
-        html, body { height: 100%; }
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--canvas);
-            color: var(--text);
-            display: flex;
-            flex-direction: column;
-        }
+html, body { height: 100%; }
 
-        a { text-decoration: none; color: inherit; }
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--canvas);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+}
 
-        /* ── TOP NAV ─────────────────────────────────────────────── */
-        .topbar {
-            background: #4e0303;
-            padding: 12px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+a { text-decoration: none; color: inherit; }
 
-        .topbar-logo {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-        }
+/* ── TOP NAV ─────────────────────────────────────────────── */
+.topbar {
+    background: #4e0303;
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-        .topbar-logo img {
-            width: 36px;
-            height: 36px;
-            object-fit: contain;
-        }
+.topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
 
-        .topbar-logo span {
-            font-size: 13px;
-            font-weight: 700;
-            color: #fff;
-        }
+.topbar-logo img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
 
-        .topbar a {
-            font-size: 12px;
-            color: rgba(255,255,255,.65);
-            border: 1px solid rgba(255,255,255,.2);
-            padding: 6px 13px;
-            border-radius: var(--radius-sm);
-            transition: background var(--t), color var(--t);
-        }
+.topbar-logo span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
 
-        .topbar a:hover {
-            background: rgba(255,255,255,.1);
-            color: #fff;
-        }
+.topbar a {
+    font-size: 12px;
+    color: rgba(255,255,255,.65);
+    border: 1px solid rgba(255,255,255,.2);
+    padding: 6px 13px;
+    border-radius: var(--radius-sm);
+    transition: background var(--t), color var(--t);
+}
 
-        /* ── PROGRESS STEPPER ────────────────────────────────────── */
-        .stepper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0;
-            padding: 28px 20px 0;
-            max-width: 700px;
-            margin: 0 auto;
-            width: 100%;
-        }
+.topbar a:hover {
+    background: rgba(255,255,255,.1);
+    color: #fff;
+}
 
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            flex: 1;
-            position: relative;
-        }
+/* ── PROGRESS STEPPER ────────────────────────────────────── */
+.stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 28px 20px 0;
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
+}
 
-        .step:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 16px;
-            left: calc(50% + 18px);
-            right: calc(-50% + 18px);
-            height: 2px;
-            background: var(--border);
-            transition: background var(--t);
-        }
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+}
 
-        .step.done:not(:last-child)::after { background: var(--brand); }
+.step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: calc(50% + 18px);
+    right: calc(-50% + 18px);
+    height: 2px;
+    background: var(--border);
+    transition: background var(--t);
+}
 
-        .step-dot {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid var(--border);
-            background: var(--surface);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--muted);
-            z-index: 1;
-            transition: all var(--t);
-        }
+.step.done:not(:last-child)::after { background: var(--brand); }
 
-        .step.active .step-dot {
-            border-color: var(--brand);
-            background: var(--brand);
-            color: #fff;
-            box-shadow: 0 0 0 4px rgba(21,96,168,.15);
-        }
+.step-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    z-index: 1;
+    transition: all var(--t);
+}
 
-        .step.done .step-dot {
-            border-color: var(--brand);
-            background: var(--brand);
-            color: #fff;
-        }
+.step.active .step-dot {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(21,96,168,.15);
+}
 
-        .step-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--muted);
-            letter-spacing: .3px;
-            white-space: nowrap;
-        }
+.step.done .step-dot {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
+}
 
-        .step.active .step-label,
-        .step.done   .step-label { color: var(--brand); }
+.step-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: .3px;
+    white-space: nowrap;
+}
 
-        /* ── MAIN WRAPPER / CARD ─────────────────────────────────── */
-        .wrap {
-            max-width: 700px;
-            width: 100%;
-            margin: 24px auto 40px;
-            padding: 0 20px;
-        }
+.step.active .step-label,
+.step.done   .step-label { color: var(--brand); }
 
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-md);
-            overflow: hidden;
-        }
+/* ── MAIN WRAPPER / CARD ─────────────────────────────────── */
+.wrap {
+    max-width: 700px;
+    width: 100%;
+    margin: 24px auto 40px;
+    padding: 0 20px;
+}
 
-        .card-head {
-            padding: 24px 32px 20px;
-            border-bottom: 1px solid var(--border);
-            background: linear-gradient(160deg, #f0f5ff, #e8f0fb);
-        }
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
 
-        .card-head h2 {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--brand);
-            margin-bottom: 2px;
-        }
+.card-head {
+    padding: 24px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(160deg, #f0f5ff, #e8f0fb);
+}
 
-        .card-head p { font-size: 13px; color: var(--muted); }
+.card-head h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--brand);
+    margin-bottom: 2px;
+}
 
-        .card-body { padding: 28px 32px; }
+.card-head p { font-size: 13px; color: var(--muted); }
 
-        /* ── STEP PANELS ─────────────────────────────────────────── */
-        .panel         { display: none; }
-        .panel.active  { display: block; }
+.card-body { padding: 28px 32px; }
 
-        /* ── FORM GRID ───────────────────────────────────────────── */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr;       gap: 16px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr;   gap: 16px; }
-        .span-2 { grid-column: span 2; }
+/* ── STEP PANELS ─────────────────────────────────────────── */
+.panel         { display: none; }
+.panel.active  { display: block; }
 
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
+/* ── FORM GRID ───────────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr;       gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr;   gap: 16px; }
+.span-2 { grid-column: span 2; }
 
-        .field label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: .5px;
-        }
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
 
-        .field input,
-        .field select {
-            width: 100%;
-            padding: 10px 13px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            color: var(--text);
-            background: var(--canvas);
-            outline: none;
-            transition: border-color var(--t), box-shadow var(--t), background var(--t);
-        }
+.field label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
 
-        .field input:focus,
-        .field select:focus {
-            border-color: var(--brand);
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(21,96,168,.10);
-        }
+.field input,
+.field select {
+    width: 100%;
+    padding: 10px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--canvas);
+    outline: none;
+    transition: border-color var(--t), box-shadow var(--t), background var(--t);
+}
 
-        .field input::placeholder      { color: #b0b8c4; }
-        .field select option[value=""] { color: var(--muted); }
+.field input:focus,
+.field select:focus {
+    border-color: var(--brand);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(21,96,168,.10);
+}
 
-        /* ── RADIO PILLS ─────────────────────────────────────────── */
-        .radio-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+.field input::placeholder      { color: #b0b8c4; }
+.field select option[value=""] { color: var(--muted); }
 
-        .radio-pill {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            border: 1.5px solid var(--border);
-            border-radius: 9999px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--muted);
-            cursor: pointer;
-            transition: all var(--t);
-        }
+/* ── RADIO PILLS ─────────────────────────────────────────── */
+.radio-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
 
-        .radio-pill input { display: none; }
+.radio-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all var(--t);
+}
 
-        .radio-pill:has(input:checked) {
-            border-color: var(--brand);
-            background: var(--brand-light);
-            color: var(--brand);
-        }
+.radio-pill input { display: none; }
 
-        /* ── SECTION DIVIDER ─────────────────────────────────────── */
-        .sec-divider {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 24px 0 18px;
-        }
+.radio-pill:has(input:checked) {
+    border-color: var(--brand);
+    background: var(--brand-light);
+    color: var(--brand);
+}
 
-        .sec-divider::before,
-        .sec-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
+/* ── SECTION DIVIDER ─────────────────────────────────────── */
+.sec-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 24px 0 18px;
+}
 
-        .sec-divider span {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: .7px;
-            white-space: nowrap;
-        }
+.sec-divider::before,
+.sec-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
 
-        /* ── COLLAPSIBLE SECTIONS ────────────────────────────────── */
-        .collapse {
-            overflow: hidden;
-            max-height: 0;
-            transition: max-height .3s ease;
-        }
+.sec-divider span {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .7px;
+    white-space: nowrap;
+}
 
-        .collapse.open { max-height: 600px; }
+/* ── COLLAPSIBLE SECTIONS ────────────────────────────────── */
+.collapse {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height .3s ease;
+}
 
-        /* ── DISABILITY CHECKBOX GRID ────────────────────────────── */
-        .disability-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
-        }
+.collapse.open { max-height: 600px; }
 
-        .check-item {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 13px;
-            color: var(--text);
-            cursor: pointer;
-            padding: 6px 10px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            transition: background var(--t), border-color var(--t);
-        }
+/* ── DISABILITY CHECKBOX GRID ────────────────────────────── */
+.disability-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
 
-        .check-item input {
-            width: 14px;
-            height: 14px;
-            accent-color: var(--brand);
-            flex-shrink: 0;
-        }
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: background var(--t), border-color var(--t);
+}
 
-        .check-item:has(input:checked) {
-            background: var(--brand-light);
-            border-color: var(--brand);
-            color: var(--brand);
-        }
+.check-item input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--brand);
+    flex-shrink: 0;
+}
 
-        /* ── CARD FOOTER / BUTTONS ───────────────────────────────── */
-        .card-foot {
-            padding: 18px 32px;
-            border-top: 1px solid var(--border);
-            background: #f9fafb;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+.check-item:has(input:checked) {
+    background: var(--brand-light);
+    border-color: var(--brand);
+    color: var(--brand);
+}
 
-        .btn {
-            padding: 10px 22px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: var(--radius-sm);
-            border: none;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            transition: all var(--t);
-        }
+/* ── CARD FOOTER / BUTTONS ───────────────────────────────── */
+.card-foot {
+    padding: 18px 32px;
+    border-top: 1px solid var(--border);
+    background: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-        .btn-ghost {
-            background: var(--surface);
-            color: var(--muted);
-            border: 1.5px solid var(--border);
-        }
+.btn {
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all var(--t);
+}
 
-        .btn-ghost:hover {
-            border-color: var(--brand);
-            color: var(--brand);
-        }
+.btn-ghost {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+}
 
-        .btn-primary { background: var(--brand); color: #fff; }
+.btn-ghost:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+}
 
-        .btn-primary:hover {
-            background: var(--brand-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 5px 16px rgba(21,96,168,.28);
-        }
+.btn-primary { background: var(--brand); color: #fff; }
 
-        .step-count {
-            font-size: 12px;
-            color: var(--muted);
-            font-weight: 500;
-        }
+.btn-primary:hover {
+    background: var(--brand-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(21,96,168,.28);
+}
 
-        /* ── PAGE FOOTER ─────────────────────────────────────────── */
-        footer {
-            background: #4e0303;
-            color: rgba(255,255,255,.5);
-            text-align: center;
-            padding: 18px;
-            font-size: 12px;
-            border-top: 3px solid var(--brand);
-            margin-top: auto;
-        }
+.step-count {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+}
 
-        footer strong { color: rgba(255,255,255,.8); }
+/* ── PAGE FOOTER ─────────────────────────────────────────── */
+footer {
+    background: #4e0303;
+    color: rgba(255,255,255,.5);
+    text-align: center;
+    padding: 18px;
+    font-size: 12px;
+    border-top: 3px solid var(--brand);
+    margin-top: auto;
+}
 
-        /* ── RESPONSIVE ──────────────────────────────────────────── */
-        @media (max-width: 580px) {
-            .grid-2, .grid-3     { grid-template-columns: 1fr; }
-            .span-2              { grid-column: span 1; }
-            .card-body,
-            .card-head,
-            .card-foot           { padding: 20px; }
-            .topbar              { padding: 10px 16px; }
-        }
+footer strong { color: rgba(255,255,255,.8); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 580px) {
+    .grid-2, .grid-3     { grid-template-columns: 1fr; }
+    .span-2              { grid-column: span 1; }
+    .card-body,
+    .card-head,
+    .card-foot           { padding: 20px; }
+    .topbar              { padding: 10px 16px; }
+}
 
     </style>
 </head>
@@ -440,6 +441,10 @@
         </div>
         <div class="step" id="s4">
             <div class="step-dot">4</div>
+            <span class="step-label">Medical Form</span>
+        </div>
+        <div class="step" id="s5">
+            <div class="step-dot">5</div>
             <span class="step-label">Review</span>
         </div>
     </div>
@@ -481,13 +486,13 @@
                             <label>Grade Level</label>
                             <select name="Grade_Level">
                                 <option value="" hidden>Select grade</option>
-                                <option>Kinder</option>
-                                <option>Grade 1</option>
-                                <option>Grade 2</option>
-                                <option>Grade 3</option>
-                                <option>Grade 4</option>
-                                <option>Grade 5</option>
-                                <option>Grade 6</option>
+                                <option value="Kinder">Kinder</option>
+                                <option value="Grade 1">Grade 1</option>
+                                <option value="Grade 2">Grade 2</option>
+                                <option value="Grade 3">Grade 3</option>
+                                <option value="Grade 4">Grade 4</option>
+                                <option value="Grade 5">Grade 5</option>
+                                <option value="Grade 6">Grade 6</option>
                             </select>
                         </div>
                         <div class="field">
@@ -502,10 +507,10 @@
                             <label>With LRN?</label>
                             <div class="radio-group">
                                 <label class="radio-pill">
-                                    <input type="radio" name="with_lrn" value="Yes" required> Yes
+                                    <input type="radio" name="with_lrn" value="1" required> Yes
                                 </label>
                                 <label class="radio-pill">
-                                    <input type="radio" name="with_lrn" value="No"> No
+                                    <input type="radio" name="with_lrn" value="0"> No
                                 </label>
                             </div>
                         </div>
@@ -513,10 +518,10 @@
                             <label>Returning Learner?</label>
                             <div class="radio-group">
                                 <label class="radio-pill">
-                                    <input type="radio" name="returning" value="Yes" onchange="toggle('returningBox', true)"> Yes
+                                    <input type="radio" name="returning" value="1" onchange="toggle('returningBox', true)"> Yes
                                 </label>
                                 <label class="radio-pill">
-                                    <input type="radio" name="returning" value="No"  onchange="toggle('returningBox', false)"> No
+                                    <input type="radio" name="returning" value="0"  onchange="toggle('returningBox', false)"> No
                                 </label>
                             </div>
                         </div>
@@ -530,13 +535,13 @@
                                 <label>Last Grade Level Completed</label>
                                 <select name="Returning_Grade_Level">
                                     <option value="" hidden>Select</option>
-                                    <option>Kinder</option>
-                                    <option>Grade 1</option>
-                                    <option>Grade 2</option>
-                                    <option>Grade 3</option>
-                                    <option>Grade 4</option>
-                                    <option>Grade 5</option>
-                                    <option>Grade 6</option>
+                                    <option value="Kinder">Kinder</option>
+                                    <option value="Grade 1">Grade 1</option>
+                                    <option value="Grade 2">Grade 2</option>
+                                    <option value="Grade 3">Grade 3</option>
+                                    <option value="Grade 4">Grade 4</option>
+                                    <option value="Grade 5">Grade 5</option>
+                                    <option value="Grade 6">Grade 6</option>
                                 </select>
                             </div>
                             <div class="field">
@@ -549,7 +554,7 @@
                             </div>
                             <div class="field span-2">
                                 <label>School ID</label>
-                                <input type="text" name="School_ID" placeholder="School ID">
+                                <input type="text" name="school_ID" placeholder="School ID">
                             </div>
                         </div>
                     </div>
@@ -670,7 +675,7 @@
                         <label>Learner with Disability?</label>
                         <div class="radio-group">
                             <label class="radio-pill">
-                                <input type="radio" name="disability" value="Yes" onchange="toggle('disabilityBox', true)"> Yes
+                                <input type="radio" name="disability" value="Yes"  onchange="toggle('disabilityBox', true)"> Yes
                             </label>
                             <label class="radio-pill">
                                 <input type="radio" name="disability" value="No"  onchange="toggle('disabilityBox', false)"> No
@@ -679,7 +684,7 @@
                     </div>
 
                     <!-- Disability Types (collapsible) -->
-                    <div class="collapse" id="disabilityBox">
+   <div class="collapse" id="disabilityBox">
                         <div class="disability-grid" style="margin-top:10px;">
                             <label class="check-item">
                                 <input type="checkbox" name="disability_type[]" value="3"> Low Vision
@@ -717,7 +722,7 @@
                 </div><!-- /.card-body -->
 
                 <div class="card-foot">
-                    <span class="step-count">Step 1 of 4</span>
+                    <span class="step-count">Step 1 of 5</span>
                     <button type="button" class="btn btn-primary" onclick="goTo(2)">Next: Address →</button>
                 </div>
 
@@ -823,7 +828,7 @@
 
                 <div class="card-foot">
                     <button type="button" class="btn btn-ghost"   onclick="goTo(1)">← Back</button>
-                    <span class="step-count">Step 2 of 4</span>
+                    <span class="step-count">Step 2 of 5</span>
                     <button type="button" class="btn btn-primary" onclick="goTo(3)">Next: Parents →</button>
                 </div>
 
@@ -914,8 +919,8 @@
 
                 <div class="card-foot">
                     <button type="button" class="btn btn-ghost"   onclick="goTo(2)">← Back</button>
-                    <span class="step-count">Step 3 of 4</span>
-                    <button type="button" class="btn btn-primary" onclick="goTo(4)">Review →</button>
+                    <span class="step-count">Step 3 of 5</span>
+                    <button type="button" class="btn btn-primary" onclick="goTo(4)">Medical →</button>
                 </div>
 
             </div><!-- /.card -->
@@ -923,9 +928,136 @@
 
 
         <!-- ═══════════════════════════════════════════════════════
-             STEP 4 — REVIEW AND SUBMIT
+             STEP 4 — MEDICAL INFORMATION   
         ════════════════════════════════════════════════════════ -->
         <div class="panel" id="panel-4">
+            <div class="card">
+
+                <div class="card-head">
+                    <h2>Medical Form</h2>
+                    <p>Student medical information</p>
+                </div>
+
+                <div class="card-body">
+
+                <div class="card-body">
+
+                <!-- Parent Info -->
+
+                 <!-- THIS IS NOT INCLUDED IN DB -->
+                <!-- <div class="field">
+                    <label>Parent / Guardian Name</label>
+                    <input type="text" name="parent_name">
+                </div>
+
+                <div class="field">
+                    <label>Contact Number</label>
+                    <input type="text" name="contact">
+                </div> -->
+
+                <hr><br>
+                <strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
+                <!-- Q1 -->
+                <div class="field">
+                <label>1. Does your child/ward have any allergies?</label>
+					<select id="field" onchange="showField()" name="has_allergies" style="width:100%;">
+						<option hidden selected>Choose</option>
+						<option value="1">Yes</option>
+						<option value="0">No</option>
+					</select>
+
+				<div id="fieldDetails"></div>
+</div>
+
+                <!-- Q2 -->
+                <div class="field">
+                <label>2. Does your child/ward have any ongoing medical condition?</label>
+					<select id="Q2" onchange="showQ2()" name="has_medical_condition" style="width:100%;">
+						<option hidden selected>Choose</option>
+						<option value="1">Yes</option>
+						<option value="0">No</option>
+					</select>
+
+				<div id="q2"></div>
+                </div>
+
+
+                <!-- Q3 -->
+                <div class="field">
+                <label>3. Did your child/ward ever have surgery / hospitalization?</label>
+					<select id="Q3" onchange="showQ3()" name="has_surgery_hospitalization" style="width:100%;">
+						<option hidden selected>Choose</option>
+						<option value="1">Yes</option>
+						<option value="0">No</option>
+					</select>
+
+				<div id="q3"></div>
+                </div>
+
+
+                <!-- Q4 -->
+                <div class="field">
+                <label>4. Is your  child currently taking treatment / medicines</label>
+                    <select id="Q4" onchange="showQ4()" name="is_currently_taking_treatment" style="width:100%;">
+						<option hidden selected>Choose</option>
+						<option value="1">Yes</option>
+						<option value="0">No</option>
+					</select>
+
+				<div id="q4"></div>
+</div>
+
+                <!-- Q5 -->
+                <div class="field">
+                <label>5. Does your family have a history of medical conditions?</label>
+                <!--SELECTION-->
+                    <select id="Q5" onchange="showQ5()" name="family_medical_history" style="width:100%;">
+                        <option hidden selected>Choose</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+
+                    <div id="q5"></div> 
+                </div>
+
+                <!-- Q6 -->
+                <div class="field">
+                <label>6. Does your child/ward have exposure to cigarette/vape smoke at home?</label>
+					<select name="exposed_to_cigarette_vape_smoke" style="width:100%;">
+						<option hidden selected>Choose</option>
+						<option value="1">Yes</option>
+						<option value="0">No</option>
+					</select>
+
+                </div>
+
+                <!-- Q7 -->
+                <div class="field">
+                <label>7. Other pertinent learner information:</label>
+                <input type="text" name="other_pertinent_information" placeholder="Optional">
+                </div>
+
+                </div>
+
+            </div>
+
+
+
+
+                <div class="card-foot">
+                    <button type="button" class="btn btn-ghost"  onclick="goTo(3)">← Back</button>
+                    <span class="step-count">Step 4 of 5</span>
+                    <button type="button" class="btn btn-primary" onclick="goTo(5)">Submit →</button>
+                </div>
+
+            </div><!-- /.card -->
+        </div><!-- /#panel-4 -->
+
+
+               <!-- ═══════════════════════════════════════════════════════
+             STEP 5 — REVIEW AND SUBMIT
+        ════════════════════════════════════════════════════════ -->
+        <div class="panel" id="panel-5">
             <div class="card">
 
                 <div class="card-head">
@@ -968,21 +1100,31 @@
                 </div><!-- /.card-body -->
 
                 <div class="card-foot">
-                    <button type="button" class="btn btn-ghost"  onclick="goTo(3)">← Back</button>
-                    <span class="step-count">Step 4 of 4</span>
+                    <button type="button" class="btn btn-ghost"  onclick="goTo(4)">← Back</button>
+                    <span class="step-count">Step 5 of 5</span>
                     <button type="submit" name="next" class="btn btn-primary">Submit Enrollment</button>
                 </div>
 
             </div><!-- /.card -->
-        </div><!-- /#panel-4 -->
-
+        </div><!-- /#panel-5 -->
+        
     </form>
-    </div><!-- /.wrap -->
+</div><!-- /.wrap -->
 
     <footer>
         &copy; 2025 <strong>Gibraltar Elementary School — AMES</strong>. All rights reserved.
     </footer>
 
+    <script src="medical.js"></script>
+    <script>
+        document.getElementById('visual_impairment').addEventListener('change', function() {
+        document.getElementById('visualOptions').style.display = this.checked ? 'block' : 'none';
+    });
+
+        document.getElementById('special_health').addEventListener('change', function() {
+        document.getElementById('healthOptions').style.display = this.checked ? 'block' : 'none';
+    });
+    </script>
     <script>
         let current = 1;
 

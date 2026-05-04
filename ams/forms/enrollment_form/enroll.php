@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── SCHOOL YEAR ───────────────────────────────────────────────
@@ -124,27 +125,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
 
     // ── PARENT / GUARDIAN ─────────────────────────────────────────
-    function insertParent($pdo, $student_id, $type, $last, $first, $middle, $contact) {
-        $last    = trim($last);
-        $first   = trim($first);
-        $middle  = trim($middle);
-        $contact = trim($contact);
-
-        if ($last === '' && $first === '' && $middle === '' && $contact === '') {
-            return null;
-        }
-
-        $stmt = $pdo->prepare('INSERT INTO parents (last_name, first_name, middle_name, contact_number, parent_type) VALUES (?,?,?,?,?)');
-        $stmt->execute([$last, $first, $middle, $contact, $type]);
-        $parent_id = $pdo->lastInsertId();
+    $parent_id = $pdo->lastInsertId();
 
         if ($parent_id) {
             $link = $pdo->prepare('INSERT INTO student_parents (student_id, parent_id) VALUES (?,?)');
             $link->execute([$student_id, $parent_id]);
         }
+            return $parent_id;
+        
+        $father_id = insertParent(
+        $pdo, $student_id, 'father',
+        $_POST['father_last_name'] ?? '',
+        $_POST['father_first_name'] ?? '',
+        $_POST['father_middle_name'] ?? '',
+        $_POST['father_contact_number'] ?? ''
+        );
 
-        return $parent_id;
-    }
+        $mother_id = insertParent(
+        $pdo, $student_id, 'mother',
+        $_POST['mother_last_name'] ?? '',
+        $_POST['mother_first_name'] ?? '',
+        $_POST['mother_middle_name'] ?? '',
+        $_POST['mother_contact_number'] ?? ''
+        );
+
+        $guardian_id = insertParent(
+        $pdo, $student_id, 'guardian',
+        $_POST['guardian_last_name'] ?? '',
+        $_POST['guardian_first_name'] ?? '',
+        $_POST['guardian_middle_name'] ?? '',
+        $_POST['guardian_contact_number'] ?? ''
+        );
+
+        $parent_id = $father_id ?? $mother_id ?? $guardian_id;
+
+        if (!$parent_id) {
+            $parent_id = null;
+        }
+
 
     $father_id   = insertParent($pdo, $student_id, 'father',
         $_POST['father_last_name']    ?? '', $_POST['father_first_name']    ?? '',
@@ -178,12 +196,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['School_ID']                  ?? null
         ]);
     }
+    //Medical Part
+    $med_state = $pdo->prepare('INSERT INTO medical_information (student_id, parent_id, exposed_to_cigarette_vape_smoke, other_pertinent_information) VALUES (?,?,?,?)');
+    $med_state->execute([
+        $student_id,
+        $parent_id,
+        $_POST['exposed_to_cigarette_vape_smoke'] ?? '',
+        $_POST['other_pertinent_information'] ?? ''
+    ]);
 
-    // ── STORE student_id in session for medical.php ───────────────
-    session_start();
-    $_SESSION['student_id'] = $student_id;
-    $_SESSION['linked_parent_id'] = $linked_parent_id;
+    $medical_id = $pdo->lastInsertId();
 
-    header('Location: medical.php');
-    exit;
-}
+    $med_state1 = $pdo->prepare('INSERT INTO medical_allergies (medical_id, has_allergies, medicine_allergy, pollen_allergy, food_allergy, other_allergy) VALUES (?,?,?,?,?,?)');
+    $med_state1->execute([
+        $medical_id,
+        $_POST['has_allergies'] ?? '',
+        $_POST['medicine_allergy'] ?? NULL,
+        $_POST['pollen_allergy'] ?? 0,
+        $_POST['food_allergy'] ?? '',
+        $_POST['other_allergy'] ?? ''
+    ]);
+
+    $med_state2 = $pdo->prepare('INSERT INTO medical_conditions (medical_id, has_medical_condition, error_of_refraction, asthma, seizure, heart_illness, anemia, bleeding_disorder, fracture_dislocation, other_condition) VALUES (?,?,?,?,?,?,?,?,?,?)');
+    $med_state2->execute([
+        $medical_id,
+        $_POST['has_medical_condition'] ?? 0,
+        $_POST['error_of_refraction'] ?? 0,
+        $_POST['asthma'] ?? 0,
+        $_POST['seizure'] ?? 0,
+        $_POST['heart_illness'] ?? 0,
+        $_POST['anemia'] ?? 0,
+        $_POST['bleeding_disorder'] ?? 0,
+        $_POST['fracture_dislocation'] ?? 0,
+        $_POST['other_condition'] ?? ''
+    ]);
+
+    $med_state3 = $pdo->prepare('INSERT INTO medical_surgery_hospitalization (medical_id, has_surgery_hospitalization, surgery_date, hospital_name, body_part) VALUES (?,?,?,?,?)');
+    $med_state3->execute([  
+        $medical_id,
+        $_POST['has_surgery_hospitalization'] ?? '',
+        $_POST['surgery_date'] ?? '',
+        $_POST['hospital_name'] ?? '',
+        $_POST['body_part'] ?? ''
+    ]);
+
+    $med_state4 = $pdo->prepare('INSERT INTO medical_treatment_medicines (medical_id, is_currently_taking_treatment, treatment_medicine, schedule_dosage) VALUES (?,?,?,?)');
+    $med_state4->execute([          
+        $medical_id,
+        $_POST['is_currently_taking_treatment'] ?? '',
+        $_POST['treatment_medicine'] ?? '',
+        $_POST['schedule_dosage'] ?? ''
+    ]);
+
+    $med_state5 = $pdo->prepare('INSERT INTO family_medical_history (medical_id, has_family_medical_history, tuberculosis, cancer, cancer_type, diabetes_mellitus, hypertension, stroke_heart_attack, depression, kidney_problems, other_condition) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+    $med_state5->execute([              
+        $medical_id,
+        $_POST['has_family_medical_history'] ?? 0,
+        $_POST['tuberculosis'] ?? 0,
+        $_POST['cancer'] ?? 0,
+        $_POST['cancer_type'] ?? 0,
+        $_POST['diabetes_mellitus'] ?? 0,
+        $_POST['hypertension'] ?? 0,
+        $_POST['stroke_heart_attack'] ?? 0,
+        $_POST['depression'] ?? 0,
+        $_POST['kidney_problems'] ?? 0,
+        $_POST['other_condition'] ?? ''
+    ]);
+
+
+    // // ── STORE student_id in session for medical.php ───────────────
+    // session_start();
+    // $_SESSION['student_id'] = $student_id;
+    // $_SESSION['linked_parent_id'] = $linked_parent_id;
+
+    // header('Location: medical.php');
+    // exit;
+} 
