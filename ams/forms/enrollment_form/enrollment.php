@@ -1,4 +1,4 @@
-<?php
+<?php    
     include '../../config/config.php';
     include 'enroll.php';
     include '../../functions/oop.php';
@@ -547,6 +547,10 @@
                                 <label>Last School Attended</label>
                                 <input type="text" name="Last_School_Attended" placeholder="School name">
                             </div>
+                            <div class="field span-2">
+                                <label>School ID</label>
+                                <input type="text" name="School_ID" placeholder="School ID">
+                            </div>
                         </div>
                     </div>
 
@@ -678,34 +682,34 @@
                     <div class="collapse" id="disabilityBox">
                         <div class="disability-grid" style="margin-top:10px;">
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Visual_Impairment"> Visual Impairment
+                                <input type="checkbox" name="disability_type[]" value="3"> Low Vision
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Hearing_Impairment"> Hearing Impairment
+                                <input type="checkbox" name="disability_type[]" value="4"> Hearing Impairment
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Autism"> Autism Spectrum Disorder
+                                <input type="checkbox" name="disability_type[]" value="2"> Blind
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Speech_Language_Disorder"> Speech / Language Disorder
+                                <input type="checkbox" name="disability_type[]" value="5"> Autism Spectrum Disorder
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Learning_Disability"> Learning Disability
+                                <input type="checkbox" name="disability_type[]" value="6"> Speech / Language Disorder
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Intellectual_Disability"> Intellectual Disability
+                                <input type="checkbox" name="disability_type[]" value="7"> Learning Disability
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Cerebral_Palsy"> Cerebral Palsy
+                                <input type="checkbox" name="disability_type[]" value="8"> Intellectual Disability
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Multiple_Disorder"> Multiple Disabilities
+                                <input type="checkbox" name="disability_type[]" value="9"> Cerebral Palsy
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Orthopedic_Physical_Handicap"> Orthopedic / Physical Handicap
+                                <input type="checkbox" name="disability_type[]" value="10"> Orthopedic / Physical Handicap
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="Special_Health_Problem"> Special Health Problem
+                                <input type="checkbox" name="disability_type[]" value="11"> Special Health Problem
                             </label>
                         </div>
                     </div>
