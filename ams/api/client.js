@@ -71,6 +71,13 @@ const API = {
         }
     },
     
+    // Student Dashboard API
+    studentDashboard: {
+        get: async function() {
+            return API.call('student_dashboard', 'me');
+        }
+    },
+
     // Users API
     users: {
         list: async function() {

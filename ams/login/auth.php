@@ -22,6 +22,7 @@ function redirect_to_dashboard($role) {
             return $protocol . '://' . $host . $basePath . '/dashboard/admin_dashboard/admin_dashboard.php';
         case 'staff':
             return $protocol . '://' . $host . $basePath . '/dashboard/teacher_dashboard/teacher_dashboard.php';
+        case 'student':
         case 'parent':
             return $protocol . '://' . $host . $basePath . '/dashboard/student_dashboard/student_dashboard.php';
         default:

@@ -1,23 +1,8 @@
-<?php
-include 'student_config.php';
+﻿<?php
+require_once __DIR__ . '/../../login/auth.php';
+require_role(['student']);
 require_once __DIR__ . '/student_nav.php';
-
-   //AUTO LOAD STUDENT
-$stmt = $pdo->query("SELECT student_id FROM students LIMIT 1");
-$row = $stmt->fetch();
-
-if (!$row) {
-    die("No students found.");
-}
-
-$student_id = $row['student_id'];
-
-   //FETCH DATA
-$student = getStudentInfo($pdo, $student_id);
-$attendance = getAttendance($pdo, $student_id);
-$attendanceRecords = getAttendanceRecords($pdo, $student_id); // NEW
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -27,81 +12,97 @@ $attendanceRecords = getAttendanceRecords($pdo, $student_id); // NEW
 </head>
 
 <body>
-
 <header>
     <h2>Gibraltar AMS - Class Record</h2>
     <img src="../../style/logo.png" class="logo">
 </header>
 
 <div class="container">
-
-    <?php renderStudentSidebar('classrecords', $student_id); ?>
+    <?php renderStudentSidebar('classrecords'); ?>
 
     <div class="content">
+        <div id="error" class="error-message" style="display:none;"></div>
 
-        <div class="card">
-
+        <div class="card" id="attendance-summary-card">
             <h3>Attendance Summary</h3>
-
-            <div class="student-info">
-                <h3><?= $student['first_name'] . ' ' . $student['last_name'] ?></h3>
-                <h3>Grade Level: <?= $student['grade_level'] ?></h3>
-            </div>
-
-            <table>
-                <tr>
-                    <th>Present</th>
-                    <th>Absent</th>
-                    <th>Late</th>
-                    <th>Excused</th>
-                </tr>
-                <tr>
-                    <td><?= $attendance['present'] ?? 0 ?></td>
-                    <td><?= $attendance['absent'] ?? 0 ?></td>
-                    <td><?= $attendance['late_count'] ?? 0 ?></td>
-                    <td><?= $attendance['excused'] ?? 0 ?></td>
-                </tr>
-            </table>
-
+            <p>Loading attendance summary...</p>
         </div>
 
-        <div class="card">
-
+        <div class="card" id="attendance-records-card">
             <h3>Attendance Records</h3>
-
-            <table>
-                <tr>
-                    <th>Subject</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                </tr>
-
-                <?php if (!empty($attendanceRecords)): ?>
-                    <?php foreach ($attendanceRecords as $a): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($a['subject_name']) ?></td>
-                        <td><?= htmlspecialchars($a['date']) ?></td>
-                        <td class="
-                            <?= $a['status'] == 'Present' ? 'text-success' : '' ?>
-                            <?= $a['status'] == 'Absent' ? 'text-danger' : '' ?>
-                            <?= $a['status'] == 'Late' ? 'text-warning' : '' ?>
-                        ">
-                            <?= $a['status'] ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="3">No attendance records found.</td>
-                    </tr>
-                <?php endif; ?>
-
-            </table>
-
+            <p>Loading attendance records...</p>
         </div>
-
     </div>
 </div>
 
+<script src="../../api/client.js"></script>
+<script>
+    function formatDate(value) {
+        if (!value) return '-';
+        const date = new Date(value);
+        return date.toLocaleDateString();
+    }
+
+    function statusClass(status) {
+        if (!status) return '';
+        switch (status.toLowerCase()) {
+            case 'present': return 'text-success';
+            case 'absent': return 'text-danger';
+            case 'late': return 'text-warning';
+            default: return '';
+        }
+    }
+
+    async function loadAttendance() {
+        const errorBox = document.getElementById('error');
+        const summaryCard = document.getElementById('attendance-summary-card');
+        const recordsCard = document.getElementById('attendance-records-card');
+
+        try {
+            const response = await API.studentDashboard.get();
+            const attendance = response.data.attendance || {};
+            const records = response.data.attendance_records || [];
+
+            summaryCard.innerHTML = `
+                <h3>Attendance Summary</h3>
+                <p>Present: ${attendance.present || 0}</p>
+                <p>Absent: ${attendance.absent || 0}</p>
+                <p>Late: ${attendance.late_count || 0}</p>
+                <p>Excused: ${attendance.excused || 0}</p>
+            `;
+
+            if (records.length === 0) {
+                recordsCard.innerHTML = '<h3>Attendance Records</h3><p>No attendance records found.</p>';
+                return;
+            }
+
+            recordsCard.innerHTML = `
+                <h3>Attendance Records</h3>
+                <table>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                    ${records.map(r => `
+                        <tr>
+                            <td>${r.subject_name}</td>
+                            <td>${formatDate(r.attendance_date)}</td>
+                            <td class="${statusClass(r.status)}">${r.status}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+            `;
+        } catch (error) {
+            console.error(error);
+            errorBox.style.display = 'block';
+            errorBox.textContent = 'Unable to load attendance records. Please refresh the page.';
+            summaryCard.innerHTML = '<h3>Attendance Summary</h3><p>Unable to load attendance at this time.</p>';
+            recordsCard.innerHTML = '<h3>Attendance Records</h3><p>Unable to load attendance records at this time.</p>';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAttendance);
+</script>
 </body>
 </html>
