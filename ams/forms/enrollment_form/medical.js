@@ -44,50 +44,54 @@ function showQ2(){
 				<hr>
 				<div class="check">
 				  <label>Asthma (Lung Ailment)
-				    <input type="checkbox" name="asthma" value="1">
+				    <input type="checkbox" name="asthma" value="2">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Seizure (Convulsions)
-				    <input type="checkbox" name="seizure" value="1">
+				    <input type="checkbox" name="seizure" value="3">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Heart Illness
-				    <input type="checkbox" name="heart_illness" value="1">
+				    <input type="checkbox" name="heart_illness" value="4">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Anemia
-				    <input type="checkbox" name="anemia" value="1">
+				    <input type="checkbox" name="anemia" value="5">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Bleeding disorder
-				    <input type="checkbox" name="bleeding_disorder" value="1">
+				    <input type="checkbox" name="bleeding_disorder" value="6">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Fracture / Dislocation
-				    <input class="toggle" type="checkbox" name="fracture_dislocation" value="1">
+				    <input class="toggle" type="checkbox" name="fracture_dislocation" value="7">
 				  </label>
 				</div>
 				<hr>
 
 				<div class="check">
 				  <label>Others:
-				    <input type="text" name="other_condition" placeholder="Please Specify">
+				    <input type="checkbox" id="has_medical_condition" name="other_medical_condition" value="8">
 				  </label>
+
+				<div id="medical_condition_details" style="display:none; margin-top:8px;">
+					<input type="text" name="other_medical_condition_text" placeholder="Please specify">
+				</div>
 				</div>
 
 			</div>
@@ -110,7 +114,7 @@ function showQ3(){
 				  <label>(When/Where/What part of the body):
 				    <input type="date" name="surgery_date" required>
 
-					<input type="text" name="hospital_name" placeholder="Where?" required>
+					<input type="text" name="hospital_name" placeholder="Hospital Name" required>
 
 					<input type="text" name="body_part" placeholder="What part of the body?" required>
 				  </label>
@@ -164,55 +168,98 @@ function showQ5(){
 				</label>
 				</div>
 				<hr>
+
 				<div class="check">
-				  <label>Cancer, what kind?
-				    <input type="text" name="cancer_type" placeholder="Please Specify">
-				  </label>
+				<label>Cancer
+					<input type="checkbox" id="has_cancer" name="has_cancer" value="2">
+				</label>
+
+				<div id="cancerBox" style="display:none; margin-top:8px;">
+					<input type="text" name="cancer_type" placeholder="Please specify type of cancer">
+				</div>
+				<br>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Diabetes Mellitus
-				    <input type="checkbox" name="diabetes_mellitus" value="1">
+				    <input type="checkbox" name="diabetes_mellitus" value="3">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Hypertension
-				    <input type="checkbox" name="hypertension" value="1">
+				    <input type="checkbox" name="hypertension" value="4">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Stroke / Heart attack
-				    <input type="checkbox" name="stroke_heart_attack" value="1">
+				    <input type="checkbox" name="stroke_heart_attack" value="5">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Depression
-				    <input type="checkbox" name="depression" value="1">
+				    <input type="checkbox" name="depression" value="6">
 				  </label>
 				</div>
 
 				<hr>
 				<div class="check">
 				  <label>Kidney problems
-				    <input class="toggle" type="checkbox" name="kidney_problems" value="1">
+				    <input class="toggle" type="checkbox" name="kidney_problems" value="7">
 				  </label>
 				</div>
 				<hr>
 
 				<div class="check">
 				  <label>Others:
-				    <input type="text" name="other_condition" placeholder="Please Specify">
+				    <input type="checkbox" id="has_other" name="other_condition_check" value="8">
 				  </label>
+
+				<div id="otherBox" style="display:none; margin-top:8px;">
+					<input type="text" name="other_condition" placeholder="Please specify">
+				</div>
 				</div>
 
 			</div>
 		`;
 	}
+	setTimeout(() => {
+		const cancerCheckbox = document.getElementById('has_cancer');
+		const cancerBox = document.getElementById('cancerBox');
+
+		if (cancerCheckbox) {
+			cancerCheckbox.addEventListener('change', function () {
+				cancerBox.style.display = this.checked ? 'block' : 'none';
+			});
+		}
+	}, 0);
+
+	setTimeout(() => {
+    const otherCheckbox = document.getElementById('has_other');
+    const otherBox = document.getElementById('otherBox');
+
+    if (otherCheckbox) {
+        otherCheckbox.addEventListener('change', function () {
+            otherBox.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+	}, 0);
+
+	setTimeout(() => {
+	const hasMedicalConditionCheckbox = document.getElementById('has_medical_condition');
+	const medicalConditionDetails = document.getElementById('medical_condition_details');
+
+	if (hasMedicalConditionCheckbox) {
+		hasMedicalConditionCheckbox.addEventListener('change', function () {
+			medicalConditionDetails.style.display = this.checked ? 'block' : 'none';
+		});
+	}
+	}, 0);
+
 }
