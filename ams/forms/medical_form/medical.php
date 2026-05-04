@@ -288,7 +288,7 @@ footer strong { color: rgba(255,255,255,.8); }
 </div>
 
 <div class="card-foot">
-    <a href="enrollment.php" class="btn">← Back</a>
+    <a href="../enrollment_form/enrollment.php" class="btn">← Back</a>
     <button type="submit" name="submit" class="btn btn-primary">Submit</button>
 </div>
 
