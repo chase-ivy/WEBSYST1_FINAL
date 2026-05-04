@@ -684,17 +684,16 @@ footer strong { color: rgba(255,255,255,.8); }
                     </div>
 
                     <!-- Disability Types (collapsible) -->
-                    <div class="collapse" id="disabilityBox">
+   <div class="collapse" id="disabilityBox">
                         <div class="disability-grid" style="margin-top:10px;">
                             <label class="check-item">
-                                <input type="checkbox" id="visual_impairment" name="disabilityDetails[]" value="1"> Visual Impairment
-                                <div id="visualOptions" style="display:none; margin-left:15px;">
-                                    <input type="checkbox" name="disabilityDetails[]" value="2"> a. blind<br>
-                                    <input type="checkbox" name="disabilityDetails[]" value="3"> b. low vision
-                                </div>
+                                <input type="checkbox" name="disability_type[]" value="3"> Low Vision
                             </label>
                             <label class="check-item">
                                 <input type="checkbox" name="disability_type[]" value="4"> Hearing Impairment
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="disability_type[]" value="2"> Blind
                             </label>
                             <label class="check-item">
                                 <input type="checkbox" name="disability_type[]" value="5"> Autism Spectrum Disorder
@@ -706,26 +705,16 @@ footer strong { color: rgba(255,255,255,.8); }
                                 <input type="checkbox" name="disability_type[]" value="7"> Learning Disability
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="8"> Emotional / Behavioral Disorder
+                                <input type="checkbox" name="disability_type[]" value="8"> Intellectual Disability
                             </label>
                             <label class="check-item">
                                 <input type="checkbox" name="disability_type[]" value="9"> Cerebral Palsy
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="10"> Intellectual Disability
+                                <input type="checkbox" name="disability_type[]" value="10"> Orthopedic / Physical Handicap
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="11"> Orthopedic / Physical Disability
-                            </label>
-                            <label class="check-item">
-                                <input type="checkbox" id="special_health" name="disability_type[]" value="12"> Special Health Problem
-                                <div id="healthOptions" style="display:none; margin-left:15px;">
-                                    <input type="checkbox" name="disabilityDetails[]" value="13"> Cancer
-                                </div>
-                            </label>
-                            <label class="check-item">
-                                <input type="checkbox" name="disability_type[]" value="14"> Multiple Disabilities / Disorder
-
+                                <input type="checkbox" name="disability_type[]" value="11"> Special Health Problem
                             </label>
                         </div>
                     </div>
@@ -971,7 +960,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 <!-- Q1 -->
                 <div class="field">
                 <label>1. Does your child/ward have any allergies?</label>
-					<select id="field" onchange="showField()" style="width:100%;">
+					<select id="field" onchange="showField()" name="has_allergies" style="width:100%;">
 						<option hidden selected>Choose</option>
 						<option value="1">Yes</option>
 						<option value="0">No</option>
@@ -983,7 +972,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 <!-- Q2 -->
                 <div class="field">
                 <label>2. Does your child/ward have any ongoing medical condition?</label>
-					<select id="Q2" onchange="showQ2()" style="width:100%;">
+					<select id="Q2" onchange="showQ2()" name="has_medical_condition" style="width:100%;">
 						<option hidden selected>Choose</option>
 						<option value="1">Yes</option>
 						<option value="0">No</option>
@@ -996,7 +985,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 <!-- Q3 -->
                 <div class="field">
                 <label>3. Did your child/ward ever have surgery / hospitalization?</label>
-					<select id="Q3" onchange="showQ3()" style="width:100%;">
+					<select id="Q3" onchange="showQ3()" name="has_surgery_hospitalization" style="width:100%;">
 						<option hidden selected>Choose</option>
 						<option value="1">Yes</option>
 						<option value="0">No</option>
@@ -1009,7 +998,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 <!-- Q4 -->
                 <div class="field">
                 <label>4. Is your  child currently taking treatment / medicines</label>
-                    <select id="Q4" onchange="showQ4()" style="width:100%;">
+                    <select id="Q4" onchange="showQ4()" name="is_currently_taking_treatment" style="width:100%;">
 						<option hidden selected>Choose</option>
 						<option value="1">Yes</option>
 						<option value="0">No</option>
@@ -1020,65 +1009,15 @@ footer strong { color: rgba(255,255,255,.8); }
 
                 <!-- Q5 -->
                 <div class="field">
-                <label>5. Does your family have a history of the following conditions:</label>
+                <label>5. Does your family have a history of medical conditions?</label>
                 <!--SELECTION-->
-                <div class="card">
+                    <select id="Q5" onchange="showQ5()" name="family_medical_history" style="width:100%;">
+                        <option hidden selected>Choose</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
 
-				<div class="check">
-				  <label>Tuberculosis
-				    <input type="checkbox" name="tuberculosis" value="1">
-				</label>
-				</div>
-				<hr>
-				<div class="check">
-				  <label>Cancer, what kind?
-				    <input type="text" name="cancer_type" placeholder="Please Specify">
-				  </label>
-				</div>
-
-				<hr>
-				<div class="check">
-				  <label>Diabetes Mellitus
-				    <input type="checkbox" name="diabetes_mellitus" value="1">
-				  </label>
-				</div>
-
-				<hr>
-				<div class="check">
-				  <label>Hypertension
-				    <input type="checkbox" name="hypertension" value="1">
-				  </label>
-				</div>
-
-				<hr>
-				<div class="check">
-				  <label>Stroke / Heart attack
-				    <input type="checkbox" name="stroke_heart_attack" value="1">
-				  </label>
-				</div>
-
-				<hr>
-				<div class="check">
-				  <label>Depression
-				    <input type="checkbox" name="depression" value="1">
-				  </label>
-				</div>
-
-				<hr>
-				<div class="check">
-				  <label>Kidney problems
-				    <input class="toggle" type="checkbox" name="kidney_problems" value="1">
-				  </label>
-				</div>
-				<hr>
-
-				<div class="check">
-				  <label>Others:
-				    <input type="text" name="other_condition" placeholder="Please Specify">
-				  </label>
-				</div>
-
-			    </div>
+                    <div id="q5"></div> 
                 </div>
 
                 <!-- Q6 -->

@@ -12,8 +12,8 @@ function showField(){
 					<span>Pollen:</span>
 					<select name="pollen_allergy" style="width: 100%;">
 						<option disabled selected>Choose</option>
-						<option value="Yes">Yes</option>
-						<option value="No">No</option>
+						<option value="1">Yes</option>
+						<option value="0">No</option>
 					</select>
 					<span>Food:</span>
 					<input type="text" name="food_allergy" placeholder="Please Specify">
