@@ -1,5 +1,11 @@
 <?php
-require_once __DIR__ . '/../../config/config.php';
+
+// ================================================================
+// enroll_process.php
+// Include this at the top of enrollment.php.
+// Handles all INSERT logic when the form is submitted.
+// Requires $pdo from config.php to be already included.
+// ================================================================
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
