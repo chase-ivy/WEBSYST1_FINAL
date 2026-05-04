@@ -174,14 +174,36 @@ function fillEditFromDropdown() {
     document.getElementById('edit_desc').value = option.getAttribute('data-desc');
 }
 
-function fillAssignFromDropdown() {
-    let select = document.getElementById("assign_select");
-    let option = select.options[select.selectedIndex];
+/* =========================
+   UPDATE
+========================= */
+async function updateSubject() {
+    const subject_id = document.getElementById('edit_id').value;
+    const name = document.getElementById('edit_name').value;
 
-    if (!option.value) return;
+    await fetch('../../api/subjects.php?action=update', {
+        method: 'POST',
+        body: JSON.stringify({ subject_id, name }),
+        headers: { 'Content-Type': 'application/json' }
+    });
 
-    document.getElementById('assign_id').value = option.value;
-    document.getElementById('assign_name').value = option.getAttribute('data-name');
+    loadSubjects();
+}
+
+async function deleteSubject(id) {
+    if (!confirm('Delete this subject?')) return;
+
+    await fetch('../../api/subjects.php?action=delete', {
+        method: 'POST',
+        body: JSON.stringify({ subject_id: id }),
+        headers: { 'Content-Type': 'application/json' }
+    });
+
+    loadSubjects();
+}
+
+function escapeHtml(text) {
+    return text.replace(/'/g, "\\'");
 }
 </script>
 
