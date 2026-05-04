@@ -10,7 +10,7 @@ function requireTeacher()
 
 function getAllStudents($pdo) {
     $stmt = $pdo->query("
-        SELECT student_id, first_name, last_name, grade_level, sex
+        SELECT student_id, first_name, last_name, sex
         FROM students
         ORDER BY last_name ASC
     ");
@@ -25,10 +25,12 @@ function getStudentsWithEnrollments($pdo) {
             s.student_id,
             s.first_name,
             s.last_name,
-            s.grade_level,
+            e.grade_level,
             s.sex
         FROM students s
-        LEFT JOIN enrollments e ON s.student_id = e.student_id
+        LEFT JOIN enrollments e ON e.enrollment_id = (
+            SELECT MAX(enrollment_id) FROM enrollments WHERE student_id = s.student_id
+        )
         ORDER BY s.last_name ASC
     ");
     return $stmt->fetchAll();
@@ -41,7 +43,7 @@ function getTeacherStudentEnrollments($pdo, $teacher_id, $grading_period = '1st'
             s.student_id,
             s.first_name,
             s.last_name,
-            s.grade_level,
+            e.grade_level,
             c.class_id,
             c.section,
             c.school_year,
@@ -93,13 +95,13 @@ function getStudentById($pdo, $student_id) {
     return $stmt->fetch();
 }
 
-function updateStudent($pdo, $student_id, $first_name, $last_name, $grade_level, $sex) {
+function updateStudent($pdo, $student_id, $first_name, $last_name, $sex) {
     $stmt = $pdo->prepare("
         UPDATE students
-        SET first_name = ?, last_name = ?, grade_level = ?, sex = ?
+        SET first_name = ?, last_name = ?, sex = ?
         WHERE student_id = ?
     ");
-    return $stmt->execute([$first_name, $last_name, $grade_level, $sex, $student_id]);
+    return $stmt->execute([$first_name, $last_name, $sex, $student_id]);
 }
 
 function deleteStudent($pdo, $student_id) {

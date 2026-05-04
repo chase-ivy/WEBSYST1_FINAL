@@ -17,27 +17,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     }
 
-    // Parents keyed by parent_type via junction table
-    function fetchParents($pdo, $student_id) {
-        $stmt = $pdo->prepare("
-            SELECT p.*
-            FROM parents p
-            JOIN student_parents sp ON p.parent_id = sp.parent_id
-            AND sp.student_id = ?
-        ");
+    function fetchLatestEnrollment($pdo, $student_id) {
+        $stmt = $pdo->prepare("SELECT * FROM enrollments WHERE student_id = ? ORDER BY enrollment_id DESC LIMIT 1");
         $stmt->execute([$student_id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    function fetchAddress($pdo, $enrollment_id, $type) {
+        $stmt = $pdo->prepare("SELECT * FROM addresses WHERE enrollment_id = ? AND address_type = ? LIMIT 1");
+        $stmt->execute([$enrollment_id, $type]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    function fetchParents($pdo, $enrollment_id) {
+        $stmt = $pdo->prepare("
+            SELECT p.*, ep.relationship
+            FROM parents p
+            JOIN enrollment_parents ep ON p.parent_id = ep.parent_id
+            WHERE ep.enrollment_id = ?
+        ");
+        $stmt->execute([$enrollment_id]);
         $result = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $result[$row['parent_type']] = $row;
+            $result[$row['relationship']] = $row;
         }
         return $result;
     }
 
-    // Disabilities as flat array of disability_type_ids
-    // Replaces the old comma-string explode on students.is_learner_with_disability
-    function fetchDisabilities($pdo, $student_id) {
-        $stmt = $pdo->prepare("SELECT disability_type_id FROM student_disabilities WHERE student_id = ?");
-        $stmt->execute([$student_id]);
+    function fetchDisabilities($pdo, $enrollment_id) {
+        $stmt = $pdo->prepare("SELECT disability_type_id FROM student_disabilities WHERE enrollment_id = ?");
+        $stmt->execute([$enrollment_id]);
         return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'disability_type_id');
     }
 
@@ -50,35 +59,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // ── FETCH ALL ─────────────────────────────────────────────────
 
     $student          = fetchOne($pdo, 'students', $student_id);
-    $current          = fetchOne($pdo, 'current_address', $student_id);
-    $permanent        = fetchOne($pdo, 'permanent_address', $student_id);
-    $parents          = fetchParents($pdo, $student_id);
-    $returning_learner = fetchOne($pdo, 'returning_learner_information', $student_id);
-    $disability_ids   = fetchDisabilities($pdo, $student_id);
+    $enrollment       = fetchLatestEnrollment($pdo, $student_id);
+    $current          = fetchAddress($pdo, $enrollment['enrollment_id'] ?? 0, 'current');
+    $permanent        = fetchAddress($pdo, $enrollment['enrollment_id'] ?? 0, 'permanent');
+    $parents          = fetchParents($pdo, $enrollment['enrollment_id'] ?? 0);
+    $returning_learner = [];
+    if (!empty($enrollment['enrollment_id'])) {
+        $stmt = $pdo->prepare('SELECT * FROM returning_learners WHERE enrollment_id = ? LIMIT 1');
+        $stmt->execute([$enrollment['enrollment_id']]);
+        $returning_learner = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+    $disability_ids   = fetchDisabilities($pdo, $enrollment['enrollment_id'] ?? 0);
 
     // Build a lookup for O(1) disability checks — replaces array_flip on comma string
     $has = array_flip($disability_ids);
-
-    // Debug output to verify data fetching before PDF generation
-    echo '<pre>';
-    echo "STUDENTs:\n";
-    print_r($student);
-
-    echo "\nCURRENT:\n";
-    print_r($current);
-
-    echo "\nPERMANENT:\n";
-    print_r($permanent);
-
-    echo "\nPARENTS:\n";
-    print_r($parents);
-
-    echo "\nRETURNING:\n";
-    print_r($returning_learner);
-
-    echo "\nDISABILITIES:\n";
-    print_r($disability_ids);
-    echo '</pre>';
 
     // ── GRADE MAP ─────────────────────────────────────────────────
 
@@ -88,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         'Grade 4' => '04', 'Grade 5' => '05', 'Grade 6' => '06',
     ];
 
-    $grade              = trim($student['grade_level'] ?? '');
+    $grade              = trim($enrollment['grade_level'] ?? '');
     $formattedGrade     = $gradeMap[$grade] ?? '';
     $returning_grade    = trim($returning_learner['last_grade_level_completed'] ?? '');
     $returning_formattedGrade = $gradeMap[$returning_grade] ?? '';
@@ -119,15 +113,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     $data = [
         'lrn'         => $student['lrn'],
-        'school_year' => $student['school_year'],
+        'school_year' => $enrollment['school_year'] ?? '',
         'grade_level' => $formattedGrade,
 
-        'with_lrn_yes'   => $student['with_lrn']  == 1 ? 'Yes' : '',
-        'with_lrn_no'    => $student['with_lrn']  == 0 ? 'Yes' : '',
-        'returning_yes'  => $student['returning']  == 1 ? 'Yes' : '',
-        'returning_no'   => $student['returning']  == 0 ? 'Yes' : '',
+        'with_lrn_yes'   => ($enrollment['with_lrn'] ?? 0) == 1 ? 'Yes' : '',
+        'with_lrn_no'    => ($enrollment['with_lrn'] ?? 0) == 0 ? 'Yes' : '',
+        'returning_yes'  => ($enrollment['is_returning_learner'] ?? 0) == 1 ? 'Yes' : '',
+        'returning_no'   => ($enrollment['is_returning_learner'] ?? 0) == 0 ? 'Yes' : '',
 
-        'psa_bcn'        => $student['psa_bcn'],
+        'psa_bcn'        => $enrollment['psa_bcn'] ?? '',
         'last_name'      => strtoupper($student['last_name']),
         'first_name'     => strtoupper($student['first_name']),
         'middle_name'    => strtoupper($student['middle_name']    ?? ''),
@@ -140,17 +134,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Computed age — not read from DB column
         'age' => computeAge($student['birth_date']),
 
-        'mother_tongue'    => strtoupper($student['mother_tongue'] ?? ''),
+        'mother_tongue'    => strtoupper($enrollment['mother_tongue'] ?? ''),
 
-        // 4Ps — null means No
-        '4ps_benificiary'  => strtoupper($student['4p_beneficiary'] ?? ''),
-        '4ps_yes'          => !empty($student['4p_beneficiary']) ? 'Yes' : '',
-        '4ps_no'           => empty($student['4p_beneficiary'])  ? 'Yes' : '',
+        // 4Ps — boolean and household reference
+        '4ps_benificiary'  => !empty($enrollment['is_four_ps_beneficiary']) ? 'Yes' : 'No',
+        '4ps_yes'          => !empty($enrollment['is_four_ps_beneficiary']) ? 'Yes' : '',
+        '4ps_no'           => empty($enrollment['is_four_ps_beneficiary'])  ? 'Yes' : '',
+        'four_ps_household_id' => strtoupper($enrollment['four_ps_household_id'] ?? ''),
 
         // IP — null means No
-        'indigenous_group' => strtoupper($student['indigenous_group'] ?? ''),
-        'ip_yes'           => !empty($student['indigenous_group']) ? 'Yes' : '',
-        'ip_no'            => empty($student['indigenous_group'])  ? 'Yes' : '',
+        'indigenous_group' => strtoupper($enrollment['indigenous_group'] ?? ''),
+        'ip_yes'           => !empty($enrollment['is_indigenous']) ? 'Yes' : '',
+        'ip_no'            => empty($enrollment['is_indigenous'])  ? 'Yes' : '',
 
         // Disability — now driven by student_disabilities rows
         'is_learner_with_disability_yes' => !empty($disability_ids) ? 'Yes' : '',

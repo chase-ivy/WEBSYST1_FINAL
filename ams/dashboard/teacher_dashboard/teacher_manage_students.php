@@ -16,7 +16,6 @@ if (isset($_POST['updateStudent'])) {
             $_POST['student_id'],
             $_POST['fname'],
             $_POST['lname'],
-            $_POST['grade'],
             strtolower($_POST['sex'])
         );
         if ($result) {
@@ -109,7 +108,7 @@ $staff = getStaffInfo($pdo, $user_id);
                     <?php foreach ($students as $s): ?>
                         <tr>
                             <td><?= $s['first_name'] . ' ' . $s['last_name'] ?></td>
-                            <td><?= $s['grade_level'] ?></td>
+                            <td><?= htmlspecialchars($s['grade_level'] ?? '-') ?></td>
                             <td>
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="student_id" value="<?= $s['student_id'] ?>">
@@ -129,7 +128,6 @@ $staff = getStaffInfo($pdo, $user_id);
                                     '<?= $s['student_id'] ?>',
                                     '<?= $s['first_name'] ?>',
                                     '<?= $s['last_name'] ?>',
-                                    '<?= $s['grade_level'] ?>',
                                     '<?= $s['sex'] ?>'
                                 )">Edit</button>
                                 <button class="btn" onclick="window.location.href='?delete=<?= $s['student_id'] ?>'">Delete</button>
@@ -152,9 +150,6 @@ $staff = getStaffInfo($pdo, $user_id);
                     
                     <label>Last Name:</label>
                     <input type="text" id="lname" name="lname" required>
-                    
-                    <label>Grade Level:</label>
-                    <input type="text" id="grade" name="grade" required>
                     
                     <label>Sex:</label>
                     <select id="sex" name="sex" required>
@@ -179,11 +174,10 @@ $staff = getStaffInfo($pdo, $user_id);
         // default
         show('students');
 
-        function fillForm(id, f, l, g, s) {
+        function fillForm(id, f, l, s) {
             document.getElementById('id').value = id;
             document.getElementById('fname').value = f;
             document.getElementById('lname').value = l;
-            document.getElementById('grade').value = g;
             document.getElementById('sex').value = s;
 
             show('editForm');

@@ -33,9 +33,15 @@ try {
         }
     }
 
-    $stmt = $pdo->prepare('SELECT student_id, lrn, first_name, middle_name, last_name, extension_name, grade_level, sex, birth_date, age, place_of_birth
-                          FROM students
-                          WHERE student_id = ?');
+    $stmt = $pdo->prepare('SELECT s.student_id, s.lrn, s.first_name, s.middle_name, s.last_name, s.extension_name, s.sex, s.birth_date, s.place_of_birth,
+                                 e.school_year, e.grade_level, e.with_lrn, e.psa_bcn, e.age, e.mother_tongue,
+                                 e.is_indigenous, e.indigenous_group, e.is_four_ps_beneficiary, e.four_ps_household_id,
+                                 e.is_learner_with_disability, e.is_returning_learner
+                          FROM students s
+                          LEFT JOIN enrollments e ON e.enrollment_id = (
+                              SELECT MAX(enrollment_id) FROM enrollments WHERE student_id = s.student_id
+                          )
+                          WHERE s.student_id = ?');
     $stmt->execute([$student_id]);
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 

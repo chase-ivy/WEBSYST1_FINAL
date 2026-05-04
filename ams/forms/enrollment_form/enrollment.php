@@ -1,8 +1,3 @@
-<?php    
-    include '../../config/config.php';
-    include 'enroll.php';
-    // include '../../functions/oop.php';
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -353,6 +348,28 @@ a { text-decoration: none; color: inherit; }
     justify-content: space-between;
 }
 
+.message {
+    margin: 16px 0 0;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    display: none;
+}
+
+.message.success {
+    display: block;
+    background: #ebf9ed;
+    color: #1f4f2c;
+    border: 1px solid #85c27d;
+}
+
+.message.error {
+    display: block;
+    background: #fbeaea;
+    color: #7a1919;
+    border: 1px solid #e0a7a7;
+}
+
 .btn {
     padding: 10px 22px;
     font-size: 14px;
@@ -450,8 +467,8 @@ footer strong { color: rgba(255,255,255,.8); }
     </div>
 
     <div class="wrap">
-    <form method="POST" action="enrollment.php">
-        <input type="hidden" name="next" value="1">
+        <div id="formMessage" class="message" aria-live="polite"></div>
+        <form id="enrollmentForm" novalidate>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 1 — LEARNER INFORMATION
@@ -1125,6 +1142,7 @@ footer strong { color: rgba(255,255,255,.8); }
         &copy; 2025 <strong>Gibraltar Elementary School — AMES</strong>. All rights reserved.
     </footer>
 
+    <script src="../../api/client.js"></script>
     <script src="medical.js"></script>
     <script>
     document.getElementById('visual_impairment').addEventListener('change', function() {
@@ -1177,6 +1195,107 @@ footer strong { color: rgba(255,255,255,.8); }
             }
 
             document.getElementById('ageField').value = age;
+        });
+
+        function addNestedValue(target, name, value) {
+            const parts = name.split('[').map(part => part.replace(/\]$/, ''));
+            let current = target;
+
+            parts.forEach((part, index) => {
+                const isLast = index === parts.length - 1;
+                const nextPart = parts[index + 1];
+
+                if (part === '') {
+                    if (isLast) {
+                        current.push(value);
+                    } else {
+                        if (!Array.isArray(current)) {
+                            current = [];
+                        }
+                        if (current.length === 0) {
+                            current.push(nextPart === '' ? [] : {});
+                        }
+                        current = current[current.length - 1];
+                    }
+                } else {
+                    if (isLast) {
+                        if (current[part] === undefined) {
+                            current[part] = [];
+                        }
+                        current[part].push(value);
+                    } else {
+                        if (current[part] === undefined) {
+                            current[part] = nextPart === '' ? [] : {};
+                        }
+                        current = current[part];
+                    }
+                }
+            });
+        }
+
+        function serializeForm(form) {
+            const formData = new FormData(form);
+            const data = {};
+
+            for (const [name, value] of formData.entries()) {
+                if (name === 'next') {
+                    continue;
+                }
+
+                if (name.includes('[')) {
+                    addNestedValue(data, name, value);
+                    continue;
+                }
+
+                if (data[name] !== undefined) {
+                    if (!Array.isArray(data[name])) {
+                        data[name] = [data[name]];
+                    }
+                    data[name].push(value);
+                } else {
+                    data[name] = value;
+                }
+            }
+
+            if (data.same_address === 'Yes') {
+                data.Permanent_House_No          = data.Current_House_No;
+                data.Permanent_Street_Name       = data.Current_Street_Name;
+                data.Permanent_Barangay          = data.Current_Barangay;
+                data.Permanent_Municipality_City = data.Current_Municipality_City;
+                data.Permanent_Province          = data.Current_Province;
+                data.Permanent_Country           = data.Current_Country;
+                data.Permanent_Zip_Code          = data.Current_Zip_Code;
+            }
+
+            return data;
+        }
+
+        function showMessage(type, message) {
+            const container = document.getElementById('formMessage');
+            container.className = `message ${type}`;
+            container.textContent = message;
+        }
+
+        document.getElementById('enrollmentForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            showMessage('', '');
+
+            try {
+                const payload = serializeForm(event.target);
+                const response = await API.enroll.create(payload);
+                showMessage('success', 'Enrollment submitted successfully. Student ID: ' + response.student_id + (response.enrollment_id ? ', Enrollment ID: ' + response.enrollment_id : ''));
+                event.target.reset();
+                goTo(1);
+                document.getElementById('ageField').value = '';
+                document.getElementById('permBox').style.opacity = '1';
+                document.getElementById('permBox').style.pointerEvents = 'auto';
+            } catch (error) {
+                showMessage('error', error.message || 'Enrollment submission failed.');
+            } finally {
+                submitButton.disabled = false;
+            }
         });
     </script>
 

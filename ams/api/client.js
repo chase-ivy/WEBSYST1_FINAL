@@ -133,6 +133,13 @@ const API = {
             return API.call('enrollments', 'delete', { enrollment_id: enrollmentId }, 'POST');
         }
     },
+
+    // Enrollment Form API
+    enroll: {
+        create: async function(data) {
+            return API.call('enroll', 'create', data, 'POST');
+        }
+    },
     
     // Subjects API
     subjects: {

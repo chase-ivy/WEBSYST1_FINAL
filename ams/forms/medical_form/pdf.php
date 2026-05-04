@@ -5,79 +5,74 @@ use Classes\GeneratePDF;
 
 require_once __DIR__ . '/../../config/config.php';
 
-// if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['student_id'])) {
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+if ($_SERVER['REQUEST_METHOD'] !== 'GET' || empty($_GET['student_id'])) {
+    echo "No student ID provided.";
+    exit;
+}
 
-    $student_id = $_GET['student_id'] ?? 1;
+$student_id = intval($_GET['student_id']);
 
-    function fetchParents($pdo, $student_id) {
-        $stmt = $pdo->prepare("
-            SELECT p.* 
-            FROM parents p
-            JOIN student_parents sp ON p.parent_id = sp.parent_id
-            WHERE sp.student_id = ?
-        ");
-        $stmt->execute([$student_id]);
-        
-        $result = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $result[$row['parent_type']] = $row;
-        }
-        return $result;
+function fetchParents($pdo, $enrollment_id) {
+    $stmt = $pdo->prepare("
+        SELECT p.*, ep.relationship
+        FROM parents p
+        JOIN enrollment_parents ep ON p.parent_id = ep.parent_id
+        WHERE ep.enrollment_id = ?
+    ");
+    $stmt->execute([$enrollment_id]);
+
+    $result = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $result[$row['relationship']] = $row;
     }
+    return $result;
+}
 
-    function fetchOne($pdo, $table, $student_id) {
-        $stmt = $pdo->prepare("SELECT * FROM $table WHERE student_id = ? LIMIT 1");
-        $stmt->execute([$student_id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+function fetchOne($pdo, $table, $student_id) {
+    $stmt = $pdo->prepare("SELECT * FROM $table WHERE student_id = ? LIMIT 1");
+    $stmt->execute([$student_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+}
+
+function fetchLatestEnrollment($pdo, $student_id) {
+    $stmt = $pdo->prepare("SELECT * FROM enrollments WHERE student_id = ? ORDER BY enrollment_id DESC LIMIT 1");
+    $stmt->execute([$student_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+}
+
+function fetchAddress($pdo, $enrollment_id, $type) {
+    $stmt = $pdo->prepare("SELECT * FROM addresses WHERE enrollment_id = ? AND address_type = ? LIMIT 1");
+    $stmt->execute([$enrollment_id, $type]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+}
+
+function fetchReturningLearner($pdo, $enrollment_id) {
+    $stmt = $pdo->prepare('SELECT * FROM returning_learners WHERE enrollment_id = ? LIMIT 1');
+    $stmt->execute([$enrollment_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+}
+
+function computeAge($birth_date) {
+    if (empty($birth_date)) {
+        return '';
     }
+    return (new DateTime($birth_date))->diff(new DateTime('today'))->y;
+}
 
-    $students = fetchOne($pdo, 'students', $student_id);
-    $parents = fetchParents($pdo, $student_id);  
-    $allergies = fetchOne($pdo, 'medical_allergies', $student_id);
-    $addresses = fetchOne($pdo, 'current_address', $student_id);
-    $conditions = fetchOne($pdo, 'medical_conditions', $student_id);
-    $surguries = fetchOne($pdo, 'medical_surgery_hospitalization', $student_id);
-    $treatments = fetchOne($pdo, 'medical_treatment_medicines', $student_id);
-    $histories = fetchOne($pdo, 'family_medical_history', $student_id);
-    $informations = fetchOne($pdo, 'medical_information', $student_id);
+$students = fetchOne($pdo, 'students', $student_id);
+$enrollment = fetchLatestEnrollment($pdo, $student_id);
+$parents = fetchParents($pdo, $enrollment['enrollment_id'] ?? 0);
+$allergies = fetchOne($pdo, 'medical_allergies', $student_id);
+$current = fetchAddress($pdo, $enrollment['enrollment_id'] ?? 0, 'current');
+$permanent = fetchAddress($pdo, $enrollment['enrollment_id'] ?? 0, 'permanent');
+$conditions = fetchOne($pdo, 'medical_conditions', $student_id);
+$surguries = fetchOne($pdo, 'medical_surgery_hospitalization', $student_id);
+$treatments = fetchOne($pdo, 'medical_treatment_medicines', $student_id);
+$histories = fetchOne($pdo, 'family_medical_history', $student_id);
+$informations = fetchOne($pdo, 'medical_information', $student_id);
+$returning_learner = fetchReturningLearner($pdo, $enrollment['enrollment_id'] ?? 0);
 
-    echo '<pre>';
-    echo "STUDENTs:\n";
-    print_r($students);
-
-    echo "\nPARENTS:\n";
-    print_r($parents);
-
-    echo "\nALLERGIES:\n";
-    print_r($allergies);
-
-    echo "\nADDRESS:\n";
-    print_r($addresses);
-
-    echo "\nCONDITIONS:\n";
-    print_r($conditions);
-
-    echo "\nSURGURIES:\n";
-    print_r($surguries);
-    
-    echo "\nTREATMENTS:\n";
-    print_r($treatments);
-    echo '</pre>';
-
-    echo "\nHISTORIES:\n";
-    print_r($histories);
-    echo '</pre>';
-
-    echo "\nINFORMATIONS:\n";
-    print_r($informations);
-    echo '</pre>';
-
-    } else {
-        echo "No student ID provided.";
-    }
-    //parent child relationship
-    $has = array_flip($mental_disability);
+$has = [];
 
     $gradeMap = [
         'Kinder'  => 'KD',
@@ -88,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         'Grade 5' => '05',
         'Grade 6' => '06',
     ];
-    $grade = trim($student['grade_level'] ?? '');
+    $grade = trim($enrollment['grade_level'] ?? '');
     $formattedGrade = $gradeMap[$grade] ?? '';
 
     $returning_grade = trim($returning_learner['last_grade_level_completed'] ?? '');
