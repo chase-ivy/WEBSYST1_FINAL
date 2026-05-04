@@ -21,8 +21,8 @@ function createStaff(PDO $pdo, string $username, string $email, string $password
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'A valid email address is required.';
     }
-    if ($role === '' || !in_array($role, ['teacher', 'parent'], true)) {
-        $errors[] = 'Role must be teacher or parent.';
+    if ($role === '' || !in_array($role, ['staff', 'student'], true)) {
+        $errors[] = 'Role must be staff or student.';
     }
     if ($password === '') {
         $errors[] = 'Password is required.';
@@ -56,8 +56,8 @@ function updateStaff(PDO $pdo, int $userId, string $username, string $email, str
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'A valid email address is required.';
     }
-    if ($role === '' || !in_array($role, ['teacher', 'parent'], true)) {
-        $errors[] = 'Role must be teacher or parent.';
+    if ($role === '' || !in_array($role, ['staff', 'student'], true)) {
+        $errors[] = 'Role must be staff or student.';
     }
     if (!empty($errors)) {
         return ['success' => false, 'errors' => $errors];

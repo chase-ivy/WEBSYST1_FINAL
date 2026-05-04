@@ -64,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="role">Role</label>
                 <select id="role" name="role" required>
                     <option value="">Select role</option>
-                    <option value="teacher">Teacher</option>
-                    <option value="parent">Parent</option>
+                    <option value="staff">Staff</option>
+                    <option value="student">Student</option>
                 </select>
                 <label for="password">Password</label>
                 <input id="password" type="password" name="password" required>
