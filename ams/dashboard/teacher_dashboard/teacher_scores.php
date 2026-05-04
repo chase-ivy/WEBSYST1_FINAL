@@ -7,22 +7,29 @@ require_role(['staff']);
 
 $teacher_id = $_SESSION['user_id'];
 
+   //GET ACTIVITIES (FIXED)
 $stmt = $pdo->prepare("
-    SELECT a.activity_id, a.activity_name, a.max_score
+    SELECT 
+        a.activity_id,
+        a.title,
+        a.max_score
     FROM activities a
-    JOIN classes c ON a.class_id = c.class_id
-    WHERE c.teacher_id = ?
+    JOIN class_subjects cs ON a.class_subject_id = cs.class_subject_id
+    WHERE cs.teacher_id = ?
 ");
 $stmt->execute([$teacher_id]);
-$activities = $stmt->fetchAll();
+$activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $selectedActivity = $_GET['activity_id'] ?? null;
 $maxScore = null;
-$enrollments = [];
+$classStudents = [];
 $scores = [];
 
+
+   //LOAD STUDENTS + SCORES
 if ($selectedActivity) {
 
+    // get max score
     foreach ($activities as $a) {
         if ($a['activity_id'] == $selectedActivity) {
             $maxScore = $a['max_score'];
@@ -30,49 +37,49 @@ if ($selectedActivity) {
         }
     }
 
+    /* GET STUDENTS IN CLASS (FIXED PROPER RELATION) */
     $stmt = $pdo->prepare("
         SELECT 
-            e.enrollment_id,
+            cs.class_student_id,
             s.first_name,
             s.last_name
-        FROM enrollments e
+        FROM class_students cs
+        JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
         JOIN students s ON e.student_id = s.student_id
-        JOIN classes c ON e.class_id = c.class_id
-        JOIN activities a ON a.class_id = c.class_id
-        WHERE a.activity_id = ?
+        JOIN class_subjects csub ON cs.class_id = csub.class_id
+        WHERE csub.teacher_id = ?
     ");
-    $stmt->execute([$selectedActivity]);
-    $enrollments = $stmt->fetchAll();
+    $stmt->execute([$teacher_id]);
+    $classStudents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    /* GET SCORES (FIXED TABLE) */
     $stmt = $pdo->prepare("
-        SELECT enrollment_id, score
-        FROM student_activity_scores
+        SELECT class_student_id, score
+        FROM activity_scores
         WHERE activity_id = ?
     ");
     $stmt->execute([$selectedActivity]);
 
-    foreach ($stmt->fetchAll() as $row) {
-        $scores[$row['enrollment_id']] = $row['score'];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $scores[$row['class_student_id']] = $row['score'];
     }
 }
 
+   //SAVE SCORES (FIXED)
 if (isset($_POST['saveScores'])) {
 
     $activity_id = $_POST['activity_id'];
     $max_score = $_POST['max_score'];
 
-    foreach ($_POST['score'] as $enrollment_id => $score) {
+    foreach ($_POST['score'] as $class_student_id => $score) {
 
         if ($score === '') continue;
-
-        if ($score > $max_score) {
-            continue; 
-        }
+        if ($score > $max_score) continue;
 
         addOrUpdateStudentScore(
             $pdo,
             $activity_id,
-            $enrollment_id,
+            $class_student_id,
             $score
         );
     }
@@ -104,14 +111,13 @@ if (isset($_POST['saveScores'])) {
 <div class="card">
     <h3>Select Activity</h3>
 
-
     <form method="GET">
         <select name="activity_id" onchange="this.form.submit()" required>
             <option value="">-- Select Activity --</option>
             <?php foreach ($activities as $a): ?>
                 <option value="<?= $a['activity_id'] ?>"
                     <?= ($selectedActivity == $a['activity_id']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($a['activity_name']) ?>
+                    <?= htmlspecialchars($a['title']) ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -137,28 +143,30 @@ if (isset($_POST['saveScores'])) {
                 <th>New Score</th>
             </tr>
 
-            <?php foreach ($enrollments as $e): ?>
-                <?php $currentScore = $scores[$e['enrollment_id']] ?? null; ?>
+            <?php foreach ($classStudents as $s): ?>
+                <?php $currentScore = $scores[$s['class_student_id']] ?? null; ?>
+
                 <tr>
                     <td>
-                        <?= htmlspecialchars($e['first_name'] . ' ' . $e['last_name']) ?>
+                        <?= htmlspecialchars($s['first_name'] . ' ' . $s['last_name']) ?>
                     </td>
+
                     <td>
-                        <span style="display:inline-block; min-width:120px;">
-                            <?= $currentScore !== null ? htmlspecialchars($currentScore) : '0' ?> / <?= htmlspecialchars($maxScore) ?>
-                        </span>
+                        <?= $currentScore !== null ? $currentScore : '0' ?> / <?= $maxScore ?>
                     </td>
+
                     <td>
                         <input 
                             type="number"
-                            name="score[<?= $e['enrollment_id'] ?>]"
-                            value="<?= $currentScore !== null ? htmlspecialchars($currentScore) : '' ?>"
+                            name="score[<?= $s['class_student_id'] ?>]"
+                            value="<?= $currentScore !== null ? $currentScore : '' ?>"
                             max="<?= $maxScore ?>"
                             min="0"
-                            style="width:80px; margin-left:12px;"
+                            style="width:80px;"
                         >
                     </td>
                 </tr>
+
             <?php endforeach; ?>
         </table>
 

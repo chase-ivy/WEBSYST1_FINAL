@@ -1,193 +1,291 @@
 <?php
-require_once __DIR__ . '/teacher_config.php';
 require_once __DIR__ . '/../../login/auth.php';
 require_once __DIR__ . '/teacher_nav.php';
 
 require_role(['staff']);
-
-$teacher_id = $_SESSION['user_id'];
-$success_message = '';
-$error_message = '';
-
-if (isset($_POST['updateStudent'])) {
-    try {
-        $result = updateStudent(
-            $pdo,
-            $_POST['student_id'],
-            $_POST['fname'],
-            $_POST['lname'],
-            $_POST['grade'],
-            strtolower($_POST['sex'])
-        );
-        if ($result) {
-            $success_message = 'Student information updated successfully!';
-            header("Refresh:2; url=" . $_SERVER['PHP_SELF']);
-        }
-    } catch (Exception $e) {
-        $error_message = 'Error updating student: ' . $e->getMessage();
-    }
-}
-
-if (isset($_GET['delete'])) {
-    try {
-        $result = deleteStudent($pdo, $_GET['delete']);
-        if ($result) {
-            $success_message = 'Student deleted successfully!';
-            header("Refresh:2; url=" . $_SERVER['PHP_SELF']);
-        }
-    } catch (Exception $e) {
-        $error_message = 'Error deleting student: ' . $e->getMessage();
-    }
-}
-
-if (isset($_POST['toggleEnrollment'])) {
-    $student_id = $_POST['student_id'];
-    $class_id = $_POST['class_id'];
-    
-    try {
-        if ($_POST['action'] === 'enroll') {
-            enrollStudent($pdo, $student_id, $class_id);
-            $success_message = 'Student enrolled successfully!';
-        } else {
-            removeEnrollment($pdo, $student_id, $class_id);
-            $success_message = 'Student unenrolled successfully!';
-        }
-        header("Refresh:2; url=" . $_SERVER['PHP_SELF']);
-    } catch (Exception $e) {
-        $error_message = 'Error toggling enrollment: ' . $e->getMessage();
-    }
-}
-
-$students = getStudentsWithEnrollments($pdo);
-$classes = getAllClasses($pdo);
-$user_id = 1;
-$staff = getStaffInfo($pdo, $user_id);
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manage Students</title>
-    <link rel="stylesheet" type="text/css" href="../../style/style.css">
+    <title>Student Management</title>
+    <link rel="stylesheet" href="../../style/style.css">
+
+    <style>
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; }
+        .card { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
+        input, select { padding: 6px; margin: 5px 0; width: 100%; }
+        button { padding: 6px 10px; cursor: pointer; }
+
+        label { display:block; margin:4px 0; }
+    </style>
 </head>
 
 <body>
-    <header>
-        <h2>Gibraltar AMS - Staff Portal</h2>
-        <img src="../../style/logo.png" class="logo">
-    </header>
 
-    <div class="container">
-        
-    <?php renderTeacherSidebar('dashboard'); ?>
-        <div class="content">
-            <?php if ($success_message): ?>
-                <div style="background-color: #d4edda; color: #155724; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
-                    <?= htmlspecialchars($success_message) ?>
-                </div>
-            <?php endif; ?>
-            
-            <?php if ($error_message): ?>
-                <div style="background-color: #f8d7da; color: #721c24; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
-                    <?= htmlspecialchars($error_message) ?>
-                </div>
-            <?php endif; ?>
-            
-            <div id="students" class="card section active">
-                <div class="card-header">
-                    <h3>Students</h3>
-                </div>
+<header>
+    <h2>Gibraltar AMS - Staff Portal</h2>
+</header>
 
-                <table>
-                    <tr>
-                        <th>Name</th>
-                        <th>Grade</th>
-                        <th>Enrollment</th>
-                        <th>Action</th>
-                    </tr>
+<div class="container">
 
-                    <?php foreach ($students as $s): ?>
-                        <tr>
-                            <td><?= $s['first_name'] . ' ' . $s['last_name'] ?></td>
-                            <td><?= $s['grade_level'] ?></td>
-                            <td>
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="student_id" value="<?= $s['student_id'] ?>">
-                                    <input type="hidden" name="class_id" value="<?= $s['class_id'] ?? 1 ?>">
-                                    <input type="hidden" name="toggleEnrollment" value="1">
-                                    <?php if ($s['enrollment_id']): ?>
-                                        <input type="hidden" name="action" value="unenroll">
-                                        <button type="submit" class="btn" style="background-color: #28a745; color: white;">Enrolled</button>
-                                    <?php else: ?>
-                                        <input type="hidden" name="action" value="enroll">
-                                        <button type="submit" class="btn" style="background-color: #999; color: white;">Not Enrolled</button>
-                                    <?php endif; ?>
-                                </form>
-                            </td>
-                            <td>
-                                <button class="btn" onclick="fillForm(
-                                    '<?= $s['student_id'] ?>',
-                                    '<?= $s['first_name'] ?>',
-                                    '<?= $s['last_name'] ?>',
-                                    '<?= $s['grade_level'] ?>',
-                                    '<?= $s['sex'] ?>'
-                                )">Edit</button>
-                                <button class="btn" onclick="window.location.href='?delete=<?= $s['student_id'] ?>'">Delete</button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
-            </div>
+<?php renderTeacherSidebar('students'); ?>
 
-            <div id="editForm" class="card section" style="display: none;">
-                <div class="card-header">
-                    <h3>Edit Student</h3>
-                </div>
+<div class="content">
 
-                <form method="POST">
-                    <input type="hidden" id="id" name="student_id">
-                    
-                    <label>First Name:</label>
-                    <input type="text" id="fname" name="fname" required>
-                    
-                    <label>Last Name:</label>
-                    <input type="text" id="lname" name="lname" required>
-                    
-                    <label>Grade Level:</label>
-                    <input type="text" id="grade" name="grade" required>
-                    
-                    <label>Sex:</label>
-                    <select id="sex" name="sex" required>
-                        <option value="">Select</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                    </select>
-                    
-                    <button class="btn" type="submit" name="updateStudent">Save Changes</button>
-                    <button class="btn" type="button" onclick="show('students')" style="background-color: #6c757d;">Cancel</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<!-- ================= CREATE ================= -->
+<div class="card">
+    <h3>Add Student</h3>
 
-    <script>
-        function show(id) {
-            document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-            document.getElementById(id).style.display = 'block';
-        }
+    <input id="lrn" placeholder="LRN">
+    <input id="fname" placeholder="First Name">
+    <input id="lname" placeholder="Last Name">
+    <input id="mname" placeholder="Middle Name">
+    <input type="date" id="bdate">
 
-        // default
-        show('students');
+    <select id="sex">
+        <option value="">Sex</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+    </select>
 
-        function fillForm(id, f, l, g, s) {
-            document.getElementById('id').value = id;
-            document.getElementById('fname').value = f;
-            document.getElementById('lname').value = l;
-            document.getElementById('grade').value = g;
-            document.getElementById('sex').value = s;
+    <input id="pob" placeholder="Place of Birth">
 
-            show('editForm');
-        }
-    </script>
+    <button onclick="createStudent()">Create Student</button>
+</div>
+
+<!-- ================= LIST ================= -->
+<div class="card">
+    <h3>Students</h3>
+    <div id="studentList">Loading...</div>
+</div>
+
+<!-- ================= EDIT FULL ================= -->
+<div class="card">
+    <h3>Edit Student</h3>
+
+    <input type="hidden" id="edit_id">
+
+    <h4>Basic Info</h4>
+    <input id="edit_lrn" placeholder="LRN">
+    <input id="edit_fname" placeholder="First Name">
+    <input id="edit_lname" placeholder="Last Name">
+    <input id="edit_mname" placeholder="Middle Name">
+    <input type="date" id="edit_bdate">
+
+    <select id="edit_sex">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+    </select>
+
+    <input id="edit_pob" placeholder="Place of Birth">
+
+    <h4>Current Address</h4>
+    <input id="c_house" placeholder="House No">
+    <input id="c_street" placeholder="Street">
+    <input id="c_barangay" placeholder="Barangay">
+    <input id="c_city" placeholder="City">
+    <input id="c_province" placeholder="Province">
+    <input id="c_country" placeholder="Country">
+    <input id="c_zip" placeholder="Zip Code">
+
+    <h4>Permanent Address</h4>
+    <input id="p_house" placeholder="House No">
+    <input id="p_street" placeholder="Street">
+    <input id="p_barangay" placeholder="Barangay">
+    <input id="p_city" placeholder="City">
+    <input id="p_province" placeholder="Province">
+    <input id="p_country" placeholder="Country">
+    <input id="p_zip" placeholder="Zip Code">
+
+    <h4>Disabilities</h4>
+
+    <label><input type="checkbox" class="disability" value="1"> Visual Impairment</label>
+    <label><input type="checkbox" class="disability" value="2"> Blind</label>
+    <label><input type="checkbox" class="disability" value="3"> Low Vision</label>
+    <label><input type="checkbox" class="disability" value="4"> Hearing Impairment</label>
+    <label><input type="checkbox" class="disability" value="5"> Autism</label>
+    <label><input type="checkbox" class="disability" value="6"> Speech Disorder</label>
+    <label><input type="checkbox" class="disability" value="7"> Learning Disorder</label>
+    <label><input type="checkbox" class="disability" value="8"> Emotional/Behavioral</label>
+    <label><input type="checkbox" class="disability" value="9"> Cerebral Palsy</label>
+    <label><input type="checkbox" class="disability" value="10"> Intellectual Disability</label>
+    <label><input type="checkbox" class="disability" value="11"> Physical Disability</label>
+
+    <button onclick="updateStudent()">Update Full Profile</button>
+</div>
+
+</div>
+</div>
+
+<script>
+
+const API = '../../api/students.php';
+
+/* ================= LIST ================= */
+async function loadStudents() {
+
+    const res = await fetch(API + '?action=list');
+    const json = await res.json();
+
+    if (!json.success) return;
+
+    let html = '<table>';
+    html += '<tr><th>Name</th><th>LRN</th><th>Action</th></tr>';
+
+    json.data.forEach(s => {
+        html += `
+        <tr>
+            <td>${s.first_name} ${s.last_name}</td>
+            <td>${s.lrn ?? ''}</td>
+            <td>
+                <button onclick="editStudent(${s.student_id})">Edit</button>
+                <button onclick="deleteStudent(${s.student_id})">Delete</button>
+            </td>
+        </tr>`;
+    });
+
+    html += '</table>';
+
+    document.getElementById('studentList').innerHTML = html;
+}
+
+/* ================= CREATE ================= */
+async function createStudent() {
+
+    const data = {
+        lrn: lrn.value,
+        first_name: fname.value,
+        last_name: lname.value,
+        middle_name: mname.value,
+        birth_date: bdate.value,
+        sex: sex.value,
+        place_of_birth: pob.value
+    };
+
+    await fetch(API + '?action=create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+
+    loadStudents();
+}
+
+/* ================= EDIT LOAD ================= */
+async function editStudent(id) {
+
+    const res = await fetch(API + '?action=get&student_id=' + id);
+    const json = await res.json();
+
+    if (!json.success) return;
+
+    const s = json.data.student;
+    const c = json.data.current_address;
+    const p = json.data.permanent_address;
+    const d = json.data.disabilities;
+
+    edit_id.value = s.student_id;
+
+    edit_lrn.value = s.lrn ?? '';
+    edit_fname.value = s.first_name;
+    edit_lname.value = s.last_name;
+    edit_mname.value = s.middle_name ?? '';
+    edit_bdate.value = s.birth_date ?? '';
+    edit_sex.value = s.sex ?? '';
+    edit_pob.value = s.place_of_birth ?? '';
+
+    c_house.value = c.house_no ?? '';
+    c_street.value = c.street_name ?? '';
+    c_barangay.value = c.barangay ?? '';
+    c_city.value = c.municipality_city ?? '';
+    c_province.value = c.province ?? '';
+    c_country.value = c.country ?? '';
+    c_zip.value = c.zip_code ?? '';
+
+    p_house.value = p.house_no ?? '';
+    p_street.value = p.street_name ?? '';
+    p_barangay.value = p.barangay ?? '';
+    p_city.value = p.municipality_city ?? '';
+    p_province.value = p.province ?? '';
+    p_country.value = p.country ?? '';
+    p_zip.value = p.zip_code ?? '';
+
+    document.querySelectorAll('.disability').forEach(cb => {
+        cb.checked = d.includes(parseInt(cb.value));
+    });
+}
+
+/* ================= UPDATE ================= */
+async function updateStudent() {
+
+    const disabilities = [];
+    document.querySelectorAll('.disability:checked').forEach(cb => {
+        disabilities.push(parseInt(cb.value));
+    });
+
+    const data = {
+        student_id: edit_id.value,
+
+        lrn: edit_lrn.value,
+        first_name: edit_fname.value,
+        last_name: edit_lname.value,
+        middle_name: edit_mname.value,
+        birth_date: edit_bdate.value,
+        sex: edit_sex.value,
+        place_of_birth: edit_pob.value,
+
+        current: {
+            house_no: c_house.value,
+            street_name: c_street.value,
+            barangay: c_barangay.value,
+            municipality_city: c_city.value,
+            province: c_province.value,
+            country: c_country.value,
+            zip_code: c_zip.value
+        },
+
+        permanent: {
+            house_no: p_house.value,
+            street_name: p_street.value,
+            barangay: p_barangay.value,
+            municipality_city: p_city.value,
+            province: p_province.value,
+            country: p_country.value,
+            zip_code: p_zip.value
+        },
+
+        disabilities: disabilities
+    };
+
+    await fetch(API + '?action=update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+
+    loadStudents();
+}
+
+/* ================= DELETE ================= */
+async function deleteStudent(id) {
+
+    if (!confirm("Delete student?")) return;
+
+    await fetch(API + '?action=delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ student_id: id })
+    });
+
+    loadStudents();
+}
+
+/* INIT */
+loadStudents();
+
+</script>
+
 </body>
 </html>

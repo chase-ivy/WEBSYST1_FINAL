@@ -16,53 +16,94 @@ if (!is_logged_in()) {
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 try {
+
+        //CLASSES - LIST ALL
     if ($action === 'list') {
-        $stmt = $pdo->query('SELECT c.class_id, c.school_year, c.grade_level, c.section, u.username as adviser
-                            FROM classes c
-                            LEFT JOIN users u ON c.adviser_id = u.user_id
-                            ORDER BY c.school_year DESC, c.grade_level, c.section');
+
+        $stmt = $pdo->query('
+            SELECT c.class_id, c.school_year, c.grade_level, c.section, u.username as adviser
+            FROM classes c
+            LEFT JOIN users u ON c.adviser_id = u.user_id
+            ORDER BY c.school_year DESC, c.grade_level, c.section
+        ');
+
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        exit;
     }
+
+        //TEACHER CLASSES
     elseif ($action === 'teacher_classes') {
+
         $teacher_id = $_SESSION['user_id'];
-        $stmt = $pdo->prepare('SELECT DISTINCT c.class_id, c.school_year, c.grade_level, c.section, s.name as subject
-                              FROM classes c
-                              JOIN class_subjects cs ON c.class_id = cs.class_id
-                              JOIN subjects s ON cs.subject_id = s.subject_id
-                              WHERE cs.teacher_id = ?
-                              ORDER BY c.grade_level, c.section, s.name');
+
+        $stmt = $pdo->prepare('
+            SELECT DISTINCT c.class_id, c.school_year, c.grade_level, c.section, s.name AS subject
+            FROM classes c
+            JOIN class_subjects cs ON c.class_id = cs.class_id
+            JOIN subjects s ON cs.subject_id = s.subject_id
+            WHERE cs.teacher_id = ?
+            ORDER BY c.grade_level, c.section, s.name
+        ');
+
         $stmt->execute([$teacher_id]);
+
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        exit;
     }
+
+        //CLASS STUDENTS
     elseif ($action === 'students') {
+
         $class_id = intval($_GET['class_id'] ?? 0);
-        $stmt = $pdo->prepare('SELECT cs.class_student_id, s.student_id, s.lrn, s.first_name, s.last_name
-                              FROM class_students cs
-                              JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
-                              JOIN students s ON e.student_id = s.student_id
-                              WHERE cs.class_id = ?
-                              ORDER BY s.last_name, s.first_name');
+
+        $stmt = $pdo->prepare('
+            SELECT cs.class_student_id, s.student_id, s.lrn, s.first_name, s.last_name
+            FROM class_students cs
+            JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
+            JOIN students s ON e.student_id = s.student_id
+            WHERE cs.class_id = ?
+            ORDER BY s.last_name, s.first_name
+        ');
+
         $stmt->execute([$class_id]);
+
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        exit;
     }
+
+        //CREATE CLASS
     elseif ($action === 'create') {
+
         $data = json_decode(file_get_contents('php://input'), true);
-        $stmt = $pdo->prepare('INSERT INTO classes (school_year, grade_level, section, adviser_id) 
-                              VALUES (?, ?, ?, ?)');
+
+        $stmt = $pdo->prepare('
+            INSERT INTO classes (school_year, grade_level, section, adviser_id)
+            VALUES (?, ?, ?, ?)
+        ');
+
         $stmt->execute([
             $data['school_year'] ?? '',
             $data['grade_level'] ?? '',
             $data['section'] ?? null,
             $data['adviser_id'] ?? null
         ]);
+
         echo json_encode(['success' => true, 'class_id' => $pdo->lastInsertId()]);
+        exit;
     }
+
+        //UPDATE CLASS
     elseif ($action === 'update') {
+
         $data = json_decode(file_get_contents('php://input'), true);
         $class_id = intval($data['class_id'] ?? 0);
-        $stmt = $pdo->prepare('UPDATE classes 
-                              SET school_year = ?, grade_level = ?, section = ?, adviser_id = ?
-                              WHERE class_id = ?');
+
+        $stmt = $pdo->prepare('
+            UPDATE classes 
+            SET school_year = ?, grade_level = ?, section = ?, adviser_id = ?
+            WHERE class_id = ?
+        ');
+
         $stmt->execute([
             $data['school_year'] ?? '',
             $data['grade_level'] ?? '',
@@ -70,14 +111,98 @@ try {
             $data['adviser_id'] ?? null,
             $class_id
         ]);
+
         echo json_encode(['success' => true]);
+        exit;
     }
-    else {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid action']);
+
+
+//ACTIVITIES CRUD SECTION
+  //LIST ACTIVITIES BY CLASS
+    elseif ($action === 'activities') {
+
+        $class_id = intval($_GET['class_id'] ?? 0);
+
+        $stmt = $pdo->prepare('
+            SELECT *
+            FROM activities
+            WHERE class_id = ?
+            ORDER BY due_date ASC, created_at DESC
+        ');
+
+        $stmt->execute([$class_id]);
+
+        echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        exit;
     }
+
+        //CREATE ACTIVITY
+    elseif ($action === 'create_activity') {
+
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        $stmt = $pdo->prepare('
+            INSERT INTO activities (class_id, title, description, due_date)
+            VALUES (?, ?, ?, ?)
+        ');
+
+        $stmt->execute([
+            $data['class_id'],
+            $data['title'],
+            $data['description'] ?? null,
+            $data['due_date'] ?? null
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'activity_id' => $pdo->lastInsertId()
+        ]);
+        exit;
+    }
+
+        //UPDATE ACTIVITY
+    elseif ($action === 'update_activity') {
+
+        $data = json_decode(file_get_contents('php://input'), true);
+        $activity_id = intval($data['activity_id'] ?? 0);
+
+        $stmt = $pdo->prepare('
+            UPDATE activities
+            SET title = ?, description = ?, due_date = ?
+            WHERE activity_id = ?
+        ');
+
+        $stmt->execute([
+            $data['title'],
+            $data['description'] ?? null,
+            $data['due_date'] ?? null,
+            $activity_id
+        ]);
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+        //DELETE ACTIVITY
+    elseif ($action === 'delete_activity') {
+
+        $data = json_decode(file_get_contents('php://input'), true);
+        $activity_id = intval($data['activity_id'] ?? 0);
+
+        $stmt = $pdo->prepare('DELETE FROM activities WHERE activity_id = ?');
+        $stmt->execute([$activity_id]);
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+        //INVALID ACTION
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid action']);
+    exit;
+
 } catch (Exception $e) {
+
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }
-?>
