@@ -1,5 +1,5 @@
 <?php
-function renderStudentSidebar(string $active = 'dashboard', int $student_id = 0): void {
+function renderStudentSidebar(string $active = 'dashboard'): void {
     $items = [
         'dashboard' => ['Dashboard', 'student_dashboard.php'],
         'grades' => ['Grades', 'student_grades.php'],
@@ -11,13 +11,8 @@ function renderStudentSidebar(string $active = 'dashboard', int $student_id = 0)
     echo '<div class="sidebar">';
 
     foreach ($items as $key => [$label, $href]) {
-        $url = $href;
-        if ($student_id && $key !== 'logout') {
-            $url .= '?student_id=' . urlencode((string) $student_id);
-        }
-
         $activeClass = $active === $key ? ' class="active"' : '';
-        echo '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '"' . $activeClass . '>' .
+        echo '<a href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '"' . $activeClass . '>' .
              htmlspecialchars($label, ENT_QUOTES, 'UTF-8') .
              '</a>';
     }
