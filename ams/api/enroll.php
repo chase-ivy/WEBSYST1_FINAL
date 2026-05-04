@@ -137,8 +137,8 @@ try {
     $pdo->beginTransaction();
 
     $schoolYear = trim(($data['year_start'] ?? '') . '-' . ($data['year_end'] ?? ''));
-    $withLrn = (!empty($data['with_lrn']) && $data['with_lrn'] === 'Yes') ? 1 : 0;
-    $returning = (!empty($data['returning']) && $data['returning'] === 'Yes') ? 1 : 0;
+    $withLrn = !empty($data['with_lrn']) && in_array((string)$data['with_lrn'], ['1', 'Yes'], true) ? 1 : 0;
+    $returning = !empty($data['returning']) && in_array((string)$data['returning'], ['1', 'Yes'], true) ? 1 : 0;
     $ipValue = (isset($data['ip']) && $data['ip'] === 'Yes') ? trim($data['IP_Specify'] ?? '') : null;
     $fourpsValue = (isset($data['fourps']) && $data['fourps'] === 'Yes') ? trim($data['FourPs_Specify'] ?? '') : null;
     $isLearnerWithDisability = !empty($data['disabilityDetails']) ? 1 : 0;
