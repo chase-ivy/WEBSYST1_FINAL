@@ -104,20 +104,32 @@ unset($_SESSION['login_error']);
         color: var(--text);
         min-height: 100vh;
         display: flex;
+        
     }
 
     /* ── LEFT PANEL ─────────────────────────────────────────── */
     .left {
         flex: 1;
         position: relative;
-        background: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=900&q=80') center/cover no-repeat;
         min-height: 100vh;
+        overflow: hidden;
     }
+
+    .left::before {
+    content: "";
+    position: absolute;
+    top: 0; 
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://images.unsplash.com/photo-1635424239131-32dc44986b56?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;
+    filter: blur(3px); 
+}
     .left::after {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(160deg, rgba(78,3,3,.88) 0%, rgba(20,0,0,.68) 100%);
+        background: linear-gradient(160deg, rgba(19, 14, 14, 0.88) 0%, rgba(12, 12, 12, 0.68) 100%);
     }
     .left-copy {
         position: absolute;
@@ -138,6 +150,7 @@ unset($_SESSION['login_error']);
     .left-logo span { color: var(--brand-dark); }
     .left-tagline {
         font-size: 11px;
+        color: red;
         font-weight: 600;
         letter-spacing: 2.5px;
         text-transform: uppercase;
@@ -148,9 +161,9 @@ unset($_SESSION['login_error']);
         display: inline-flex;
         align-items: center;
         gap: 7px;
-        background: rgba(236,63,63,.18);
-        border: 1px solid rgba(236,63,63,.35);
-        color: #f99;
+        background: rgba(249, 248, 248, 0.18);
+        border: 1px solid rgba(0, 0, 0, 0.35);
+        color: rgb(233, 233, 233);
         font-size: 11px;
         font-weight: 600;
         letter-spacing: .4px;
@@ -183,14 +196,17 @@ unset($_SESSION['login_error']);
         align-items: center;
         padding: 40px 24px;
         background: var(--canvas);
+        border: 1px solid rgba(0, 0, 0, 1);
+    
+        
     }
     .box {
         width: 100%;
-        max-width: 390px;
+        max-width: 420px;
         background: var(--surface);
-        border: 1px solid var(--border);
+        border: 1px solid rgba(0, 0, 0, 1);
         border-radius: var(--radius-xl);
-        padding: 40px 38px;
+        padding: 30px 35px;
         box-shadow: var(--shadow-md);
         animation: up .45s both;
     }
