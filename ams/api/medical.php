@@ -81,3 +81,68 @@ try {
     echo json_encode(['error' => $e->getMessage()]);
 }
 ?>
+
+<?php
+
+    $med_state = $pdo->prepare('INSERT INTO medical_allergies (medical_id, has_allergies) VALUES (?, ?)');
+    $med_state->execute([
+        $medical_id, 
+        $_POST['has_allergies'] ?? '0'
+    ]);
+    
+    $allery_group_id = $pdo->lastInsertId();
+    
+    $med_state1 = $pdo->prepare('INSERT INTO student_allergies (allergy_group_id, allergy_type_id, description) VALUES (?, ?, ?)');
+    $med_state1->execute([
+        $allery_group_id,
+        $_POST['medicine_allergy'] ?? '0',
+        $_POST['allergy_description'] ?? ''
+    ]);
+
+
+    $med_state2 = $pdo->prepare('INSERT INTO medical_conditions (medical_id, has_conditions) VALUES (?, ?)');
+    $med_state2->execute([$medical_id, $_POST['has_med_conditions'] ?? '0']);
+
+    $condition_group_id = $pdo->lastInsertId();
+
+    $med_state3 = $pdo->prepare('INSERT INTO student_conditions (condition_group_id, condition_type_id, descriptipion) VALUES (?, ?, ?)');
+    $med_state3->execute([
+        $condition_group_id,
+        $_POST['condition_type_id'] ?? '0',
+        $_POST['condition_description'] ?? ''
+    ]);
+
+    $med_state4 = $pdo->('INSERT INTO medical_surgeries (medical_id, has_surgery, surgery_date, hospital_name, body_part) VALUES (?, ?, ?, ?, ?)');
+    $med_state4->execute([
+        $medical_id,
+        $_POST['has_surgery_hospitalization'] ?? '0',
+        $_POST['surgery_date'] ?? '',
+        $_POST['hospital_name'] ?? '',
+        $_POST['body_part'] ?? ''
+    ]);
+
+    $med_state5 = $pdo->prepare('INSERT INTO medical_treatments (medical_id, is_taking_treatment, treatment_medicine, schedule_dosage) VALUES (?, ?, ?, ?)');
+    $med_state5->execute([
+        $medical_id,
+        $_POST['is_taking_treatment'] ?? '0',
+        $_POST['treatment_medicine'] ?? '',
+        $_POST['schedule_dosage'] ?? ''
+    ]);
+
+    $med_state6 = $pdo->prepare('INSERT INTO family_medical_history (medical_id, has_family_history) VALUES (?,?))');
+    $med_state6->execute([
+        $medical_id,
+        $_POST['has_family_history'] ?? '0'
+    ]);
+
+    $family_history_id = $pdo->lastInsertId();
+/
+    $med_state7 = $pdo0->prepare('INSERT INTO student_family_history (family_history_id, family_condition_type_id, description) VALUES (?, ?, ?)');
+    $med_state7->execute([
+        $family_history_id,
+        $_POST['family_condition_type_id'] ?? '0',
+        $_POST['family_condition_description'] ?? ''
+    ]);
+
+
+?>  
