@@ -6,9 +6,11 @@ require_role(['staff']);
 
 $teacher_id = $_SESSION['user_id'];
 
+require_once __DIR__ . '/../../config/config.php';
+
 $stmt = $pdo->prepare("SELECT username FROM users WHERE user_id = ?");
 $stmt->execute([$teacher_id]);
-$staff = $stmt->fetch();
+$staff = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -16,12 +18,38 @@ $staff = $stmt->fetch();
 <head>
     <title>Teacher Dashboard</title>
     <link rel="stylesheet" href="../../style/style.css">
+
     <style>
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 16px 0; }
-        .summary-card { background: #f5f5f5; padding: 16px; border-radius: 4px; text-align: center; }
-        .summary-card h4 { margin: 0 0 8px 0; font-size: 14px; color: #666; }
-        .summary-card p { margin: 0; font-size: 32px; font-weight: bold; color: #333; }
-        .loading { color: #999; font-style: italic; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .summary-card {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .summary-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .summary-card p {
+            margin: 0;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .loading {
+            color: #999;
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -32,128 +60,149 @@ $staff = $stmt->fetch();
 </header>
 
 <div class="container">
+
 <?php renderTeacherSidebar('dashboard'); ?>
 
-    <div class="content">
+<div class="content">
 
-        <div class="card">
-            <h3>Welcome, <?= htmlspecialchars($staff['username']) ?> 👋</h3>
-            <p>Loading your dashboard information...</p>
-        </div>
-
-        <!-- SUMMARY -->
-        <div class="card">
-            <h3>Dashboard Summary</h3>
-            <div class="summary-grid" id="summaryCards">
-                <div class="loading">Loading statistics...</div>
-            </div>
-        </div>
-
-        <!-- SUBJECTS -->
-        <div class="card">
-            <h3>Subjects Handled</h3>
-            <ul id="subjectsList">
-                <li class="loading">Loading subjects...</li>
-            </ul>
-        </div>
-
-        <!-- CLASSES -->
-        <div class="card">
-            <h3>Your Classes</h3>
-            <table id="classesTable">
-                <thead>
-                    <tr>
-                        <th>Subject</th>
-                        <th>Grade Level</th>
-                        <th>Section</th>
-                        <th>Students</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="4" class="loading">Loading classes...</td></tr>
-                </tbody>
-            </table>
-        </div>
-
+    <div class="card">
+        <h3>Welcome, <?= htmlspecialchars($staff['username']) ?> 👋</h3>
+        <p>Your dashboard overview</p>
     </div>
+
+    <!-- SUMMARY -->
+    <div class="card">
+        <h3>Dashboard Summary</h3>
+        <div class="summary-grid" id="summaryCards">
+            <div class="loading">Loading statistics...</div>
+        </div>
+    </div>
+
+    <!-- SUBJECTS -->
+    <div class="card">
+        <h3>Subjects Handled</h3>
+        <ul id="subjectsList">
+            <li class="loading">Loading subjects...</li>
+        </ul>
+    </div>
+
+    <!-- CLASSES -->
+    <div class="card">
+        <h3>Your Classes</h3>
+        <table id="classesTable">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Grade</th>
+                    <th>Section</th>
+                    <th>Students</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="4" class="loading">Loading classes...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
 </div>
 
-<script src="../../api/client.js"></script>
 <script>
-    async function loadDashboard() {
-        try {
-            // Load teacher dashboard data
-            const dashboardResponse = await API.teacher.dashboard();
-            if (dashboardResponse.success) {
-                const data = dashboardResponse.data;
-                renderClasses(data.classes);
-                renderSubjects(data.subjects);
-                renderSummary(data);
-            }
-        } catch (error) {
-            console.error('Dashboard load error:', error);
-            document.getElementById('summaryCards').innerHTML = '<div class="alert alert-error">Failed to load dashboard</div>';
-        }
-    }
 
-    function renderClasses(classes) {
-        const tbody = document.querySelector('#classesTable tbody');
-        if (classes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4">No classes assigned</td></tr>';
-            return;
+async function loadDashboard() {
+    try {
+        const res = await fetch('../../api/teacher.php?action=dashboard');
+        const json = await res.json();
+
+        if (!json.success) {
+            throw new Error(json.error || 'Failed');
         }
 
-        tbody.innerHTML = classes.map(c => `
-            <tr>
-                <td>${escapeHtml(c.subject_name)}</td>
-                <td>${c.grade_level}</td>
-                <td>${c.section}</td>
-                <td><a href="teacher_manage_students.php?class_id=${c.class_id}">Manage (${c.student_count})</a></td>
-            </tr>
-        `).join('');
+        const data = json.data;
+
+        renderSummary(data);
+        renderSubjects(data.subjects);
+        renderClasses(data.classes);
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById('summaryCards').innerHTML =
+            '<div class="alert alert-error">Failed to load dashboard</div>';
+    }
+}
+
+   //RENDER SUMMARY
+function renderSummary(data) {
+
+    const summaryCards = document.getElementById('summaryCards');
+
+    summaryCards.innerHTML = `
+        <div class="summary-card">
+            <h4>Classes</h4>
+            <p>${data.classes.length}</p>
+        </div>
+        <div class="summary-card">
+            <h4>Students</h4>
+            <p>${data.total_students}</p>
+        </div>
+        <div class="summary-card">
+            <h4>Subjects</h4>
+            <p>${data.subjects.length}</p>
+        </div>
+    `;
+}
+
+
+   //RENDER SUBJECTS
+function renderSubjects(subjects) {
+
+    const list = document.getElementById('subjectsList');
+
+    if (!subjects.length) {
+        list.innerHTML = '<li>No subjects assigned</li>';
+        return;
     }
 
-    function renderSubjects(subjects) {
-        const subjectsList = document.getElementById('subjectsList');
+    list.innerHTML = subjects.map(s =>
+        `<li>${escapeHtml(s.name)}</li>`
+    ).join('');
+}
 
-        if (subjects.length === 0) {
-            subjectsList.innerHTML = '<li>No subjects assigned</li>';
-            return;
-        }
 
-        subjectsList.innerHTML = subjects.map(s => `<li>${escapeHtml(s.name)}</li>`).join('');
+   //RENDER CLASSES
+function renderClasses(classes) {
+
+    const tbody = document.querySelector('#classesTable tbody');
+
+    if (!classes.length) {
+        tbody.innerHTML = '<tr><td colspan="4">No classes assigned</td></tr>';
+        return;
     }
 
-    function renderSummary(data) {
-        const totalClasses = data.classes.length;
-        const totalStudents = data.total_students;
-        const totalSubjects = data.subjects.length;
+    tbody.innerHTML = classes.map(c => `
+        <tr>
+            <td>${escapeHtml(c.subject_name)}</td>
+            <td>${c.grade_level}</td>
+            <td>${c.section}</td>
+            <td>
+                <a href="teacher_manage_students.php?class_id=${c.class_id}">
+                    Manage (${c.student_count})
+                </a>
+            </td>
+        </tr>
+    `).join('');
+}
 
-        const summaryCards = document.getElementById('summaryCards');
-        summaryCards.innerHTML = `
-            <div class="summary-card">
-                <h4>Classes</h4>
-                <p>${totalClasses}</p>
-            </div>
-            <div class="summary-card">
-                <h4>Students</h4>
-                <p>${totalStudents}</p>
-            </div>
-            <div class="summary-card">
-                <h4>Subjects</h4>
-                <p>${totalSubjects}</p>
-            </div>
-        `;
-    }
+   //ESCAPE HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+/* INIT */
+document.addEventListener('DOMContentLoaded', loadDashboard);
 
-    // Load dashboard on page load
-    document.addEventListener('DOMContentLoaded', loadDashboard);
 </script>
 
 </body>

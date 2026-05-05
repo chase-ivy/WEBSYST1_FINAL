@@ -8,11 +8,11 @@ require_role(['staff']);
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Teacher Activities</title>
+    <title>Teacher Classes</title>
     <link rel="stylesheet" href="../../style/style.css">
 
     <style>
-        .activity-controls {
+        .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px;
@@ -24,20 +24,15 @@ require_role(['staff']);
             flex-direction: column;
         }
 
-        .form-group label {
+        label {
             font-weight: bold;
             margin-bottom: 4px;
-            font-size: 14px;
         }
 
-        input, select, textarea {
+        input, select {
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
-        }
-
-        textarea {
-            resize: vertical;
         }
 
         .card {
@@ -55,7 +50,6 @@ require_role(['staff']);
         th, td {
             padding: 10px;
             border-bottom: 1px solid #eee;
-            text-align: left;
         }
 
         th {
@@ -64,14 +58,14 @@ require_role(['staff']);
 
         .btn {
             padding: 6px 10px;
-            cursor: pointer;
             border: none;
             border-radius: 4px;
+            cursor: pointer;
         }
 
         .btn-primary { background: #2196F3; color: white; }
-        .btn-danger { background: #f44336; color: white; }
         .btn-success { background: #4CAF50; color: white; }
+        .btn-danger { background: #f44336; color: white; }
 
         .alert {
             padding: 10px;
@@ -79,85 +73,75 @@ require_role(['staff']);
             border-radius: 4px;
         }
 
-        .alert-success { background: #d4edda; color: #155724; }
-        .alert-error { background: #f8d7da; color: #721c24; }
+        .alert-success { background: #d4edda; }
+        .alert-error { background: #f8d7da; }
     </style>
 </head>
 
 <body>
 
 <header>
-    <h2>Gibraltar AMS - Teacher Activities</h2>
+    <h2>Gibraltar AMS - Manage Classes</h2>
 </header>
 
 <div class="container">
-
-<?php renderTeacherSidebar('activities'); ?>
+<?php renderTeacherSidebar('classes'); ?>
 
 <div class="content">
 
-    <!-- CLASS SELECT -->
+    <!-- CREATE CLASS -->
     <div class="card">
-        <h3>Select Class</h3>
+        <h3>Create Class</h3>
 
-        <select id="classSelect">
-            <option value="">-- Choose Class --</option>
-        </select>
-    </div>
-
-    <!-- CREATE ACTIVITY -->
-    <div class="card">
-        <h3>Create Activity</h3>
-
-        <div class="activity-controls">
+        <div class="form-grid">
             <div class="form-group">
-                <label>Title</label>
-                <input type="text" id="title">
+                <label>School Year</label>
+                <input type="text" id="school_year" placeholder="2025-2026">
             </div>
 
             <div class="form-group">
-                <label>Due Date</label>
-                <input type="date" id="due_date">
+                <label>Grade Level</label>
+                <input type="text" id="grade_level">
+            </div>
+
+            <div class="form-group">
+                <label>Section</label>
+                <input type="text" id="section">
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Description</label>
-            <textarea id="description" rows="3"></textarea>
-        </div>
-
-        <button class="btn btn-success" onclick="createActivity()">Add Activity</button>
+        <button class="btn btn-success" onclick="createClass()">Create</button>
     </div>
 
-    <!-- LIST -->
+    <!-- CLASS LIST -->
     <div class="card">
-        <h3>Activities</h3>
-        <div id="activityList">Select a class...</div>
+        <h3>Your Classes</h3>
+        <div id="classList">Loading...</div>
     </div>
 
     <!-- EDIT -->
     <div class="card" id="editCard" style="display:none;">
-        <h3>Edit Activity</h3>
+        <h3>Edit Class</h3>
 
         <input type="hidden" id="edit_id">
 
         <div class="form-group">
-            <label>Title</label>
-            <input type="text" id="edit_title">
+            <label>School Year</label>
+            <input type="text" id="edit_school_year">
         </div>
 
         <div class="form-group">
-            <label>Due Date</label>
-            <input type="date" id="edit_due_date">
+            <label>Grade Level</label>
+            <input type="text" id="edit_grade_level">
         </div>
 
         <div class="form-group">
-            <label>Description</label>
-            <textarea id="edit_description" rows="3"></textarea>
+            <label>Section</label>
+            <input type="text" id="edit_section">
         </div>
 
-        <button class="btn btn-primary" onclick="updateActivity()">Update</button>
-        <button class="btn" onclick="document.getElementById('editCard').style.display='none'">Cancel</button>
+        <button class="btn btn-primary" onclick="updateClass()">Update</button>
+        <button class="btn" onclick="hideEdit()">Cancel</button>
     </div>
 
 </div>
@@ -166,69 +150,51 @@ require_role(['staff']);
 <script src="../../api/client.js"></script>
 <script>
 
-let currentClassId = null;
+let classes = [];
 
-   //LOAD CLASSES
+// LOAD TEACHER CLASSES
 async function loadClasses() {
     try {
-        const response = await API.teacher.classes();
-        if (response.success) {
-            const select = document.getElementById('classSelect');
-            select.innerHTML = '<option value="">-- Choose Class --</option>' +
-                response.data.map(c =>
-                    `<option value="${c.class_id}">
-                        ${c.subject_name} - ${c.grade_level} ${c.section}
-                    </option>`
-                ).join('');
+        const res = await API.classes.getTeacherClasses();
+
+        if (res.success) {
+            classes = res.data;
+            renderClasses();
         }
-    } catch (error) {
-        console.error('Failed to load classes:', error);
+    } catch (err) {
+        console.error(err);
+        document.getElementById('classList').innerHTML = "Failed to load classes";
     }
 }
 
-document.getElementById('classSelect').addEventListener('change', function () {
-    currentClassId = this.value;
+function renderClasses() {
 
-    if (currentClassId) {
-        loadActivities();
-    }
-});
+    const container = document.getElementById('classList');
 
-   //LOAD ACTIVITIES
-async function loadActivities() {
-    try {
-        const response = await API.activities.listByClass(currentClassId);
-        if (response.success) {
-            renderActivities(response.data);
-        }
-    } catch (error) {
-        console.error('Failed to load activities:', error);
-    }
-}
-
-function renderActivities(data) {
-
-    const list = document.getElementById('activityList');
-
-    if (data.length === 0) {
-        list.innerHTML = "No activities yet.";
+    if (classes.length === 0) {
+        container.innerHTML = "No classes found.";
         return;
     }
 
-    list.innerHTML = `
+    container.innerHTML = `
         <table>
             <tr>
-                <th>Title</th>
-                <th>Due</th>
-                <th>Action</th>
+                <th>School Year</th>
+                <th>Grade</th>
+                <th>Section</th>
+                <th>Subject</th>
+                <th>Actions</th>
             </tr>
-            ${data.map(a => `
+
+            ${classes.map(c => `
                 <tr>
-                    <td>${a.title}</td>
-                    <td>${a.due_date ?? ''}</td>
+                    <td>${c.school_year}</td>
+                    <td>${c.grade_level}</td>
+                    <td>${c.section}</td>
+                    <td>${c.subject}</td>
                     <td>
-                        <button class="btn btn-primary" onclick='editActivity(${JSON.stringify(a)})'>Edit</button>
-                        <button class="btn btn-danger" onclick="deleteActivity(${a.activity_id})">Delete</button>
+                        <button class="btn btn-primary" onclick='editClass(${JSON.stringify(c)})'>Edit</button>
+                        <button class="btn btn-danger" onclick="deleteClass(${c.class_id})">Delete</button>
                     </td>
                 </tr>
             `).join('')}
@@ -236,89 +202,82 @@ function renderActivities(data) {
     `;
 }
 
-   //CREATE
-async function createActivity() {
-
-    if (!currentClassId) {
-        alert("Select a class first");
-        return;
-    }
+// CREATE
+async function createClass() {
 
     const data = {
-        class_subject_id: currentClassId,
-        title: document.getElementById('title').value,
-        description: document.getElementById('description').value,
-        due_date: document.getElementById('due_date').value
+        school_year: document.getElementById('school_year').value,
+        grade_level: document.getElementById('grade_level').value,
+        section: document.getElementById('section').value
     };
 
     try {
-        const response = await API.activities.create(data);
-        if (response.success) {
-            document.getElementById('title').value = '';
-            document.getElementById('description').value = '';
-            document.getElementById('due_date').value = '';
-            loadActivities();
-        } else {
-            alert('Failed to create activity');
+        const res = await API.classes.create(data);
+
+        if (res.success) {
+            loadClasses();
         }
-    } catch (error) {
-        console.error('Failed to create activity:', error);
-        alert('Failed to create activity');
+    } catch (err) {
+        console.error(err);
+        alert("Failed to create class");
     }
 }
 
-
-   //EDIT
-function editActivity(activity) {
+// EDIT
+function editClass(c) {
     document.getElementById('editCard').style.display = 'block';
-    document.getElementById('edit_id').value = activity.activity_id;
-    document.getElementById('edit_title').value = activity.title;
-    document.getElementById('edit_due_date').value = activity.due_date;
-    document.getElementById('edit_description').value = activity.description;
+
+    document.getElementById('edit_id').value = c.class_id;
+    document.getElementById('edit_school_year').value = c.school_year;
+    document.getElementById('edit_grade_level').value = c.grade_level;
+    document.getElementById('edit_section').value = c.section;
 }
 
+function hideEdit() {
+    document.getElementById('editCard').style.display = 'none';
+}
 
-   //UPDATE
-async function updateActivity() {
+// UPDATE
+async function updateClass() {
+
+    const id = document.getElementById('edit_id').value;
+
     const data = {
-        activity_id: document.getElementById('edit_id').value,
-        title: document.getElementById('edit_title').value,
-        description: document.getElementById('edit_description').value,
-        due_date: document.getElementById('edit_due_date').value
+        school_year: document.getElementById('edit_school_year').value,
+        grade_level: document.getElementById('edit_grade_level').value,
+        section: document.getElementById('edit_section').value
     };
 
     try {
-        const response = await API.call('activities', 'update', data, 'POST');
-        if (response.success) {
-            document.getElementById('editCard').style.display = 'none';
-            loadActivities();
-        } else {
-            alert('Failed to update activity');
+        const res = await API.classes.update(id, data);
+
+        if (res.success) {
+            hideEdit();
+            loadClasses();
         }
-    } catch (error) {
-        console.error('Failed to update activity:', error);
-        alert('Failed to update activity');
+    } catch (err) {
+        console.error(err);
+        alert("Failed to update");
     }
 }
 
-   //DELETE
-async function deleteActivity(activity_id) {
-    if (!confirm('Delete this activity?')) return;
+async function deleteClass(id) {
+
+    if (!confirm("Delete this class?")) return;
 
     try {
-        const response = await API.call('activities', 'delete', { activity_id }, 'POST');
-        if (response.success) {
-            loadActivities();
-        } else {
-            alert('Failed to delete activity');
+        const res = await API.call('classes', 'delete', { class_id: id }, 'POST');
+
+        if (res.success) {
+            loadClasses();
         }
-    } catch (error) {
-        console.error('Failed to delete activity:', error);
-        alert('Failed to delete activity');
+    } catch (err) {
+        console.error(err);
+        alert("Delete failed");
     }
 }
 
-/* INIT */
+// INIT
 loadClasses();
 
 </script>
