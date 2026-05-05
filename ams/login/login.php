@@ -33,7 +33,7 @@ if (isset($_POST["login"])) {
             if ($user['role'] === 'admin' && $password === $user['password_hash']) {
                 $_SESSION['special_admin_access'] = true;
             }
-
+            
             header('Location: ' . redirect_to_dashboard($user['role']));
             exit;
         } else {
@@ -206,7 +206,7 @@ unset($_SESSION['login_error']);
     }
     .box {
         width: 100%;
-        max-width: 500px;
+        max-width: 400px;
         background: var(--surface);
         border: 1px solid rgba(0, 0, 0, 1);
         border-radius: var(--radius-xl);
