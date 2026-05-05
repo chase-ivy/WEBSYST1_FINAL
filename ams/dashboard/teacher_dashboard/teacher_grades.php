@@ -6,98 +6,83 @@ require_role(['staff']);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Grade Management - Teacher Dashboard</title>
-    <link rel="stylesheet" href="../../style/style.css">
-
-    <style>
-        .grade-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        .grade-table th, .grade-table td { padding: 12px; border-bottom: 1px solid #eee; }
-        .grade-table th { background: #f5f5f5; }
-
-        .grade-table input {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .btn-save-grade {
-            background: #4CAF50;
-            color: white;
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .btn-save-grade:hover { background: #45a049; }
-
-        .form-group { margin-bottom: 12px; }
-
-        .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
-        .alert-success { background: #d4edda; color: #155724; }
-        .alert-error { background: #f8d7da; color: #721c24; }
-
-        .loading { color: #888; }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Grades · Gibraltar AMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="teacher.css">
 </head>
-
 <body>
 
-<header>
-    <h2>Gibraltar AMS - Grade Management</h2>
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMS</span></div>
+    <span class="topbar-label">Teacher Portal</span>
 </header>
 
-<div class="dashboard-layout">
-<?php renderTeacherSidebar('grades'); ?>
+<div class="shell">
+    <?php renderTeacherSidebar('grades'); ?>
 
-<div class="content">
+    <main class="main">
+        <div class="page-header">
+            <h1>Grades</h1>
+            <p>Manage student grades for your classes.</p>
+        </div>
 
-<div class="card">
-    <h3>Grade Management</h3>
+        <section class="section">
+            <div class="section-header">
+                <h2>Grade Controls</h2>
+                <p>Select a class and grading period to view grades.</p>
+            </div>
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Class</label>
+                        <select id="classSelect">
+                            <option value="">-- Choose Class --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Grading Period</label>
+                        <select id="gradingPeriod">
+                            <option value="Q1">1st Quarter</option>
+                            <option value="Q2">2nd Quarter</option>
+                            <option value="Q3">3rd Quarter</option>
+                            <option value="Q4">4th Quarter</option>
+                            <option value="Midterm">Midterm</option>
+                            <option value="Final">Final</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="statusMessage"></div>
+            </div>
+        </section>
 
-    <div class="form-group">
-        <label>Select Class:</label>
-        <select id="classSelect">
-            <option value="">-- Choose Class --</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Grading Period:</label>
-        <select id="gradingPeriod">
-            <option value="Q1">1st Quarter</option>
-            <option value="Q2">2nd Quarter</option>
-            <option value="Q3">3rd Quarter</option>
-            <option value="Q4">4th Quarter</option>
-            <option value="Midterm">Midterm</option>
-            <option value="Final">Final</option>
-        </select>
-    </div>
-
-    <div id="statusMessage"></div>
-
-    <div id="gradeContainer" style="display:none;">
-        <table class="grade-table">
-            <thead>
-                <tr>
-                    <th>Student</th>
-                    <th>Subject</th>
-                    <th>Grade</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="gradeTable">
-                <tr><td colspan="4" class="loading">Loading...</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-</div>
-
-</div>
+        <section class="section" id="gradeSection" style="display:none;">
+            <div class="section-header">
+                <h2>Grade Table</h2>
+                <p>Update grades for each student and save individual entries.</p>
+            </div>
+            <div class="section-body">
+                <div class="table-wrap">
+                    <table class="grade-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Subject</th>
+                                <th>Grade</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradeTable">
+                            <tr><td colspan="4" class="empty-row">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
 </div>
 
 <script src="../../api/client.js"></script>
@@ -105,8 +90,6 @@ require_role(['staff']);
 let currentClassId = null;
 let gradeData = [];
 
-
-   //LOAD CLASSES (teacher)
 async function loadClasses() {
     try {
         const response = await API.teacher.classes();
@@ -114,9 +97,7 @@ async function loadClasses() {
             const select = document.getElementById('classSelect');
             select.innerHTML = '<option value="">-- Choose Class --</option>' +
                 response.data.map(c =>
-                    `<option value="${c.class_id}">
-                        ${c.grade_level} ${c.section} - ${c.subject_name}
-                    </option>`
+                    `<option value="${c.class_id}">${c.grade_level} ${c.section} - ${c.subject_name}</option>`
                 ).join('');
         }
     } catch (error) {
@@ -125,12 +106,10 @@ async function loadClasses() {
     }
 }
 
-
-   //LOAD GRADES BY CLASS
 async function loadGrades() {
     if (!currentClassId) return;
 
-    document.getElementById('gradeTable').innerHTML = '<tr><td colspan="4" class="loading">Loading grades...</td></tr>';
+    document.getElementById('gradeTable').innerHTML = '<tr><td colspan="4" class="empty-row">Loading grades...</td></tr>';
 
     try {
         const response = await API.grades.getClassGrades(currentClassId);
@@ -146,13 +125,11 @@ async function loadGrades() {
     }
 }
 
-
-   //RENDER TABLE
 function renderGrades() {
     const tbody = document.getElementById('gradeTable');
 
     if (gradeData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4">No grades found</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">No grades found</td></tr>';
         return;
     }
 
@@ -161,33 +138,24 @@ function renderGrades() {
     tbody.innerHTML = gradeData
         .filter(g => g.grading_period === period)
         .map(g => `
-        <tr>
-            <td>${escapeHtml(g.first_name + ' ' + g.last_name)}</td>
-            <td>${escapeHtml(g.subject)}</td>
-            <td>
-                <input type="number" 
-                    id="grade-${g.class_student_id}-${g.grade_id ?? 0}"
-                    value="${g.grade ?? ''}"
-                    min="0" max="100" step="0.5">
-            </td>
-            <td>
-                <button class="btn-save-grade"
-                    onclick="saveGrade(${g.class_student_id}, ${g.grade_id ?? 0})">
-                    Save
-                </button>
-            </td>
-        </tr>
-    `).join('');
+            <tr>
+                <td class="td-primary">${escapeHtml(g.first_name + ' ' + g.last_name)}</td>
+                <td>${escapeHtml(g.subject)}</td>
+                <td>
+                    <input type="number"
+                        id="grade-${g.class_student_id}-${g.grade_id ?? 0}"
+                        value="${g.grade ?? ''}"
+                        min="0" max="100" step="0.5">
+                </td>
+                <td>
+                    <button type="button" class="btn-primary" onclick="saveGrade(${g.class_student_id}, ${g.grade_id ?? 0})">Save</button>
+                </td>
+            </tr>
+        `).join('');
 }
 
-
-   //SAVE GRADE (API MATCHED)
 async function saveGrade(class_student_id, grade_id) {
-
-    const input = document.querySelector(
-        `input[id^="grade-${class_student_id}-"]`
-    );
-
+    const input = document.querySelector(`input[id^="grade-${class_student_id}-"]`);
     const grade = parseFloat(input.value);
     const grading_period = document.getElementById('gradingPeriod').value;
 
@@ -216,38 +184,31 @@ async function saveGrade(class_student_id, grade_id) {
     }
 }
 
-
-   //UI HELPERS
 function showMessage(type, text) {
-    document.getElementById('statusMessage').innerHTML =
-        `<div class="alert alert-${type}">${escapeHtml(text)}</div>`;
+    document.getElementById('statusMessage').innerHTML = `<div class="alert alert-${type}">${escapeHtml(text)}</div>`;
 }
 
 function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = text || '';
     return div.innerHTML;
 }
 
-
-   //EVENTS
 document.getElementById('classSelect').addEventListener('change', function () {
     currentClassId = this.value;
 
     if (!currentClassId) {
-        document.getElementById('gradeContainer').style.display = 'none';
+        document.getElementById('gradeSection').style.display = 'none';
         return;
     }
 
-    document.getElementById('gradeContainer').style.display = 'block';
+    document.getElementById('gradeSection').style.display = 'block';
     loadGrades();
 });
 
 document.getElementById('gradingPeriod').addEventListener('change', renderGrades);
 
-/* INIT */
-document.addEventListener('DOMContentLoaded', loadClasses);
-
+window.addEventListener('DOMContentLoaded', loadClasses);
 </script>
 
 </body>

@@ -6,67 +6,79 @@ require_role(['staff']);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="../../style/style.css">
-    <title>Scores</title>
-    <style>
-        .card { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; border-bottom: 1px solid #ddd; }
-        input { padding: 6px; width: 80px; }
-        button { padding: 6px 10px; cursor: pointer; }
-        .loading { color: #999; font-style: italic; }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scores · Gibraltar AMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="teacher.css">
 </head>
-
 <body>
 
-<header>
-    <h2>Gibraltar AMS - Teacher Portal</h2>
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMS</span></div>
+    <span class="topbar-label">Teacher Portal</span>
 </header>
 
-<div class="dashboard-layout">
+<div class="shell">
+    <?php renderTeacherSidebar('scores'); ?>
 
-<?php renderTeacherSidebar('scores'); ?>
+    <main class="main">
+        <div class="page-header">
+            <h1>Scores</h1>
+            <p>Enter and update scores for your students.</p>
+        </div>
 
-<div class="content">
+        <section class="section">
+            <div class="section-header">
+                <h2>Select Activity</h2>
+                <p>Choose an activity to review and update scores.</p>
+            </div>
+            <div class="section-body">
+                <div class="form-group">
+                    <label>Activity</label>
+                    <select id="activitySelect" onchange="loadActivityScores()">
+                        <option value="">-- Select Activity --</option>
+                    </select>
+                </div>
+            </div>
+        </section>
 
-<div class="card">
-    <h3>Select Activity</h3>
-    <select id="activitySelect" onchange="loadActivityScores()">
-        <option value="">-- Select Activity --</option>
-    </select>
-</div>
+        <section class="section" id="scoresSection" style="display: none;">
+            <div class="section-header">
+                <h2>Score Entry</h2>
+                <p>Update student scores for the selected activity.</p>
+            </div>
+            <div class="section-body">
+                <p><strong>Max Score:</strong> <span id="maxScore">-</span></p>
 
-<div id="scoresContainer" style="display: none;">
-<div class="card">
-    <h3 id="activityTitle">Score Entry</h3>
-    <p><strong>Max Score:</strong> <span id="maxScore">-</span></p>
+                <form id="scoresForm">
+                    <input type="hidden" id="activityId" name="activity_id">
+                    <input type="hidden" id="maxScoreInput" name="max_score">
 
-    <form id="scoresForm">
-        <input type="hidden" id="activityId" name="activity_id">
-        <input type="hidden" id="maxScoreInput" name="max_score">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Current / Max</th>
+                                    <th>New Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoresTable">
+                                <tr><td colspan="3" class="empty-row">Loading students...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Student</th>
-                    <th>Current / Max</th>
-                    <th>New Score</th>
-                </tr>
-            </thead>
-            <tbody id="scoresTable">
-                <tr><td colspan="3" class="loading">Loading students...</td></tr>
-            </tbody>
-        </table>
-
-        <button type="submit" class="btn">Save Scores</button>
-    </form>
-</div>
-</div>
-
-</div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Save Scores</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
 </div>
 
 <script src="../../api/client.js"></script>
@@ -81,8 +93,6 @@ async function loadActivities() {
             const select = document.getElementById('activitySelect');
             select.innerHTML = '<option value="">-- Select Activity --</option>';
 
-            // For now, we'll load activities for the first class
-            // In a full implementation, you'd select class first, then activities
             if (response.data.length > 0) {
                 const firstClass = response.data[0];
                 const activitiesResponse = await API.activities.listByClass(firstClass.class_id);
@@ -106,7 +116,7 @@ async function loadActivities() {
 async function loadActivityScores() {
     const activityId = document.getElementById('activitySelect').value;
     if (!activityId) {
-        document.getElementById('scoresContainer').style.display = 'none';
+        document.getElementById('scoresSection').style.display = 'none';
         return;
     }
 
@@ -120,17 +130,16 @@ async function loadActivityScores() {
     document.getElementById('maxScore').textContent = maxScore;
 
     try {
-        // Load students and their current scores
         const scoresResponse = await API.activities.getScores(activityId);
         const studentsResponse = await API.teacher.students();
 
         if (scoresResponse.success && studentsResponse.success) {
             renderScoresTable(studentsResponse.data, scoresResponse.data);
-            document.getElementById('scoresContainer').style.display = 'block';
+            document.getElementById('scoresSection').style.display = 'block';
         }
     } catch (error) {
         console.error('Failed to load scores:', error);
-        document.getElementById('scoresTable').innerHTML = '<tr><td colspan="3">Failed to load scores</td></tr>';
+        document.getElementById('scoresTable').innerHTML = '<tr><td colspan="3" class="empty-row">Failed to load scores</td></tr>';
     }
 }
 
@@ -182,7 +191,7 @@ document.getElementById('scoresForm').addEventListener('submit', async (e) => {
     try {
         await API.activities.saveScore(data);
         alert('Scores saved successfully!');
-        loadActivityScores(); // Reload to show updated scores
+        loadActivityScores();
     } catch (error) {
         alert('Failed to save scores: ' + error.message);
     }
@@ -194,8 +203,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Load activities on page load
-loadActivities();
+window.addEventListener('DOMContentLoaded', loadActivities);
 </script>
 
 </body>

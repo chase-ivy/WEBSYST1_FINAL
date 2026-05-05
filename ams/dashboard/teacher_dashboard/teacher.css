@@ -382,6 +382,59 @@ body {
     padding: 24px;
 }
 
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 16px;
+    padding: 18px 24px 0;
+}
+
+.card .card-body {
+    padding: 0 24px 24px;
+}
+
+button,
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--brand);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+button:hover,
+.btn:hover {
+    background: var(--brand-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(78,3,3,.22);
+}
+
+.action-link {
+    color: var(--brand);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 /* ── FORM STYLES ────────────────────────────────────────── */
 .form-grid {
     display: grid;
