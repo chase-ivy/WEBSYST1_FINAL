@@ -5,6 +5,13 @@ use Classes\GeneratePDF;
 
 require_once __DIR__ . '/../../config/config.php';
 
+// if ($_SERVER['REQUEST_METHOD'] !== 'GET' || empty($_GET['student_id'])) {
+//     echo "No student ID provided.";
+//     exit;
+// }
+
+// $student_id = intval($_GET['student_id']);
+
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     echo "No student ID provided.";
     exit;
