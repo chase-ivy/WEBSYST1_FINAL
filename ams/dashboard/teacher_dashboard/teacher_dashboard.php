@@ -31,7 +31,7 @@ $staff = $stmt->fetch();
     <h2>Gibraltar AMS - Teacher Portal</h2>
 </header>
 
-<div class="container">
+<div class="dashboard-layout">
 <?php renderTeacherSidebar('dashboard'); ?>
 
     <div class="content">
