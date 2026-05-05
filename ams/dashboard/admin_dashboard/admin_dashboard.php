@@ -13,8 +13,21 @@ $staffList = getStaffList($pdo);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Dashboard · Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="crud.css" rel="stylesheet">
-    
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        body {
+        font-family: 'DM Sans', sans-serif;
+        background-image: url('hallway.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        background-color: #2a1a1a; /* fallback if image fails to load */
+        color: var(--text);
+        min-height: 100vh;
+        font-size: 14px;
+        line-height: 1.5;
+        }
+    </style>
 </head>
 <body>
 
@@ -147,7 +160,7 @@ $staffList = getStaffList($pdo);
     </main>
 </div>
 
-<script src="../api/client.js"></script>
+<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
 <script>
     function getRoleBadgeClass(role) {
         const map = { admin: 'badge-admin', teacher: 'badge-teacher', staff: 'badge-staff' };
