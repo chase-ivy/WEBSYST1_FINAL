@@ -966,7 +966,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 <div class="card-foot">
                     <button type="button" class="btn btn-ghost"   onclick="goTo(2)">← Back</button>
                     <span class="step-count">Step 3 of 5</span>
-                    <button type="button" class="btn btn-primary" onclick="goTo(4)">Medical →</button>
+                    <button type="button" class="btn btn-primary" onclick="goTo(4)"> Next: Medical →</button>
                 </div>
 
             </div><!-- /.card -->
@@ -1091,7 +1091,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 <div class="card-foot">
                     <button type="button" class="btn btn-ghost"  onclick="goTo(3)">← Back</button>
                     <span class="step-count">Step 4 of 5</span>
-                    <button type="button" class="btn btn-primary" onclick="goTo(5)">Submit →</button>
+                    <button type="button" class="btn btn-primary" onclick="goTo(5)">Next: Agreement →</button>
                 </div>
 
             </div>
