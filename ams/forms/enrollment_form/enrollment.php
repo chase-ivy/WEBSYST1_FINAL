@@ -439,7 +439,7 @@ footer strong { color: rgba(255,255,255,.8); }
             <img src="../../style/logo.png" alt="Logo">
             <span>Gibraltar Elementary School</span>
         </div>
-        <a href="../../login/login.php/">← Back to Home</a>
+        <a href="../../dashboard/teacher_dashboard/teacher_dashboard.php">← Back to Dashboard</a>
     </div>
 
     <!-- PROGRESS STEPPER -->

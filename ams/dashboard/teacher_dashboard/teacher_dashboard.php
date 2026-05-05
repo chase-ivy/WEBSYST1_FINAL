@@ -134,26 +134,47 @@ $staff = $stmt->fetch(PDO::FETCH_ASSOC);
     </main>
 </div>
 
-<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
+<script src="../../api/client.js"></script>
 <script>
     async function loadDashboard() {
+        if (typeof API === 'undefined') {
+            console.error('API client is not loaded.');
+            return;
+        }
+
         try {
-            const response = await API.call('teacher', 'dashboard');
-            if (response.success) {
-                const data = response.data;
-                document.getElementById('student-count').textContent = data.total_students || 0;
-                document.getElementById('class-count').textContent = (data.classes || []).length;
-                document.getElementById('subject-count').textContent = (data.subjects || []).length;
-                loadClasses(data.classes || []);
+            const response = typeof API.teacher?.dashboard === 'function'
+                ? await API.teacher.dashboard()
+                : await API.call('teacher', 'dashboard');
+
+            if (!response || !response.success) {
+                console.error('Teacher dashboard failed:', response);
+                showDashboardError('Unable to load dashboard data.');
+                return;
             }
+
+            const data = response.data || {};
+            const classes = Array.isArray(data.classes) ? data.classes : [];
+            const subjects = Array.isArray(data.subjects) ? data.subjects : [];
+
+            document.getElementById('student-count').textContent = data.total_students ?? 0;
+            document.getElementById('class-count').textContent = classes.length;
+            document.getElementById('subject-count').textContent = subjects.length;
+            loadClasses(classes);
         } catch (error) {
             console.error('Failed to load dashboard:', error);
+            showDashboardError('Unable to load dashboard. See console for details.');
         }
+    }
+
+    function showDashboardError(message) {
+        const tbody = document.getElementById('classes-tbody');
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="5">${message}</td></tr>`;
     }
 
     function loadClasses(classes) {
         const tbody = document.getElementById('classes-tbody');
-        if (classes.length === 0) {
+        if (!Array.isArray(classes) || classes.length === 0) {
             tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No classes assigned.</td></tr>';
             return;
         }
@@ -170,6 +191,7 @@ $staff = $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     document.addEventListener('DOMContentLoaded', loadDashboard);
+    window.addEventListener('focus', loadDashboard);
 </script>
 
 </body>

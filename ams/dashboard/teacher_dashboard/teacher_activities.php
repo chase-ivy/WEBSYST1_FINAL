@@ -245,8 +245,6 @@ window.addEventListener('DOMContentLoaded', loadClasses);
     return div.innerHTML;
 }
 
-/* ================= INIT ================= */
-loadClasses();
 </script>
 
 </body>

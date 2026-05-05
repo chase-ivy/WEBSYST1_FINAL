@@ -134,7 +134,7 @@ async function updateSubject() {
     const name = document.getElementById('edit_name').value;
 
     try {
-        const response = await API.subjects.update({ subject_id, name });
+        const response = await API.subjects.update(subject_id, { name });
         if (response.success) {
             loadSubjects();
         } else {
@@ -150,7 +150,7 @@ async function deleteSubject(id) {
     if (!confirm('Delete this subject?')) return;
 
     try {
-        const response = await API.subjects.delete({ subject_id: id });
+        const response = await API.subjects.delete(id);
         if (response.success) {
             loadSubjects();
         } else {
