@@ -136,7 +136,7 @@ try {
     ]);
 
     $family_history_id = $pdo->lastInsertId();
-/
+
     $med_state7 = $pdo0->prepare('INSERT INTO student_family_history (family_history_id, family_condition_type_id, description) VALUES (?, ?, ?)');
     $med_state7->execute([
         $family_history_id,

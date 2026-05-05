@@ -95,6 +95,16 @@ unset($_SESSION['login_error']);
         --radius-lg:    14px;
         --radius-xl:    20px;
         --transition:   180ms ease;
+
+        /* validation colors — username only */
+        --valid-border: #16a34a;
+        --valid-bg:     #f0fdf4;
+        --valid-ring:   rgba(22, 163, 74, 0.12);
+        --invalid-border: #dc2626;
+        --invalid-bg:   #fef2f2;
+        --invalid-ring: rgba(220, 38, 38, 0.10);
+        --focus-border: #2563eb;
+        --focus-ring:   rgba(37, 99, 235, 0.12);
     }
 
     *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
@@ -104,7 +114,6 @@ unset($_SESSION['login_error']);
         color: var(--text);
         min-height: 100vh;
         display: flex;
-        
     }
 
     /* ── LEFT PANEL ─────────────────────────────────────────── */
@@ -114,17 +123,14 @@ unset($_SESSION['login_error']);
         min-height: 100vh;
         overflow: hidden;
     }
-
     .left::before {
-    content: "";
-    position: absolute;
-    top: 0; 
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('https://images.unsplash.com/photo-1635424239131-32dc44986b56?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;
-    filter: blur(3px); 
-}
+        content: "";
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: url('https://images.unsplash.com/photo-1635424239131-32dc44986b56?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;
+        filter: blur(3px);
+    }
     .left::after {
         content: '';
         position: absolute;
@@ -197,40 +203,20 @@ unset($_SESSION['login_error']);
         padding: 40px 24px;
         background: var(--canvas);
         border: 1px solid rgba(0, 0, 0, 1);
-    
-        
     }
     .box {
         width: 100%;
-        max-width: 420px;
+        max-width: 500px;
         background: var(--surface);
         border: 1px solid rgba(0, 0, 0, 1);
         border-radius: var(--radius-xl);
-        padding: 30px 35px;
+        padding: 40px 38px;
         box-shadow: var(--shadow-md);
         animation: up .45s both;
     }
     @keyframes up {
         from { opacity:0; transform:translateY(14px); }
         to   { opacity:1; transform:none; }
-    }
-
-    .box-logo {
-        font-family: 'Syne', sans-serif;
-        font-size: 18px;
-        font-weight: 800;
-        letter-spacing: 1px;
-        color: var(--text);
-        margin-bottom: 4px;
-    }
-    .box-logo span { color: var(--brand-dark); }
-    .box-sub-logo {
-        font-size: 11px;
-        color: var(--muted);
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        font-weight: 500;
-        margin-bottom: 28px;
     }
     .box h2 {
         font-family: 'Syne', sans-serif;
@@ -239,10 +225,121 @@ unset($_SESSION['login_error']);
         margin-bottom: 4px;
     }
     .box .sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
-
     .divider { height: 1px; background: var(--border); opacity: .6; margin-bottom: 24px; }
 
-    /* ── FIELDS ─────────────────────────────────────────────── */
+    /* ── USERNAME FIELD — floating label + validation (NEW) ─── */
+    .username-field {
+        position: relative;
+        margin-bottom: 10px;
+    }
+    .username-field input {
+        width: 100%;
+        padding: 18px 35px 10px 15px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-md);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        outline: none;
+        background: #fafaf8;
+        color: var(--text);
+        height: 47px;
+        transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .username-field label {
+        position: absolute;
+        left: 13px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 500;
+        pointer-events: none;
+        transition: top 160ms ease, transform 160ms ease, font-size 160ms ease,
+                    color 160ms ease, letter-spacing 160ms ease;
+    }
+    /* float up when focused or filled */
+    .username-field input:focus ~ label,
+    .username-field input:not(:placeholder-shown) ~ label {
+        top: 10px;
+        transform: translateY(0);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+    }
+    /* focus — blue */
+   .username-field input:focus {
+    border-color: var(--border);   /* keep default border */
+    background: #fafaf8;           /* same as normal */
+    box-shadow: none;              /* remove glow */
+}
+    .username-field input:focus ~ label { color: var(--focus-border); }
+    /* valid — green */
+    .username-field.is-valid input {
+        border-color: var(--valid-border);
+        background: var(--valid-bg);
+        box-shadow: 0 0 0 3px var(--valid-ring);
+    }
+    .username-field.is-valid label { color: var(--valid-border); }
+    /* invalid — red */
+    .username-field.is-invalid input {
+        border-color: var(--invalid-border);
+        background: var(--invalid-bg);
+        box-shadow: 0 0 0 3px var(--invalid-ring);
+    }
+    .username-field.is-invalid label { color: var(--invalid-border); }
+
+    /* status icons */
+    .username-field .field-icon {
+        position: absolute;
+        right: 13px;
+        top: 50%;
+        transform: translateY(-50%) scale(0.6);
+        width: 16px; height: 16px;
+        pointer-events: none;
+        opacity: 0;
+        fill: none;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .username-field.is-valid   .icon-valid   { opacity:1; transform: translateY(-50%) scale(1); stroke: var(--valid-border);   }
+    .username-field.is-invalid .icon-invalid { opacity:1; transform: translateY(-50%) scale(1); stroke: var(--invalid-border); }
+
+    /* Email / LRN type badge */
+    .type-badge {
+        position: absolute;
+        right: 13px;
+        top: 8px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        padding: 2px 7px;
+        border-radius: 9999px;
+        opacity: 0;
+        transform: scale(0.85);
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .type-badge.show       { opacity: 1; transform: scale(1); }
+    .type-badge.email-type { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .type-badge.lrn-type   { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+    /* hint below username */
+    .username-hint {
+        font-size: 11px;
+        margin-top: 5px;
+        padding-left: 2px;
+        min-height: 16px;
+        opacity: 0;
+        transition: color 180ms ease, opacity 180ms ease;
+    }
+    .username-field.is-valid   .username-hint { color: var(--valid-border);   opacity: 1; }
+    .username-field.is-invalid .username-hint { color: var(--invalid-border); opacity: 1; }
+
+    /* ── PASSWORD FIELD — original, untouched ───────────────── */
     .form-group { margin-bottom: 16px; }
     .form-group label {
         display: block;
@@ -270,8 +367,6 @@ unset($_SESSION['login_error']);
         background: var(--surface);
         box-shadow: 0 0 0 3px rgba(78,3,3,.10);
     }
-
-    /* password wrapper */
     .password-input { position: relative; }
     .password-input input { padding-right: 42px; }
     .toggle-password {
@@ -291,7 +386,7 @@ unset($_SESSION['login_error']);
     .toggle-password:hover { color: var(--brand); }
     .toggle-password svg { width: 16px; height: 16px; }
 
-    /* ── BUTTON ─────────────────────────────────────────────── */
+    /* ── LOGIN BUTTON ───────────────────────────────────────── */
     .login-btn {
         width: 100%;
         padding: 12px;
@@ -305,6 +400,11 @@ unset($_SESSION['login_error']);
         cursor: pointer;
         margin-top: 6px;
         transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    }
+    /* lights up bright red when username is valid */
+    .login-btn.ready {
+        background: var(--brand-dark);
+        box-shadow: 0 4px 14px rgba(236,63,63,.35);
     }
     .login-btn:hover {
         background: var(--brand-dark);
@@ -350,8 +450,6 @@ unset($_SESSION['login_error']);
 <!-- RIGHT PANEL -->
 <div class="right">
     <div class="box">
-
-
         <h2>Sign In</h2>
         <p class="sub">Enter your credentials to continue</p>
         <div class="divider"></div>
@@ -368,11 +466,33 @@ unset($_SESSION['login_error']);
         <?php endif; ?>
 
         <form method="POST">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Enter your email or LRN" required>
+
+            <!-- USERNAME — floating label + real-time validation (NEW) -->
+            <div class="username-field" id="field-username">
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    placeholder=" "
+                    autocomplete="username"
+                    required
+                >
+                <label for="username">Email or LRN</label>
+
+                <span class="type-badge" id="type-badge"></span>
+
+                <svg class="field-icon icon-valid" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <svg class="field-icon icon-invalid" viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+
+                <p class="username-hint" id="username-hint"></p>
             </div>
 
+            <!-- PASSWORD — 100% original -->
             <div class="form-group">
                 <label for="password">Password</label>
                 <div class="password-input">
@@ -386,13 +506,13 @@ unset($_SESSION['login_error']);
                 </div>
             </div>
 
-            <button type="submit" name="login" class="login-btn">Log In</button>
+            <button type="submit" name="login" class="login-btn" id="login-btn">Log In</button>
         </form>
-
     </div>
 </div>
 
 <script>
+    /* ── PASSWORD TOGGLE — original, untouched ── */
     function togglePassword() {
         const input = document.getElementById("password");
         const button = document.querySelector(".toggle-password");
@@ -402,6 +522,59 @@ unset($_SESSION['login_error']);
             ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>'
             : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
     }
+
+    /* ── USERNAME VALIDATION — new ── */
+    (function () {
+        const input    = document.getElementById('username');
+        const fieldEl  = document.getElementById('field-username');
+        const hintEl   = document.getElementById('username-hint');
+        const badgeEl  = document.getElementById('type-badge');
+        const loginBtn = document.getElementById('login-btn');
+
+        function setState(state, hint) {
+            fieldEl.classList.remove('is-valid', 'is-invalid');
+            if (state) fieldEl.classList.add(state);
+            hintEl.textContent = hint || '';
+            loginBtn.classList.toggle('ready', state === 'is-valid');
+        }
+
+        function validate(val) {
+            if (!val) {
+                setState('', '');
+                badgeEl.className = 'type-badge';
+                return;
+            }
+
+            const hasAt   = val.includes('@');
+            const allNums = /^\d+$/.test(val);
+
+            if (hasAt) {
+                badgeEl.textContent = 'Email';
+                badgeEl.className   = 'type-badge email-type show';
+                const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+                setState(ok ? 'is-valid' : 'is-invalid', ok ? 'Looks good!' : 'Enter a valid email address');
+
+            } else if (allNums) {
+                badgeEl.textContent = 'LRN';
+                badgeEl.className   = 'type-badge lrn-type show';
+                if (val.length === 12) {
+                    setState('is-valid', '12-digit LRN verified');
+                } else {
+                    const left = 12 - val.length;
+                    setState('is-invalid', left > 0
+                        ? `${left} more digit${left === 1 ? '' : 's'} needed`
+                        : 'LRN must be exactly 12 digits');
+                }
+
+            } else {
+                badgeEl.className = 'type-badge';
+                setState('is-invalid', 'Enter a valid email or 12-digit LRN');
+            }
+        }
+
+        input.addEventListener('input', () => validate(input.value.trim()));
+        input.addEventListener('blur',  () => { if (input.value.trim()) validate(input.value.trim()); });
+    })();
 </script>
 </body>
 </html>
