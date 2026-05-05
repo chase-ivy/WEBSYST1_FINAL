@@ -4,7 +4,7 @@
  */
 
 const API = {
-    BASE: '/websys/ams/api',
+    BASE: '/WEBSYST1_FINAL/ams/api',
     
     // Helper function for API calls
     call: async function(endpoint, action, data = null, method = 'GET') {
