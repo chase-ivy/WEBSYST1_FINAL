@@ -966,7 +966,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 <div class="card-foot">
                     <button type="button" class="btn btn-ghost"   onclick="goTo(2)">← Back</button>
                     <span class="step-count">Step 3 of 5</span>
-                    <button type="button" class="btn btn-primary" onclick="goTo(5)">Medical →</button>
+                    <button type="button" class="btn btn-primary" onclick="goTo(4)">Medical →</button>
                 </div>
 
             </div><!-- /.card -->
@@ -976,7 +976,7 @@ footer strong { color: rgba(255,255,255,.8); }
         <!-- ═══════════════════════════════════════════════════════
              STEP 4 — MEDICAL INFORMATION   
         ════════════════════════════════════════════════════════ -->
-        <!-- <div class="panel" id="panel-4">
+        <div class="panel" id="panel-4">
             <div class="card">
 
                 <div class="card-head">
@@ -986,7 +986,7 @@ footer strong { color: rgba(255,255,255,.8); }
 
                 <div class="card-body">
 
-                <div class="card-body"> -->
+                <div class="card-body">
 
                 <!-- Parent Info -->
 
@@ -1001,7 +1001,7 @@ footer strong { color: rgba(255,255,255,.8); }
                     <input type="text" name="contact">
                 </div> -->
 
-                <!-- <hr><br>
+                <hr><br>
                 <strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
 
                 <div class="field">
@@ -1018,7 +1018,7 @@ footer strong { color: rgba(255,255,255,.8); }
 
                 <div class="field">
                 <label>2. Does your child/ward have any ongoing medical condition?</label>
-					<select id="Q2" onchange="showQ2()" name="has_medical_condition" style="width:100%;">
+					<select id="Q2" onchange="showQ2()" name="has_med_condition" style="width:100%;">
 						<option hidden selected>Choose</option>
 						<option value="1">Yes</option>
 						<option value="0">No</option>
@@ -1095,7 +1095,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 </div>
 
             </div>
-        </div> -->
+        </div>
 
 
                <!-- ═══════════════════════════════════════════════════════
@@ -1144,7 +1144,7 @@ footer strong { color: rgba(255,255,255,.8); }
                 </div><!-- /.card-body -->
 
                 <div class="card-foot">
-                    <button type="button" class="btn btn-ghost"  onclick="goTo(3)">← Back</button>
+                    <button type="button" class="btn btn-ghost"  onclick="goTo(4)">← Back</button>
                     <span class="step-count">Step 5 of 5</span>
                     <button type="submit" name="next" class="btn btn-primary">Submit Enrollment</button>
                 </div>
