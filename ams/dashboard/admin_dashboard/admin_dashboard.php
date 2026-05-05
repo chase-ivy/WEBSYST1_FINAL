@@ -7,109 +7,186 @@ require_special_admin();
 $staffList = getStaffList($pdo);
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="../../style/style.css">
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard · Gibraltar AMES</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="crud.css" rel="stylesheet">
+    
 </head>
 <body>
-<header>
-    <h2>Gibraltar AMS Admin</h2>
-    <a class="action-link" href="../../login/logout.php">Logout</a>
+
+<!-- ── TOPBAR ──────────────────────────────────────────────── -->
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMES</span></div>
+    <span class="topbar-label">Admin Panel</span>
 </header>
-<div class="container">
+
+<!-- ── LAYOUT SHELL ────────────────────────────────────────── -->
+<div class="shell">
+
+    <!-- SIDEBAR — rendered by renderAdminSidebar() -->
     <?php renderAdminSidebar('dashboard'); ?>
-    <main class="content">
-        <div class="card">
-            <div class="card-header">
-                <h3>Overview</h3>
-            </div>
-            <div class="grid">
-                <div class="card">
-                    <h3>Total Staff</h3>
-                    <p><span id="staff-count"><?php echo count($staffList); ?></span> active accounts</p>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Dashboard</h1>
+            <p>Welcome back. Here's an overview of your system.</p>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
-                <div class="card">
-                    <h3>Create Staff</h3>
-                    <p>Open the create page to add new staff or student accounts.</p>
-                    <a class="btn" href="admin_create.php">Go to Create</a>
-                </div>
-                <div class="card">
-                    <h3>Update Staff</h3>
-                    <p>Review and edit existing staff records.</p>
-                    <a class="btn" href="admin_update.php">Go to Update</a>
-                </div>
-                <div class="card">
-                    <h3>Delete Staff</h3>
-                    <p>Remove accounts that should no longer have access.</p>
-                    <a class="btn" href="admin_delete.php">Go to Delete</a>
+                <div>
+                    <div class="stat-value" id="staff-count"><?php echo count($staffList); ?></div>
+                    <div class="stat-label">Active Staff Accounts</div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h3>Recent Staff Accounts</h3>
+        <!-- Action Cards -->
+        <div class="action-grid">
+            <div class="action-card">
+                <div class="action-card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                </div>
+                <h3>Create Staff</h3>
+                <p>Add new staff or student accounts to the system.</p>
+                <a class="btn-action" href="admin_create.php">
+                    Go to Create
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
             </div>
-            <div id="staff-error" class="alert alert-error" style="display:none;"></div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Created At</th>
-                    </tr>
-                </thead>
-                <tbody id="staff-tbody">
-                    <?php if (empty($staffList)): ?>
-                        <tr><td colspan="4">No staff accounts found.</td></tr>
-                    <?php else: ?>
-                        <?php foreach ($staffList as $staff): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo htmlspecialchars($staff['role'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo htmlspecialchars($staff['created_at'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+
+            <div class="action-card">
+                <div class="action-card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+                <h3>Update Staff</h3>
+                <p>Review and edit existing staff records and permissions.</p>
+                <a class="btn-action" href="admin_update.php">
+                    Go to Update
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+
+            <div class="action-card">
+                <div class="action-card-icon">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </div>
+                <h3>Delete Staff</h3>
+                <p>Remove accounts that should no longer have access.</p>
+                <a class="btn-action" href="admin_delete.php">
+                    Go to Delete
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
         </div>
+
+        <!-- Staff Table -->
+        <div class="section">
+            <div class="section-header">
+                <h2>Recent Staff Accounts</h2>
+                <p>All registered staff and their roles</p>
+            </div>
+
+            <div id="staff-error" class="alert-error" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span id="staff-error-msg"></span>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staff-tbody">
+                        <?php if (empty($staffList)): ?>
+                            <tr class="empty-row">
+                                <td colspan="4">No staff accounts found.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($staffList as $staff): ?>
+                                <?php
+                                    $role = htmlspecialchars($staff['role'] ?? 'unassigned', ENT_QUOTES, 'UTF-8');
+                                    $badgeClass = match(strtolower($role)) {
+                                        'admin'   => 'badge-admin',
+                                        'teacher' => 'badge-teacher',
+                                        'staff'   => 'badge-staff',
+                                        default   => 'badge-default',
+                                    };
+                                ?>
+                                <tr>
+                                    <td class="td-primary"><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><span class="badge <?php echo $badgeClass; ?>"><?php echo $role; ?></span></td>
+                                    <td><?php echo htmlspecialchars($staff['created_at'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </main>
 </div>
-<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
+
+<script src="../api/client.js"></script>
 <script>
+    function getRoleBadgeClass(role) {
+        const map = { admin: 'badge-admin', teacher: 'badge-teacher', staff: 'badge-staff' };
+        return map[(role || '').toLowerCase()] || 'badge-default';
+    }
+
     async function loadAdminStaff() {
         try {
             const response = await API.users.list();
-            const rows = response.data || [];
-            const tbody = document.getElementById('staff-tbody');
-            const count = document.getElementById('staff-count');
+            const rows     = response.data || [];
+            const tbody    = document.getElementById('staff-tbody');
+            const count    = document.getElementById('staff-count');
 
             count.textContent = rows.length;
 
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4">No staff accounts found.</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = rows.map(staff => `
-                <tr>
-                    <td>${staff.username}</td>
-                    <td>${staff.email}</td>
-                    <td>${staff.role || 'Unassigned'}</td>
-                    <td>${staff.created_at}</td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = rows.map(staff => {
+                const role       = staff.role || 'Unassigned';
+                const badgeClass = getRoleBadgeClass(role);
+                return `
+                    <tr>
+                        <td class="td-primary">${staff.username}</td>
+                        <td>${staff.email}</td>
+                        <td><span class="badge ${badgeClass}">${role}</span></td>
+                        <td>${staff.created_at}</td>
+                    </tr>
+                `;
+            }).join('');
+
         } catch (error) {
-            const errorContainer = document.getElementById('staff-error');
-            if (errorContainer) {
-                errorContainer.textContent = error.message || 'Unable to load staff list.';
-                errorContainer.style.display = 'block';
+            const container = document.getElementById('staff-error');
+            const msg       = document.getElementById('staff-error-msg');
+            if (container && msg) {
+                msg.textContent         = error.message || 'Unable to load staff list.';
+                container.style.display = 'flex';
             }
             console.error('Unable to load staff list', error);
         }
@@ -117,5 +194,6 @@ $staffList = getStaffList($pdo);
 
     document.addEventListener('DOMContentLoaded', loadAdminStaff);
 </script>
+
 </body>
 </html>

@@ -24,56 +24,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="../../style/style.css">
+    <link rel="stylesheet" type="text/css" href="crud.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <title>Create Staff | Admin Dashboard</title>
 </head>
 <body>
-<header>
-    <h2>Gibraltar AMS Admin</h2>
-    <a class="action-link" href="../../login/logout.php">Logout</a>
+
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMS</span> Admin</div>
 </header>
-<div class="container">
-    <?php renderAdminSidebar('create'); ?>
-    <main class="content">
-        <div class="card">
-            <div class="card-header">
-                <h3>Create New Staff Member</h3>
-            </div>
-            <div id="create-alert"></div>
-            <?php if ($success !== ''): ?>
-                <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
-            <?php endif; ?>
-            <?php if (!empty($errors)): ?>
-                <div class="alert alert-error">
-                    <ul>
-                        <?php foreach ($errors as $error): ?>
-                            <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            <?php endif; ?>
-            <form id="create-staff-form" method="post">
-                <label for="username">Username</label>
-                <input id="username" type="text" name="username" required>
-                <label for="email">Email</label>
-                <input id="email" type="email" name="email" required>
-                <label for="role">Role</label>
-                <select id="role" name="role" required>
-                    <option value="">Select role</option>
-                    <option value="staff">Staff</option>
-                    <option value="student">Student</option>
-                </select>
-                <label for="password">Password</label>
-                <input id="password" type="password" name="password" required>
-                <button type="submit" class="btn">Create Staff</button>
-            </form>
+
+<div class="shell">
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <h3>Management</h3>
+            <p>Admin Controls</p>
         </div>
+        <?php renderAdminSidebar('create'); ?>
+    </nav>
+
+    <main class="main">
+        <div class="page-header">
+            <h1>Staff Registration</h1>
+            <p>Add a new staff or student account to the system</p>
+        </div>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Account Details</h2>
+            </div>
+            
+            <div class="section-body">
+                <div id="create-alert"></div>
+                
+                <?php if ($success !== ''): ?>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
+                <?php endif; ?>
+
+                <?php if (!empty($errors)): ?>
+                    <div class="alert alert-error">
+                        <ul>
+                            <?php foreach ($errors as $error): ?>
+                                <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <form id="create-staff-form" method="post" class="form-grid">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input id="username" type="text" name="username" placeholder="e.g. jdoe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input id="email" type="email" name="email" placeholder="email@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="role">Assigned Role</label>
+                        <div class="select-wrap">
+                            <select id="role" name="role" required>
+                                <option value="" disabled selected>Select a role...</option>
+                                <option value="staff">Staff</option>
+                                <option value="student">Student</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input id="password" type="password" name="password" placeholder="Min. 6 characters" required>
+                    </div>
+
+                    <div class="form-actions full">
+                        <button type="submit" class="btn-primary">Register Account</button>
+                        <button type="reset" class="btn-secondary">Clear Form</button>
+                    </div>
+                </form>
+            </div>
+        </section>
     </main>
 </div>
+
 <script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
 <script>
     const createForm = document.getElementById('create-staff-form');
@@ -85,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     createForm.addEventListener('submit', async event => {
         event.preventDefault();
-        createAlert.innerHTML = '';
+        createAlert.innerHTML = ''; // Clear previous messages
 
         const data = {
             username: document.getElementById('username').value.trim(),
@@ -94,21 +132,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             password: document.getElementById('password').value.trim()
         };
 
-        if (data.role === '') {
-            showCreateMessage('Role is required.', true);
+        if (!data.role) {
+            showCreateMessage('Please select a valid role.', true);
             return;
         }
 
         try {
+            // Using the client.js API helper
             const response = await API.users.create(data);
             if (response.success) {
-                showCreateMessage(response.message || 'Staff created successfully.');
+                showCreateMessage(response.message || 'Staff member successfully created.');
                 createForm.reset();
+                // Optional: redirect to update page to see the new entry
+                // setTimeout(() => window.location.href = 'admin_update.php', 2000);
             } else {
-                showCreateMessage((response.errors || []).join('<br>') || 'Could not create staff.', true);
+                const errorText = Array.isArray(response.errors) ? response.errors.join('<br>') : 'Registration failed.';
+                showCreateMessage(errorText, true);
             }
         } catch (error) {
-            showCreateMessage(error.message || 'Create request failed.', true);
+            showCreateMessage(error.message || 'An unexpected error occurred during creation.', true);
         }
     });
 </script>

@@ -32,112 +32,158 @@ if (!empty($_GET['edit_id'])) {
 $staffList = getStaffList($pdo);
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="../../style/style.css">
+    <link rel="stylesheet" type="text/css" href="crud.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <title>Update Staff | Admin Dashboard</title>
 </head>
 <body>
-<header>
-    <h2>Gibraltar AMS Admin</h2>
-    <a class="action-link" href="../../login/logout.php">Logout</a>
+
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMS</span> Admin</div>
+    
 </header>
-<div class="container">
-    <?php renderAdminSidebar('update'); ?>
-    <main class="content">
-        <div class="card">
-            <div class="card-header">
-                <h3><?php echo $editStaff ? 'Update Staff Member' : 'Select a Staff Record'; ?></h3>
-            </div>
-            <?php if ($success !== ''): ?>
-                <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
-            <?php endif; ?>
-            <?php if (!empty($errors)): ?>
-                <div class="alert alert-error">
-                    <ul>
-                        <?php foreach ($errors as $error): ?>
-                            <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            <?php endif; ?>
-            <?php if ($editStaff): ?>
-                <form id="update-staff-form" method="post">
-                    <input type="hidden" id="user_id" name="user_id" value="<?php echo htmlspecialchars($editStaff['user_id'], ENT_QUOTES, 'UTF-8'); ?>">
-                    <label for="username">Username</label>
-                    <input id="username" type="text" name="username" value="<?php echo htmlspecialchars($editStaff['username'], ENT_QUOTES, 'UTF-8'); ?>" required>
-                    <label for="email">Email</label>
-                    <input id="email" type="email" name="email" value="<?php echo htmlspecialchars($editStaff['email'], ENT_QUOTES, 'UTF-8'); ?>" required>
-                    <label for="role">Role</label>
-                    <select id="role" name="role" required>
-                        <option value="staff" <?php echo $editStaff['role'] === 'staff' ? 'selected' : ''; ?>>Staff</option>
-                        <option value="student" <?php echo $editStaff['role'] === 'student' ? 'selected' : ''; ?>>Student</option>
-                    </select>
-                    <label for="password">New Password <small>(leave blank to keep current)</small></label>
-                    <input id="password" type="password" name="password">
-                    <button type="submit" class="btn">Save Changes</button>
-                </form>
-            <?php else: ?>
-                <div id="update-section">
-                    <p>Select a staff member below to edit their details.</p>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="update-staff-tbody">
-                            <?php if (empty($staffList)): ?>
-                                <tr><td colspan="4">No staff accounts found.</td></tr>
-                            <?php else: ?>
-                                <?php foreach ($staffList as $staff): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td><?php echo htmlspecialchars($staff['role'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td><button type="button" class="action-link edit-user" data-user-id="<?php echo htmlspecialchars($staff['user_id'], ENT_QUOTES, 'UTF-8'); ?>">Edit</button></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <div id="update-form-wrapper" style="display:none; margin-top:1rem;">
-                    <form id="update-staff-form" method="post">
-                        <input type="hidden" id="user_id" name="user_id" value="">
-                        <label for="username">Username</label>
-                        <input id="username" type="text" name="username" required>
-                        <label for="email">Email</label>
-                        <input id="email" type="email" name="email" required>
-                        <label for="role">Role</label>
-                        <select id="role" name="role" required>
-                            <option value="staff">Staff</option>
-                            <option value="student">Student</option>
-                        </select>
-                        <label for="password">New Password <small>(leave blank to keep current)</small></label>
-                        <input id="password" type="password" name="password">
-                        <button type="submit" class="btn">Save Changes</button>
-                    </form>
-                </div>
-            <?php endif; ?>
+
+<div class="shell">
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <h3>Management</h3>
+            <p>Admin Controls</p>
         </div>
+        <?php renderAdminSidebar('update'); ?>
+    </nav>
+
+    <main class="main">
+        <div class="page-header">
+            <h1>Staff Records</h1>
+            <p><?php echo $editStaff ? 'Update details for ' . htmlspecialchars($editStaff['username']) : 'Manage and update system users'; ?></p>
+        </div>
+
+        <section class="section">
+            <div class="section-header">
+                <h2><?php echo $editStaff ? 'Edit Member' : 'Staff List'; ?></h2>
+            </div>
+            
+            <div class="section-body">
+                <?php if ($success !== ''): ?>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
+                <?php endif; ?>
+
+                <?php if (!empty($errors)): ?>
+                    <div class="alert alert-error">
+                        <ul>
+                            <?php foreach ($errors as $error): ?>
+                                <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <div id="js-alert-container"></div>
+
+                <?php if ($editStaff): ?>
+                    <!-- Form for Direct PHP POST Update -->
+                    <form method="post" class="form-grid">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($editStaff['user_id']); ?>">
+                        
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input id="username" type="text" name="username" value="<?php echo htmlspecialchars($editStaff['username']); ?>" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input id="email" type="email" name="email" value="<?php echo htmlspecialchars($editStaff['email']); ?>" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="role">User Role</label>
+                            <div class="select-wrap">
+                                <select id="role" name="role" required>
+                                    <option value="staff" <?php echo $editStaff['role'] === 'staff' ? 'selected' : ''; ?>>Staff</option>
+                                    <option value="student" <?php echo $editStaff['role'] === 'student' ? 'selected' : ''; ?>>Student</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">New Password <small>(leave blank to keep current)</small></label>
+                            <input id="password" type="password" name="password">
+                        </div>
+
+                        <div class="form-actions full">
+                            <button type="submit" class="btn-primary">Update Member</button>
+                            <a href="admin_update.php" class="btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                <?php else: ?>
+                    <!-- Default List View -->
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="update-staff-tbody">
+                                <!-- Data handled by client.js -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Hidden Edit Panel for AJAX Updates -->
+                    <div id="update-form-wrapper" class="edit-panel" style="display:none;">
+                        <div class="edit-panel-header">
+                            <h3>Edit Staff Member</h3>
+                        </div>
+                        <form id="update-staff-form" class="form-grid">
+                            <input type="hidden" id="user_id" name="user_id">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input id="js-username" type="text" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input id="js-email" type="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Role</label>
+                                <div class="select-wrap">
+                                    <select id="js-role">
+                                        <option value="staff">Staff</option>
+                                        <option value="student">Student</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input id="js-password" type="password">
+                            </div>
+                            <div class="form-actions full">
+                                <button type="submit" class="btn-primary">Save Changes</button>
+                                <button type="button" class="btn-secondary" onclick="location.reload()">Back to List</button>
+                            </div>
+                        </form>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
     </main>
 </div>
+
 <script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
 <script>
-    const updateAlert = document.createElement('div');
-    const updateContainer = document.querySelector('.card');
-    if (updateContainer) {
-        updateContainer.insertBefore(updateAlert, updateContainer.firstChild);
-    }
+    const alertContainer = document.getElementById('js-alert-container');
 
     function showUpdateMessage(message, isError = false) {
-        updateAlert.innerHTML = `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${message}</div>`;
+        alertContainer.innerHTML = `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${message}</div>`;
     }
 
     async function loadStaffForUpdate() {
@@ -148,23 +194,23 @@ $staffList = getStaffList($pdo);
             if (!tbody) return;
 
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4">No staff accounts found.</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>';
                 return;
             }
 
             tbody.innerHTML = rows.map(staff => `
                 <tr>
-                    <td>${staff.username}</td>
+                    <td class="td-primary">${staff.username}</td>
                     <td>${staff.email}</td>
-                    <td>${staff.role}</td>
-                    <td><button type="button" class="action-link edit-user" data-user-id="${staff.user_id}">Edit</button></td>
+                    <td><span class="badge badge-staff">${staff.role}</span></td>
+                    <td class="td-actions">
+                        <button type="button" class="btn-edit edit-user" data-user-id="${staff.user_id}">Edit</button>
+                    </td>
                 </tr>
             `).join('');
 
             document.querySelectorAll('.edit-user').forEach(button => {
-                button.addEventListener('click', () => {
-                    fillUpdateForm(button.dataset.userId);
-                });
+                button.addEventListener('click', () => fillUpdateForm(button.dataset.userId));
             });
         } catch (error) {
             console.error('Unable to load staff list', error);
@@ -175,22 +221,17 @@ $staffList = getStaffList($pdo);
         try {
             const response = await API.users.get(userId);
             const staff = response.data;
-            if (!staff) {
-                showUpdateMessage('Staff member not found.', true);
-                return;
-            }
+            if (!staff) return;
+
+            document.querySelector('.table-wrap').style.display = 'none';
             document.getElementById('user_id').value = staff.user_id;
-            document.getElementById('username').value = staff.username;
-            document.getElementById('email').value = staff.email;
-            document.getElementById('role').value = staff.role;
-            document.getElementById('password').value = '';
-            const wrapper = document.getElementById('update-form-wrapper');
-            if (wrapper) {
-                wrapper.style.display = 'block';
-            }
-            showUpdateMessage('Loaded staff member for editing. Update values and save.', false);
+            document.getElementById('js-username').value = staff.username;
+            document.getElementById('js-email').value = staff.email;
+            document.getElementById('js-role').value = staff.role;
+            
+            document.getElementById('update-form-wrapper').style.display = 'block';
         } catch (error) {
-            showUpdateMessage(error.message || 'Failed to load staff data.', true);
+            showUpdateMessage('Failed to load staff data.', true);
         }
     }
 
@@ -198,26 +239,23 @@ $staffList = getStaffList($pdo);
     if (updateForm) {
         updateForm.addEventListener('submit', async event => {
             event.preventDefault();
-            updateAlert.innerHTML = '';
             const data = {
-                user_id: parseInt(document.getElementById('user_id').value, 10),
-                username: document.getElementById('username').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                role: document.getElementById('role').value,
-                password: document.getElementById('password').value.trim()
+                user_id: parseInt(document.getElementById('user_id').value),
+                username: document.getElementById('js-username').value.trim(),
+                email: document.getElementById('js-email').value.trim(),
+                role: document.getElementById('js-role').value,
+                password: document.getElementById('js-password').value.trim()
             };
             try {
                 const response = await API.users.update(data.user_id, data);
                 if (response.success) {
-                    showUpdateMessage(response.message || 'Staff updated successfully.');
-                    if (document.getElementById('update-staff-tbody')) {
-                        loadStaffForUpdate();
-                    }
+                    showUpdateMessage('Staff updated successfully.');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    showUpdateMessage((response.errors || []).join('<br>') || 'Update failed.', true);
+                    showUpdateMessage(response.errors?.join(', ') || 'Update failed.', true);
                 }
             } catch (error) {
-                showUpdateMessage(error.message || 'Update request failed.', true);
+                showUpdateMessage('Update request failed.', true);
             }
         });
     }
