@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../login/auth.php';
 require_role(['student']);
 require_once __DIR__ . '/student_nav.php';
@@ -18,7 +18,7 @@ require_once __DIR__ . '/student_nav.php';
     <img src="../../style/logo.png" alt="Logo" class="logo">
 </header>
 
-<div class="container">
+<div class="dashboard-layout">
     <?php renderStudentSidebar('dashboard'); ?>
 
     <div class="content">

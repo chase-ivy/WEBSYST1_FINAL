@@ -36,7 +36,7 @@ $staffList = getStaffList($pdo);
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="crud.css">
+    <link rel="stylesheet" type="text/css" href="admin.css">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <title>Update Staff | Admin Dashboard</title>
 </head>

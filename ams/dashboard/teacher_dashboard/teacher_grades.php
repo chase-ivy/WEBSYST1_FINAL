@@ -50,7 +50,7 @@ require_role(['staff']);
     <h2>Gibraltar AMS - Grade Management</h2>
 </header>
 
-<div class="container">
+<div class="dashboard-layout">
 <?php renderTeacherSidebar('grades'); ?>
 
 <div class="content">

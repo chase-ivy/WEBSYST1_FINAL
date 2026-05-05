@@ -46,7 +46,7 @@ require_role(['staff']);
     <h2>Gibraltar AMS - Attendance Recording</h2>
 </header>
 
-<div class="container">
+<div class="dashboard-layout">
 
 <?php renderTeacherSidebar('attendance'); ?>
 

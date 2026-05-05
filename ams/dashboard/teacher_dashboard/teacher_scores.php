@@ -26,7 +26,7 @@ require_role(['staff']);
     <h2>Gibraltar AMS - Teacher Portal</h2>
 </header>
 
-<div class="container">
+<div class="dashboard-layout">
 
 <?php renderTeacherSidebar('scores'); ?>
 

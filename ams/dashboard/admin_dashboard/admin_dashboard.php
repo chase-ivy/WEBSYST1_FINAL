@@ -13,8 +13,7 @@ $staffList = getStaffList($pdo);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Dashboard · Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="crud.css" rel="stylesheet">
-    
+    <link rel="stylesheet" href="admin.css">
 </head>
 <body>
 
@@ -147,7 +146,7 @@ $staffList = getStaffList($pdo);
     </main>
 </div>
 
-<script src="../api/client.js"></script>
+<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
 <script>
     function getRoleBadgeClass(role) {
         const map = { admin: 'badge-admin', teacher: 'badge-teacher', staff: 'badge-staff' };
