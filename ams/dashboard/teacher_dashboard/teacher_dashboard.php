@@ -1,197 +1,217 @@
 <?php
 require_once __DIR__ . '/../../login/auth.php';
 require_once __DIR__ . '/teacher_nav.php';
+require_once __DIR__ . '/../../config/config.php';
 
 require_role(['staff']);
 
 $teacher_id = $_SESSION['user_id'];
 
-require_once __DIR__ . '/../../config/config.php';
-
 $stmt = $pdo->prepare("SELECT username FROM users WHERE user_id = ?");
 $stmt->execute([$teacher_id]);
 $staff = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Teacher Dashboard · Gibraltar AMS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="teacher.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Teacher Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="teacher.css">
 </head>
+
 <body>
 
+<!-- TOPBAR -->
 <header class="topbar">
     <div class="topbar-brand">Gibraltar <span>AMS</span></div>
     <span class="topbar-label">Teacher Portal</span>
 </header>
 
+<!-- LAYOUT -->
 <div class="shell">
-    <?php renderTeacherSidebar('dashboard'); ?>
 
-    <main class="main">
-        <div class="page-header">
-            <h1>Dashboard</h1>
-            <p>Welcome back, <?php echo htmlspecialchars($staff['username']) ?>. Here's your overview.</p>
-        </div>
+<?php renderTeacherSidebar('dashboard'); ?>
 
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <div>
-                    <div class="stat-value" id="student-count">0</div>
-                    <div class="stat-label">Total Students</div>
-                </div>
+<!-- MAIN -->
+<main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Welcome back, <?= htmlspecialchars($staff['username']) ?>. Here's your overview.</p>
+    </div>
+
+    <!-- STAT GRID (MATCH ADMIN STYLE) -->
+    <div class="stat-grid">
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                </svg>
             </div>
-
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                </div>
-                <div>
-                    <div class="stat-value" id="class-count">0</div>
-                    <div class="stat-label">My Classes</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                </div>
-                <div>
-                    <div class="stat-value" id="subject-count">0</div>
-                    <div class="stat-label">Subjects</div>
-                </div>
+            <div>
+                <div class="stat-value" id="student-count">0</div>
+                <div class="stat-label">Total Students</div>
             </div>
         </div>
 
-        <div class="action-grid">
-            <div class="action-card">
-                <div class="action-card-icon">
-                    <svg viewBox="0 0 24 24"><path d="M3 7h18"/><path d="M7 11l5 5 5-5"/></svg>
-                </div>
-                <h3>View My Classes</h3>
-                <p>Browse the classes assigned to you and review student enrollment details.</p>
-                <a class="btn-action" href="teacher_classes.php">
-                    Open Classes
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </a>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <path d="M16 2v4M8 2v4M3 10h18"/>
+                </svg>
             </div>
-
-            <div class="action-card">
-                <div class="action-card-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                </div>
-                <h3>Enter Scores</h3>
-                <p>Update student scores quickly and keep grades aligned with your current lessons.</p>
-                <a class="btn-action" href="teacher_scores.php">
-                    Enter Scores
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </a>
-            </div>
-
-            <div class="action-card">
-                <div class="action-card-icon">
-                    <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
-                </div>
-                <h3>Take Attendance</h3>
-                <p>Log student attendance for your sessions and keep records current.</p>
-                <a class="btn-action" href="teacher_attendance.php">
-                    Open Attendance
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </a>
+            <div>
+                <div class="stat-value" id="class-count">0</div>
+                <div class="stat-label">My Classes</div>
             </div>
         </div>
 
-        <section class="section">
-            <div class="section-header">
-                <h2>My Classes</h2>
-                <p>Classes you are assigned to teach</p>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
             </div>
-            <div class="section-body">
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Subject</th>
-                                <th>Grade Level</th>
-                                <th>Section</th>
-                                <th>Students</th>
-                                <th>School Year</th>
-                            </tr>
-                        </thead>
-                        <tbody id="classes-tbody">
-                            <tr class="empty-row"><td colspan="5">Loading classes...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div>
+                <div class="stat-value" id="subject-count">0</div>
+                <div class="stat-label">Subjects</div>
             </div>
-        </section>
-    </main>
+        </div>
+
+    </div>
+
+    <!-- ACTION GRID (ALIGNED) -->
+    <div class="action-grid">
+
+        <div class="action-card">
+            <div class="action-card-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 7h18"/>
+                    <path d="M7 11l5 5 5-5"/>
+                </svg>
+            </div>
+            <h3>My Classes</h3>
+            <p>View and manage your assigned classes.</p>
+            <a class="btn-action" href="teacher_classes.php">Open</a>
+        </div>
+
+        <div class="action-card">
+            <div class="action-card-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 5v14"/>
+                    <path d="M5 12h14"/>
+                </svg>
+            </div>
+            <h3>Scores</h3>
+            <p>Update student grades and assessments.</p>
+            <a class="btn-action" href="teacher_scores.php">Open</a>
+        </div>
+
+        <div class="action-card">
+            <div class="action-card-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 7h16"/>
+                    <path d="M4 12h16"/>
+                    <path d="M4 17h16"/>
+                </svg>
+            </div>
+            <h3>Attendance</h3>
+            <p>Track student attendance records.</p>
+            <a class="btn-action" href="teacher_attendance.php">Open</a>
+        </div>
+
+    </div>
+
+    <!-- SECTION TABLE -->
+    <section class="section">
+
+        <div class="section-header">
+            <h2>My Classes</h2>
+            <p>Classes assigned to you</p>
+        </div>
+
+        <div class="section-body">
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Grade</th>
+                            <th>Section</th>
+                            <th>Students</th>
+                            <th>School Year</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="classes-tbody">
+                        <tr class="empty-row">
+                            <td colspan="5">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
 </div>
 
 <script src="../../api/client.js"></script>
+
 <script>
-    async function loadDashboard() {
-        if (typeof API === 'undefined') {
-            console.error('API client is not loaded.');
+async function loadDashboard() {
+    try {
+        const res = await API.teacher.dashboard();
+
+        if (!res.success) throw new Error('API failed');
+
+        const data = res.data;
+
+        // stats
+        document.getElementById('student-count').textContent = data.total_students || 0;
+        document.getElementById('class-count').textContent = data.class_count || 0;
+        document.getElementById('subject-count').textContent = data.subject_count || 0;
+
+        // table
+        const tbody = document.getElementById('classes-tbody');
+
+        if (!data.classes || data.classes.length === 0) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No classes found</td></tr>`;
             return;
         }
 
-        try {
-            const response = typeof API.teacher?.dashboard === 'function'
-                ? await API.teacher.dashboard()
-                : await API.call('teacher', 'dashboard');
-
-            if (!response || !response.success) {
-                console.error('Teacher dashboard failed:', response);
-                showDashboardError('Unable to load dashboard data.');
-                return;
-            }
-
-            const data = response.data || {};
-            const classes = Array.isArray(data.classes) ? data.classes : [];
-            const subjects = Array.isArray(data.subjects) ? data.subjects : [];
-
-            document.getElementById('student-count').textContent = data.total_students ?? 0;
-            document.getElementById('class-count').textContent = classes.length;
-            document.getElementById('subject-count').textContent = subjects.length;
-            loadClasses(classes);
-        } catch (error) {
-            console.error('Failed to load dashboard:', error);
-            showDashboardError('Unable to load dashboard. See console for details.');
-        }
-    }
-
-    function showDashboardError(message) {
-        const tbody = document.getElementById('classes-tbody');
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="5">${message}</td></tr>`;
-    }
-
-    function loadClasses(classes) {
-        const tbody = document.getElementById('classes-tbody');
-        if (!Array.isArray(classes) || classes.length === 0) {
-            tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No classes assigned.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = classes.map(cls => `
+        tbody.innerHTML = data.classes.map(c => `
             <tr>
-                <td class="td-primary">${cls.subject_name || 'N/A'}</td>
-                <td>${cls.grade_level || 'N/A'}</td>
-                <td>${cls.section || 'N/A'}</td>
-                <td>${cls.student_count || 0}</td>
-                <td>${cls.school_year || 'N/A'}</td>
+                <td class="td-primary">${c.subject_name}</td>
+                <td>${c.grade_level}</td>
+                <td>${c.section}</td>
+                <td>${c.student_count}</td>
+                <td>${c.school_year}</td>
             </tr>
         `).join('');
-    }
 
-    document.addEventListener('DOMContentLoaded', loadDashboard);
-    window.addEventListener('focus', loadDashboard);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+
+// optional auto refresh (matches admin behavior style)
+setInterval(loadDashboard, 30000);
 </script>
 
 </body>

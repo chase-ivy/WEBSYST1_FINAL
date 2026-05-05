@@ -546,7 +546,7 @@ button:hover,
     background: #fef2f2;
     border-color: #dc2626;
 }
-}
+
 
 .btn-primary {
     display: inline-flex;
@@ -843,7 +843,7 @@ select:focus-visible {
     gap: 16px;
     margin-bottom: 16px;
 }
-}
+
 
 /* ── RESPONSIVE ─────────────────────────────────────────── */
 @media (max-width: 860px) {
