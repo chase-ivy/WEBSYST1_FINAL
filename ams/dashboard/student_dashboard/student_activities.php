@@ -3,90 +3,118 @@ require_once __DIR__ . '/../../login/auth.php';
 require_role(['student']);
 require_once __DIR__ . '/student_nav.php';
 ?>
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Activities</title>
-    <link rel="stylesheet" type="text/css" href="../../style/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Activities · Gibraltar AMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="student.css">
 </head>
-
 <body>
-<header>
-    <h2>Gibraltar AMS - Student Portal</h2>
-    <img src="../../style/logo.png" alt="Logo" class="logo">
+
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMS</span></div>
+    <span class="topbar-label">Student Portal</span>
 </header>
 
-<div class="dashboard-layout">
+<div class="shell">
     <?php renderStudentSidebar('activities'); ?>
 
-    <div class="content">
-        <div id="error" class="error-message" style="display:none;"></div>
-        <div class="card" id="activities-card">
-            <h3>Activities</h3>
-            <p>Loading activities...</p>
+    <main class="main">
+        <div class="page-header">
+            <h1>Activities</h1>
+            <p>View your activity scores and participation.</p>
         </div>
-    </div>
+
+        <div id="error" class="alert alert-error" style="display:none;"></div>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Activity Scores</h2>
+                <p>Your performance in class activities and assignments.</p>
+            </div>
+            <div class="section-body">
+                <div id="activities-content">
+                    <div class="empty-row">Loading activities...</div>
+                </div>
+            </div>
+        </section>
+    </main>
 </div>
 
 <script src="../../api/client.js"></script>
 <script>
-    function formatDate(value) {
-        if (!value) return '-';
-        const date = new Date(value);
-        return date.toLocaleDateString();
-    }
+function formatDate(value) {
+    if (!value) return '-';
+    const date = new Date(value);
+    return date.toLocaleDateString();
+}
 
-    async function loadActivities() {
-        const errorBox = document.getElementById('error');
-        const card = document.getElementById('activities-card');
+async function loadActivities() {
+    const errorBox = document.getElementById('error');
+    const content = document.getElementById('activities-content');
 
-        try {
-            const response = await API.studentDashboard.get();
-            const activities = response.data.activities || [];
+    try {
+        const response = await API.studentDashboard.get();
+        const activities = response.data.activities || [];
 
-            if (activities.length === 0) {
-                card.innerHTML = '<h3>Activities</h3><p>No activities found.</p>';
-                return;
-            }
-
-            card.innerHTML = `
-                <h3>Activities</h3>
-                <table>
-                    <tr>
-                        <th>Subject</th>
-                        <th>Activity</th>
-                        <th>Date</th>
-                        <th>Score</th>
-                        <th>Max Score</th>
-                        <th>Status</th>
-                    </tr>
-                    ${activities.map(a => {
-                        const score = Number(a.score || 0);
-                        const maxScore = Number(a.max_score || 0);
-                        const status = maxScore > 0 && score >= maxScore * 0.75 ? 'Good' : 'Needs Improvement';
-                        return `
-                            <tr>
-                                <td>${a.subject_name}</td>
-                                <td>${a.activity_name}</td>
-                                <td>${formatDate(a.activity_date)}</td>
-                                <td>${score}</td>
-                                <td>${maxScore}</td>
-                                <td>${status}</td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </table>
-            `;
-        } catch (error) {
-            console.error(error);
-            errorBox.style.display = 'block';
-            errorBox.textContent = 'Unable to load activities. Please refresh the page.';
-            card.innerHTML = '<h3>Activities</h3><p>Unable to load activities at this time.</p>';
+        if (activities.length === 0) {
+            content.innerHTML = '<div class="empty-row">No activities found.</div>';
+            return;
         }
-    }
 
-    document.addEventListener('DOMContentLoaded', loadActivities);
+        content.innerHTML = `
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Activity</th>
+                            <th>Date</th>
+                            <th>Score</th>
+                            <th>Max Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${activities.map(a => {
+                            const score = Number(a.score || 0);
+                            const maxScore = Number(a.max_score || 0);
+                            const status = maxScore > 0 && score >= maxScore * 0.75 ? 'Good' : 'Needs Improvement';
+                            return `
+                                <tr>
+                                    <td class="td-primary">${escapeHtml(a.subject_name)}</td>
+                                    <td>${escapeHtml(a.activity_name)}</td>
+                                    <td>${formatDate(a.activity_date)}</td>
+                                    <td>${score}</td>
+                                    <td>${maxScore}</td>
+                                    <td>${status}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } catch (error) {
+        console.error(error);
+        errorBox.style.display = 'block';
+        errorBox.textContent = 'Unable to load activities. Please refresh the page.';
+        content.innerHTML = '<div class="empty-row">Unable to load activities at this time.</div>';
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', loadActivities);
 </script>
+
 </body>
 </html>

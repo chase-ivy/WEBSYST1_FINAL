@@ -8,14 +8,23 @@ function renderStudentSidebar(string $active = 'dashboard'): void {
         'classrecords' => ['Class Record', 'student_classrecords.php'],
         'logout' => ['Logout', '../../login/logout.php'],
     ];
-    echo '<div class="sidebar">';
 
-    foreach ($items as $key => [$label, $href]) {
-        $activeClass = $active === $key ? ' class="active"' : '';
-        echo '<a href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '"' . $activeClass . '>' .
-             htmlspecialchars($label, ENT_QUOTES, 'UTF-8') .
-             '</a>';
-    }
+    echo '<aside class="sidebar">';
 
+    echo '<div class="sidebar-brand">';
+    echo '<h3>Student Panel</h3>';
+    echo '<p>Gibraltar AMS</p>';
     echo '</div>';
+
+    echo '<nav>';
+    foreach ($items as $key => [$label, $href]) {
+        $activeClass = ($active === $key) ? 'active' : '';
+        echo '<a class="' . $activeClass . '" href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '">';
+        echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+        echo '</a>';
+    }
+    echo '</nav>';
+
+    echo '<a href="../../login/logout.php">Logout</a>';
+    echo '</aside>';
 }
