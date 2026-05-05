@@ -6,9 +6,11 @@ require_role(['staff']);
 
 $teacher_id = $_SESSION['user_id'];
 
+require_once __DIR__ . '/../../config/config.php';
+
 $stmt = $pdo->prepare("SELECT username FROM users WHERE user_id = ?");
 $stmt->execute([$teacher_id]);
-$staff = $stmt->fetch();
+$staff = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
