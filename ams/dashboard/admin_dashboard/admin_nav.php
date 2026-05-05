@@ -5,7 +5,6 @@ function renderAdminSidebar(string $active = 'dashboard'): void {
         'create' => ['Create Staff', 'admin_create.php'],
         'update' => ['Update Staff', 'admin_update.php'],
         'delete' => ['Delete Staff', 'admin_delete.php'],
-        'logout' => ['Logout', '../../login/logout.php'],
     ];
 
     echo '<aside class="sidebar">';
@@ -13,9 +12,15 @@ function renderAdminSidebar(string $active = 'dashboard'): void {
     echo '<h3>Admin Panel</h3>';
     echo '<p>Gibraltar AMS</p>';
     echo '</div>';
+    
+    echo '<nav>';
     foreach ($items as $key => [$label, $href]) {
         $activeClass = $active === $key ? 'active' : '';
         echo '<a class="' . $activeClass . '" href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</a>';
     }
+    echo '</nav>';
+    
+    echo '<a href="../../login/logout.php">Logout</a>';
     echo '</aside>';
 }
+

@@ -23,8 +23,22 @@ $staffList = getStaffList($pdo);
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Link to the correct admin CSS file -->
-    <link rel="stylesheet" type="text/css" href="crud.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="admin.css">
+    <style>
+        body {
+        font-family: 'DM Sans', sans-serif;
+        background-image: url('hallway.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        background-color: #2a1a1a; /* fallback if image fails to load */
+        color: var(--text);
+        min-height: 100vh;
+        font-size: 14px;
+        line-height: 1.5;
+        }
+    </style>
     <title>Delete Staff | Admin Dashboard</title>
 </head>
 <body>
@@ -36,10 +50,7 @@ $staffList = getStaffList($pdo);
 
 <div class="shell">
     <nav class="sidebar">
-        <div class="sidebar-brand">
-            <h3>Management</h3>
-            <p>Admin Controls</p>
-        </div>
+      
         <?php renderAdminSidebar('delete'); ?>
     </nav>
 
