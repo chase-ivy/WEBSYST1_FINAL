@@ -11,7 +11,6 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
         'scores'     => ['Scores', 'teacher_scores.php'],
         'grades'     => ['Grades', 'teacher_grades.php'],
         'attendance' => ['Attendance', 'teacher_attendance.php'],
-        'logout'     => ['Logout', '../../login/login.php'],
     ];
 
     echo '<aside class="sidebar">';
@@ -21,6 +20,7 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
     echo '<p>Gibraltar AMS</p>';
     echo '</div>';
 
+    echo '<nav>';
     foreach ($items as $key => [$label, $href]) {
 
         $activeClass = ($active === $key) ? 'active' : '';
@@ -31,6 +31,8 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
         echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         echo '</a>';
     }
+    echo '</nav>';
 
+    echo '<a href="../../login/logout.php">Logout</a>';
     echo '</aside>';
 }

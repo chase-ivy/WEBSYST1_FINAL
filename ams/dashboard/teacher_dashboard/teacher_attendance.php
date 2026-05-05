@@ -6,108 +6,94 @@ require_role(['staff']);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Attendance Recording - Teacher Dashboard</title>
-    <link rel="stylesheet" href="../../style/style.css">
-
-    <style>
-        .attendance-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-weight: bold; margin-bottom: 4px; font-size: 14px; }
-        .form-group input, .form-group select { 
-            padding: 8px; 
-            border: 1px solid #ddd; 
-            border-radius: 4px; 
-            font-family: inherit;
-        }
-
-        .attendance-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        .attendance-table th, .attendance-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        .attendance-table th { background: #f5f5f5; font-weight: bold; }
-
-        .status-select { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
-
-        .btn-mark-all { background: #2196F3; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin: 8px 4px 8px 0; }
-        .btn-mark-all:hover { background: #0b7dda; }
-
-        .alert { padding: 12px; margin: 12px 0; border-radius: 4px; }
-        .alert-success { background: #d4edda; color: #155724; }
-        .alert-error { background: #f8d7da; color: #721c24; }
-
-        .loading { color: #999; font-style: italic; }
-        .action-link { color: #2196F3; cursor: pointer; text-decoration: underline; }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Attendance · Gibraltar AMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="teacher.css">
 </head>
-
 <body>
 
-<header>
-    <h2>Gibraltar AMS - Attendance Recording</h2>
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMS</span></div>
+    <span class="topbar-label">Teacher Portal</span>
 </header>
 
-<div class="dashboard-layout">
+<div class="shell">
+    <?php renderTeacherSidebar('attendance'); ?>
 
-<?php renderTeacherSidebar('attendance'); ?>
-
-<div class="content">
-
-<div class="card">
-    <h3>Record Attendance</h3>
-
-    <div class="attendance-controls">
-
-        <div class="form-group">
-            <label>Select Class:</label>
-            <select id="classSelect">
-                <option value="">-- Choose a class --</option>
-            </select>
+    <main class="main">
+        <div class="page-header">
+            <h1>Attendance</h1>
+            <p>Record attendance for your classes.</p>
         </div>
 
-        <div class="form-group">
-            <label>Date:</label>
-            <input type="date" id="attendanceDate">
-        </div>
+        <section class="section">
+            <div class="section-header">
+                <h2>Attendance Controls</h2>
+                <p>Select a class and date before saving attendance records.</p>
+            </div>
+            <div class="section-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Class</label>
+                        <select id="classSelect">
+                            <option value="">-- Choose a class --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="attendanceDate">
+                    </div>
+                </div>
 
-        <div style="display:flex; gap:8px; align-items:flex-end;">
-            <button class="btn-mark-all" onclick="markAllPresent()">Mark All Present</button>
-            <button class="btn-mark-all" onclick="markAllAbsent()" style="background:#f44336;">Mark All Absent</button>
-        </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" onclick="markAllPresent()">Mark All Present</button>
+                    <button type="button" class="btn-secondary" onclick="markAllAbsent()">Mark All Absent</button>
+                </div>
 
-    </div>
+                <div id="statusMessage"></div>
+            </div>
+        </section>
 
-    <div id="statusMessage"></div>
-
-    <div id="attendanceContainer" style="display:none;">
-        <table class="attendance-table">
-            <thead>
-                <tr>
-                    <th>Student Name</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="attendanceBody">
-                <tr><td colspan="3" class="loading">Loading...</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-</div>
-
-</div>
+        <section class="section">
+            <div class="section-header">
+                <h2>Class Attendance</h2>
+                <p>Student attendance records for the selected class.</p>
+            </div>
+            <div class="section-body">
+                <div id="attendanceContainer" style="display:none;">
+                    <div class="table-wrap">
+                        <table class="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceBody">
+                                <tr><td colspan="3" class="empty-row">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 </div>
 
 <script src="../../api/client.js"></script>
 <script>
-
 let currentClassId = null;
 let attendanceRecords = [];
 
-/* DEFAULT DATE */
-document.getElementById('attendanceDate').valueAsDate = new Date();
+function showMessage(type, text) {
+    document.getElementById('statusMessage').innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+}
 
-/* LOAD CLASSES */
 async function loadClasses() {
     try {
         const response = await API.teacher.classes();
@@ -115,9 +101,7 @@ async function loadClasses() {
             const select = document.getElementById('classSelect');
             select.innerHTML = '<option value="">-- Choose a class --</option>' +
                 response.data.map(c =>
-                    `<option value="${c.class_id}">
-                        ${c.subject_name} - ${c.grade_level} ${c.section}
-                    </option>`
+                    `<option value="${c.class_id}">${c.subject_name} - ${c.grade_level} ${c.section}</option>`
                 ).join('');
         }
     } catch (error) {
@@ -125,28 +109,6 @@ async function loadClasses() {
     }
 }
 
-/* CLASS CHANGE */
-document.getElementById('classSelect').addEventListener('change', async function () {
-
-    currentClassId = this.value;
-
-    if (!currentClassId) {
-        document.getElementById('attendanceContainer').style.display = 'none';
-        return;
-    }
-
-    document.getElementById('attendanceContainer').style.display = 'block';
-    await loadAttendance();
-});
-
-/* DATE CHANGE */
-document.getElementById('attendanceDate').addEventListener('change', async function () {
-    if (currentClassId) {
-        await loadAttendance();
-    }
-});
-
-/* LOAD ATTENDANCE */
 async function loadAttendance() {
     const date = document.getElementById('attendanceDate').value;
 
@@ -158,16 +120,15 @@ async function loadAttendance() {
         }
     } catch (error) {
         console.error('Failed to load attendance:', error);
+        showMessage('error', 'Failed to load attendance');
     }
 }
 
-/* RENDER TABLE */
 function renderTable() {
-
     const body = document.getElementById('attendanceBody');
 
     if (attendanceRecords.length === 0) {
-        body.innerHTML = `<tr><td colspan="3">No students found</td></tr>`;
+        body.innerHTML = '<tr><td colspan="3" class="empty-row">No students found</td></tr>';
         return;
     }
 
@@ -190,7 +151,6 @@ function renderTable() {
     `).join('');
 }
 
-/* SAVE SINGLE */
 async function save(class_student_id) {
     const status = document.getElementById(`status-${class_student_id}`).value;
     const date = document.getElementById('attendanceDate').value;
@@ -214,55 +174,72 @@ async function save(class_student_id) {
     }
 }
 
-/* MARK ALL PRESENT */
 async function markAllPresent() {
     const date = document.getElementById('attendanceDate').value;
 
-    for (let r of attendanceRecords) {
-        await saveAuto(r.class_student_id, date, 'present');
-    }
+    await Promise.all(attendanceRecords.map(async student => {
+        try {
+            await API.attendance.record({
+                class_student_id: student.class_student_id,
+                date,
+                status: 'present'
+            });
+        } catch (error) {
+            console.error('Failed to mark present:', error);
+        }
+    }));
 
-    showMessage('success', 'All marked present');
+    showMessage('success', 'All students marked present');
     await loadAttendance();
 }
 
-/* MARK ALL ABSENT */
 async function markAllAbsent() {
     const date = document.getElementById('attendanceDate').value;
 
-    for (let r of attendanceRecords) {
-        await saveAuto(r.class_student_id, date, 'absent');
-    }
+    await Promise.all(attendanceRecords.map(async student => {
+        try {
+            await API.attendance.record({
+                class_student_id: student.class_student_id,
+                date,
+                status: 'absent'
+            });
+        } catch (error) {
+            console.error('Failed to mark absent:', error);
+        }
+    }));
 
-    showMessage('success', 'All marked absent');
+    showMessage('success', 'All students marked absent');
     await loadAttendance();
 }
 
-/* AUTO SAVE */
-async function saveAuto(class_student_id, date, status) {
-    try {
-        await API.attendance.record({
-            class_student_id,
-            date,
-            status
-        });
-    } catch (error) {
-        console.error('Failed to record attendance:', error);
-    }
-}
-
-/* MESSAGE */
-function showMessage(type, text) {
+function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text;
-    const msg = div.innerHTML;
-    document.getElementById('statusMessage').innerHTML =
-        `<div class="alert alert-${type}">${msg}</div>`;
+    div.textContent = text || '';
+    return div.innerHTML;
 }
 
-/* INIT */
-loadClasses();
+function handleClassChange() {
+    currentClassId = document.getElementById('classSelect').value;
 
+    if (!currentClassId) {
+        document.getElementById('attendanceContainer').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('attendanceContainer').style.display = 'block';
+    loadAttendance();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('attendanceDate').valueAsDate = new Date();
+    document.getElementById('classSelect').addEventListener('change', handleClassChange);
+    document.getElementById('attendanceDate').addEventListener('change', async () => {
+        if (currentClassId) {
+            await loadAttendance();
+        }
+    });
+    loadClasses();
+});
 </script>
 
 </body>

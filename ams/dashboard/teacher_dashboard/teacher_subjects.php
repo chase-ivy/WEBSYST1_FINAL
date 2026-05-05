@@ -6,87 +6,104 @@ require_role(['staff']);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Subjects</title>
-    <link rel="stylesheet" href="../../style/style.css">
-
-    <style>
-        .card { padding: 15px; margin-bottom: 15px; background: #fff; border-radius: 6px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; border-bottom: 1px solid #ddd; }
-        input { padding: 6px; width: 100%; margin: 5px 0; }
-        button { padding: 6px 10px; cursor: pointer; }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Subjects · Gibraltar AMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="teacher.css">
 </head>
-
 <body>
 
-<header>
-    <h2>Gibraltar AMS - Teacher Portal</h2>
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMS</span></div>
+    <span class="topbar-label">Teacher Portal</span>
 </header>
 
-<div class="dashboard-layout">
+<div class="shell">
+    <?php renderTeacherSidebar('subjects'); ?>
 
-<?php renderTeacherSidebar('subjects'); ?>
+    <main class="main">
+        <div class="page-header">
+            <h1>Subjects</h1>
+            <p>Manage the subjects used in your classes.</p>
+        </div>
 
-<div class="content">
+        <section class="section">
+            <div class="section-header">
+                <h2>Add Subject</h2>
+                <p>Create a new subject for your course list.</p>
+            </div>
+            <div class="section-body">
+                <div class="form-group">
+                    <label>Subject Name</label>
+                    <input type="text" id="newSubject" placeholder="Subject name">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" onclick="createSubject()">Add Subject</button>
+                </div>
+            </div>
+        </section>
 
-    <div class="card">
-        <h3>Add Subject</h3>
+        <section class="section">
+            <div class="section-header">
+                <h2>Subject List</h2>
+                <p>View and manage available subjects.</p>
+            </div>
+            <div class="section-body">
+                <div id="subjectList">Loading...</div>
+            </div>
+        </section>
 
-        <input type="text" id="newSubject" placeholder="Subject name">
-        <button onclick="createSubject()">Add</button>
-    </div>
-
-    <div class="card">
-        <h3>Subjects</h3>
-        <div id="subjectList">Loading...</div>
-    </div>
-
-    <div class="card">
-        <h3>Edit Subject</h3>
-
-        <input type="hidden" id="edit_id">
-        <input type="text" id="edit_name" placeholder="Subject name">
-
-        <button onclick="updateSubject()">Update</button>
-    </div>
-
-</div>
+        <section class="section">
+            <div class="section-header">
+                <h2>Edit Subject</h2>
+                <p>Update the selected subject name.</p>
+            </div>
+            <div class="section-body">
+                <input type="hidden" id="edit_id">
+                <div class="form-group">
+                    <label>Subject Name</label>
+                    <input type="text" id="edit_name" placeholder="Subject name">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" onclick="updateSubject()">Update Subject</button>
+                </div>
+            </div>
+        </section>
+    </main>
 </div>
 
 <script src="../../api/client.js"></script>
 <script>
-
 async function loadSubjects() {
     try {
         const response = await API.subjects.list();
         if (response.success) {
-            let html = '<table>';
-            html += '<tr><th>Name</th><th>Action</th></tr>';
+            let html = '<div class="table-wrap"><table>';
+            html += '<thead><tr><th>Name</th><th>Action</th></tr></thead><tbody>';
 
             response.data.forEach(s => {
                 html += `
                     <tr>
-                        <td>${s.name}</td>
+                        <td class="td-primary">${escapeHtml(s.name)}</td>
                         <td>
-                            <button onclick="editSubject(${s.subject_id}, '${escapeHtml(s.name)}')">Edit</button>
-                            <button onclick="deleteSubject(${s.subject_id})">Delete</button>
+                            <button type="button" class="btn-secondary" onclick="editSubject(${s.subject_id}, '${escapeHtml(s.name)}')">Edit</button>
+                            <button type="button" class="btn-secondary" onclick="deleteSubject(${s.subject_id})">Delete</button>
                         </td>
                     </tr>
                 `;
             });
 
-            html += '</table>';
-
+            html += '</tbody></table></div>';
             document.getElementById('subjectList').innerHTML = html;
         } else {
-            document.getElementById('subjectList').innerHTML = 'Failed to load';
+            document.getElementById('subjectList').innerHTML = 'Failed to load subjects';
         }
     } catch (error) {
         console.error('Failed to load subjects:', error);
-        document.getElementById('subjectList').innerHTML = 'Failed to load';
+        document.getElementById('subjectList').innerHTML = 'Failed to load subjects';
     }
 }
 
@@ -146,12 +163,12 @@ async function deleteSubject(id) {
 }
 
 function escapeHtml(text) {
-    return text.replace(/'/g, "\\'");
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
 }
 
-/* INIT */
-loadSubjects();
-
+window.addEventListener('DOMContentLoaded', loadSubjects);
 </script>
 
 </body>

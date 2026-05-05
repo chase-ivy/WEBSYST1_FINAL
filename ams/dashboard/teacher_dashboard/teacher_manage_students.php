@@ -6,84 +6,87 @@ require_role(['staff']);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Student Management</title>
-    <link rel="stylesheet" href="../../style/style.css">
-
-    <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border-bottom: 1px solid #ddd; }
-        .card { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
-        input, select { padding: 6px; margin: 5px 0; width: 100%; }
-        button { padding: 6px 10px; cursor: pointer; }
-        label { display:block; margin:4px 0; }
-        .loading { color: #999; font-style: italic; }
-        .section { display: none; }
-        .section.active { display: block; }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Students · Gibraltar AMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="teacher.css">
 </head>
-
 <body>
 
-<header>
-    <h2>Gibraltar AMS - Teacher Portal</h2>
+<header class="topbar">
+    <div class="topbar-brand">Gibraltar <span>AMS</span></div>
+    <span class="topbar-label">Teacher Portal</span>
 </header>
 
-<div class="dashboard-layout">
+<div class="shell">
+    <?php renderTeacherSidebar('students'); ?>
 
-<?php renderTeacherSidebar('students'); ?>
-
-<div class="content">
-
-<!-- ================= STUDENTS LIST ================= -->
-<div id="students" class="section active">
-    <div class="card">
-        <h3>My Students</h3>
-        <div id="studentsTable">
-            <div class="loading">Loading students...</div>
+    <main class="main">
+        <div class="page-header">
+            <h1>Students</h1>
+            <p>Manage the students assigned to your classes.</p>
         </div>
-    </div>
-</div>
 
-<!-- ================= EDIT FORM ================= -->
-<div id="editForm" class="section">
-    <div class="card">
-        <h3>Edit Student</h3>
+        <section id="studentsSection" class="section">
+            <div class="section-header">
+                <h2>My Students</h2>
+                <p>View and edit student records for your classes.</p>
+            </div>
+            <div class="section-body">
+                <div id="studentsTable">
+                    <div class="empty-row">Loading students...</div>
+                </div>
+            </div>
+        </section>
 
-        <form id="editStudentForm">
-            <input type="hidden" id="edit_student_id" name="student_id">
-
-            <label>First Name:</label>
-            <input type="text" id="edit_fname" name="first_name" required>
-
-            <label>Last Name:</label>
-            <input type="text" id="edit_lname" name="last_name" required>
-
-            <label>Grade Level:</label>
-            <input type="text" id="edit_grade" name="grade_level" required>
-
-            <label>Sex:</label>
-            <select id="edit_sex" name="sex" required>
-                <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-
-            <button type="submit">Save Changes</button>
-            <button type="button" onclick="showSection('students')">Cancel</button>
-        </form>
-    </div>
-</div>
-
-</div>
+        <section id="editSection" class="section" style="display:none;">
+            <div class="section-header">
+                <h2>Edit Student</h2>
+                <p>Update an existing student record.</p>
+            </div>
+            <div class="section-body">
+                <form id="editStudentForm">
+                    <input type="hidden" id="edit_student_id" name="student_id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="edit_fname" name="first_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="edit_lname" name="last_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Grade Level</label>
+                            <input type="text" id="edit_grade" name="grade_level" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sex</label>
+                            <select id="edit_sex" name="sex" required>
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                        <button type="button" class="btn-secondary" onclick="showSection('studentsSection')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
 </div>
 
 <script src="../../api/client.js"></script>
 <script>
 function showSection(sectionId) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+    document.getElementById(sectionId).style.display = 'block';
 }
 
 async function loadStudents() {
@@ -92,49 +95,38 @@ async function loadStudents() {
         if (response.success) {
             renderStudentsTable(response.data);
         } else {
-            document.getElementById('studentsTable').innerHTML = 'Failed to load students';
+            document.getElementById('studentsTable').innerHTML = '<div class="empty-row">Failed to load students</div>';
         }
     } catch (error) {
         console.error('Failed to load students:', error);
-        document.getElementById('studentsTable').innerHTML = 'Error loading students';
+        document.getElementById('studentsTable').innerHTML = '<div class="empty-row">Error loading students</div>';
     }
 }
 
 function renderStudentsTable(students) {
     if (students.length === 0) {
-        document.getElementById('studentsTable').innerHTML = '<p>No students assigned to your classes.</p>';
+        document.getElementById('studentsTable').innerHTML = '<div class="empty-row">No students assigned to your classes.</div>';
         return;
     }
 
-    let html = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>LRN</th>
-                    <th>Grade</th>
-                    <th>Subject</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+    let html = '<div class="table-wrap"><table>';
+    html += '<thead><tr><th>Name</th><th>LRN</th><th>Grade</th><th>Subject</th><th>Actions</th></tr></thead><tbody>';
 
     students.forEach(student => {
         html += `
             <tr>
-                <td>${escapeHtml(student.first_name + ' ' + student.last_name)}</td>
+                <td class="td-primary">${escapeHtml(student.first_name + ' ' + student.last_name)}</td>
                 <td>${escapeHtml(student.lrn || 'N/A')}</td>
                 <td>${escapeHtml(student.grade_level || 'N/A')}</td>
                 <td>${escapeHtml(student.subject_name || 'N/A')}</td>
                 <td>
-                    <button onclick="editStudent(${student.student_id}, '${escapeHtml(student.first_name)}', '${escapeHtml(student.last_name)}', '${escapeHtml(student.grade_level || '')}', '${escapeHtml(student.sex || '')}')">Edit</button>
+                    <button type="button" class="btn-secondary" onclick="editStudent(${student.student_id}, '${escapeHtml(student.first_name)}', '${escapeHtml(student.last_name)}', '${escapeHtml(student.grade_level || '')}', '${escapeHtml(student.sex || '')}')">Edit</button>
                 </td>
             </tr>
         `;
     });
 
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     document.getElementById('studentsTable').innerHTML = html;
 }
 
@@ -144,7 +136,7 @@ function editStudent(studentId, firstName, lastName, gradeLevel, sex) {
     document.getElementById('edit_lname').value = lastName;
     document.getElementById('edit_grade').value = gradeLevel;
     document.getElementById('edit_sex').value = sex;
-    showSection('editForm');
+    showSection('editSection');
 }
 
 document.getElementById('editStudentForm').addEventListener('submit', async (e) => {
@@ -163,7 +155,7 @@ document.getElementById('editStudentForm').addEventListener('submit', async (e) 
         const response = await API.students.update(data.student_id, data);
         if (response.success) {
             alert('Student updated successfully!');
-            showSection('students');
+            showSection('studentsSection');
             loadStudents();
         } else {
             alert('Failed to update student: ' + (response.errors ? response.errors.join(', ') : 'Unknown error'));
@@ -179,8 +171,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Load students on page load
-loadStudents();
+window.addEventListener('DOMContentLoaded', loadStudents);
 </script>
 
 </body>
