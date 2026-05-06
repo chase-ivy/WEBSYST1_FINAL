@@ -62,10 +62,8 @@ $staffList = getStaffList($pdo);
 </header>
 
 <div class="shell">
-    <nav class="sidebar">
    
         <?php renderAdminSidebar('update'); ?>
-    </nav>
 
     <main class="main">
         <div class="page-header">

@@ -53,9 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </header>
 
 <div class="shell">
-    <nav class="sidebar">
         <?php renderAdminSidebar('create'); ?>
-    </nav>
 
     <main class="main">
         <div class="page-header">
