@@ -95,6 +95,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="form-group">
+                        <label for="role">Assigned Role</label>
+                        <div class="select-wrap">
+                            <select id="role" name="role" required>
+                                <option value="" disabled selected>Select a role...</option>
+                                <option value="staff">Staff</option>
+                                <option value="student">Student</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="password">Password</label>
                         <input id="password" type="password" name="password" placeholder="Min. 6 characters" required>
                     </div>

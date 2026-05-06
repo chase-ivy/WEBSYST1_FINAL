@@ -76,6 +76,19 @@ $staffList = getStaffList($pdo);
                     <div class="stat-label">Total Student Accounts</div>
                 </div>
             </div>
+            <?php 
+                $studentStmt = $pdo->query("SELECT COUNT(*) as total FROM students");
+                $studentCount = $studentStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+            ?>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M18 21H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/><path d="M10 13.5h4"/><path d="M9 9h0"/><path d="M15 9h0"/></svg>
+                </div>
+                <div>
+                    <div class="stat-value" id="student-count"><?php echo $studentCount; ?></div>
+                    <div class="stat-label">Total Student Accounts</div>
+                </div>
+            </div>
         </div>
 
         <!-- Action Cards -->
@@ -85,7 +98,7 @@ $staffList = getStaffList($pdo);
                     <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                 </div>
                 <h3>Create Staff</h3>
-                <p>Add new staff accounts to the system.</p>
+                <p>Add new staff or student accounts to the system.</p>
                 <a class="btn-action" href="admin_create.php">
                     Go to Create
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
