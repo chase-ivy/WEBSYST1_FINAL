@@ -115,6 +115,21 @@ const API = {
         update: async function(classId, data) {
             data.class_id = classId;
             return API.call('classes', 'update', data, 'POST');
+        },
+        delete: async function(classId) {
+            return API.call('classes', 'delete', { class_id: classId }, 'POST');
+        },
+        remove: async function(classId) {
+            return API.call('classes', 'delete', { class_id: classId }, 'POST');
+        },
+        assignStudent: async function(data) {
+            return API.call('classes', 'assign_student', data, 'POST');
+        },
+        getSubjects: async function(classId) {
+            return API.call('classes', 'subjects', { class_id: classId });
+        },
+        unassignSubject: async function(classSubjectId) {
+            return API.call('classes', 'unassign_subject', { class_subject_id: classSubjectId }, 'POST');
         }
     },
     
@@ -187,7 +202,10 @@ const API = {
     // Activities API
     activities: {
         listByClass: async function(classId) {
-            return API.call('activities', 'list', { class_subject_id: classId });
+            return API.call('activities', 'list', { class_id: classId });
+        },
+        listByClassSubject: async function(classSubjectId) {
+            return API.call('activities', 'list', { class_subject_id: classSubjectId });
         },
         create: async function(data) {
             return API.call('activities', 'create', data, 'POST');
@@ -216,6 +234,15 @@ const API = {
         },
         assignSubject: async function(data) {
             return API.call('teacher', 'assign_subject', data, 'POST');
+        },
+        getStudentAccount: async function(studentId) {
+            return API.call('teacher', 'student_account', { student_id: studentId });
+        },
+        updateStudentAccount: async function(data) {
+            return API.call('teacher', 'update_student_account', data, 'POST');
+        },
+        deleteStudent: async function(studentId) {
+            return API.call('teacher', 'delete_student', { student_id: studentId }, 'POST');
         }
     },
     

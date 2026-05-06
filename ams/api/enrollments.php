@@ -17,7 +17,7 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 try {
     if ($action === 'list') {
-        $stmt = $pdo->query('SELECT e.enrollment_id, s.lrn, s.first_name, s.last_name, e.school_year, e.grade_level
+        $stmt = $pdo->query('SELECT e.enrollment_id, s.student_id, s.lrn, s.first_name, s.last_name, e.school_year, e.grade_level
                             FROM enrollments e
                             JOIN students s ON e.student_id = s.student_id
                             ORDER BY e.school_year DESC, e.grade_level, s.last_name, s.first_name');

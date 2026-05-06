@@ -36,16 +36,23 @@ try {
 
         $teacher_id = $_SESSION['user_id'];
 
-        $stmt = $pdo->prepare('
-            SELECT DISTINCT c.class_id, c.school_year, c.grade_level, c.section, s.name AS subject
+        $stmt = $pdo->prepare("
+            SELECT c.class_id,
+                   c.school_year,
+                   c.grade_level,
+                   c.section,
+                   COALESCE(GROUP_CONCAT(DISTINCT s.name ORDER BY s.name SEPARATOR ', '), '') AS subject,
+                   COUNT(DISTINCT cs.class_student_id) AS student_count
             FROM classes c
-            JOIN class_subjects cs ON c.class_id = cs.class_id
-            JOIN subjects s ON cs.subject_id = s.subject_id
-            WHERE cs.teacher_id = ?
-            ORDER BY c.grade_level, c.section, s.name
-        ');
+            LEFT JOIN class_subjects cls ON c.class_id = cls.class_id
+            LEFT JOIN subjects s ON cls.subject_id = s.subject_id
+            LEFT JOIN class_students cs ON c.class_id = cs.class_id
+            WHERE cls.teacher_id = ? OR c.adviser_id = ?
+            GROUP BY c.class_id, c.school_year, c.grade_level, c.section
+            ORDER BY c.grade_level, c.section, c.school_year DESC
+        ");
 
-        $stmt->execute([$teacher_id]);
+        $stmt->execute([$teacher_id, $teacher_id]);
 
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
         exit;
@@ -75,6 +82,7 @@ try {
     elseif ($action === 'create') {
 
         $data = json_decode(file_get_contents('php://input'), true);
+        $teacher_id = $_SESSION['user_id'];
 
         $stmt = $pdo->prepare('
             INSERT INTO classes (school_year, grade_level, section, adviser_id)
@@ -85,10 +93,56 @@ try {
             $data['school_year'] ?? '',
             $data['grade_level'] ?? '',
             $data['section'] ?? null,
-            $data['adviser_id'] ?? null
+            $teacher_id
         ]);
 
         echo json_encode(['success' => true, 'class_id' => $pdo->lastInsertId()]);
+        exit;
+    }
+
+    elseif ($action === 'assign_student') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $class_id = intval($data['class_id'] ?? 0);
+        $student_id = intval($data['student_id'] ?? 0);
+        $teacher_id = $_SESSION['user_id'];
+
+        if ($class_id <= 0 || $student_id <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Invalid class or student selection']);
+            exit;
+        }
+
+        $permission = $pdo->prepare('SELECT 1 FROM classes c
+            LEFT JOIN class_subjects cls ON c.class_id = cls.class_id
+            WHERE c.class_id = ? AND (c.adviser_id = ? OR cls.teacher_id = ?)
+            LIMIT 1');
+        $permission->execute([$class_id, $teacher_id, $teacher_id]);
+
+        if (!$permission->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Forbidden']);
+            exit;
+        }
+
+        $enrollmentStmt = $pdo->prepare('SELECT enrollment_id FROM enrollments WHERE student_id = ? ORDER BY enrollment_id DESC LIMIT 1');
+        $enrollmentStmt->execute([$student_id]);
+        $enrollment = $enrollmentStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (empty($enrollment['enrollment_id'])) {
+            echo json_encode(['success' => false, 'error' => 'Student does not have an enrollment record.']);
+            exit;
+        }
+
+        $check = $pdo->prepare('SELECT COUNT(*) FROM class_students WHERE class_id = ? AND enrollment_id = ?');
+        $check->execute([$class_id, $enrollment['enrollment_id']]);
+        if ($check->fetchColumn() > 0) {
+            echo json_encode(['success' => false, 'error' => 'Student is already assigned to that class.']);
+            exit;
+        }
+
+        $insert = $pdo->prepare('INSERT INTO class_students (class_id, enrollment_id) VALUES (?, ?)');
+        $insert->execute([$class_id, $enrollment['enrollment_id']]);
+
+        echo json_encode(['success' => true, 'message' => 'Student assigned to class successfully.']);
         exit;
     }
 
@@ -97,10 +151,26 @@ try {
 
         $data = json_decode(file_get_contents('php://input'), true);
         $class_id = intval($data['class_id'] ?? 0);
+        $teacher_id = $_SESSION['user_id'];
+
+        $check = $pdo->prepare('
+            SELECT 1
+            FROM classes c
+            LEFT JOIN class_subjects cls ON c.class_id = cls.class_id
+            WHERE c.class_id = ? AND (c.adviser_id = ? OR cls.teacher_id = ?)
+            LIMIT 1
+        ');
+        $check->execute([$class_id, $teacher_id, $teacher_id]);
+
+        if (!$check->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Forbidden']);
+            exit;
+        }
 
         $stmt = $pdo->prepare('
             UPDATE classes 
-            SET school_year = ?, grade_level = ?, section = ?, adviser_id = ?
+            SET school_year = ?, grade_level = ?, section = ?
             WHERE class_id = ?
         ');
 
@@ -108,7 +178,6 @@ try {
             $data['school_year'] ?? '',
             $data['grade_level'] ?? '',
             $data['section'] ?? null,
-            $data['adviser_id'] ?? null,
             $class_id
         ]);
 
@@ -137,6 +206,34 @@ try {
     }
 
         //CREATE ACTIVITY
+    elseif ($action === 'delete') {
+
+        $data = json_decode(file_get_contents('php://input'), true);
+        $class_id = intval($data['class_id'] ?? 0);
+        $teacher_id = $_SESSION['user_id'];
+
+        $check = $pdo->prepare('
+            SELECT 1
+            FROM classes c
+            LEFT JOIN class_subjects cls ON c.class_id = cls.class_id
+            WHERE c.class_id = ? AND (c.adviser_id = ? OR cls.teacher_id = ?)
+            LIMIT 1
+        ');
+        $check->execute([$class_id, $teacher_id, $teacher_id]);
+
+        if (!$check->fetchColumn()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Forbidden']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare('DELETE FROM classes WHERE class_id = ?');
+        $stmt->execute([$class_id]);
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
     elseif ($action === 'create_activity') {
 
         $data = json_decode(file_get_contents('php://input'), true);
@@ -191,6 +288,37 @@ try {
 
         $stmt = $pdo->prepare('DELETE FROM activities WHERE activity_id = ?');
         $stmt->execute([$activity_id]);
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+        //GET CLASS SUBJECTS
+    elseif ($action === 'subjects') {
+
+        $class_id = intval($_GET['class_id'] ?? 0);
+
+        $stmt = $pdo->prepare('
+            SELECT cs.class_subject_id, s.subject_id, s.name AS subject_name
+            FROM class_subjects cs
+            JOIN subjects s ON cs.subject_id = s.subject_id
+            WHERE cs.class_id = ?
+            ORDER BY s.name
+        ');
+
+        $stmt->execute([$class_id]);
+        echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        exit;
+    }
+
+        //UNASSIGN SUBJECT FROM CLASS
+    elseif ($action === 'unassign_subject') {
+
+        $data = json_decode(file_get_contents('php://input'), true);
+        $class_subject_id = intval($data['class_subject_id'] ?? 0);
+
+        $stmt = $pdo->prepare('DELETE FROM class_subjects WHERE class_subject_id = ?');
+        $stmt->execute([$class_subject_id]);
 
         echo json_encode(['success' => true]);
         exit;

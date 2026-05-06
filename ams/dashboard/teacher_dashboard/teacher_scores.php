@@ -32,6 +32,36 @@ require_role(['staff']);
 
         <section class="section">
             <div class="section-header">
+                <h2>Select Class</h2>
+                <p>Choose a class to view activities and scores.</p>
+            </div>
+            <div class="section-body">
+                <div class="form-group">
+                    <label>Class</label>
+                    <select id="classSelect" onchange="onClassChange()">
+                        <option value="">-- Select Class --</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Select Subject</h2>
+                <p>Choose a subject to view its activities.</p>
+            </div>
+            <div class="section-body">
+                <div class="form-group">
+                    <label>Subject</label>
+                    <select id="subjectSelect" onchange="onSubjectChange()">
+                        <option value="">-- Select Subject --</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
                 <h2>Select Activity</h2>
                 <p>Choose an activity to review and update scores.</p>
             </div>
@@ -85,26 +115,109 @@ require_role(['staff']);
 <script>
 let currentActivity = null;
 let maxScore = 0;
+let currentClassId = null;
+let currentClassSubjectId = null;
+let classesMap = {};
+let classSubjectsMap = {};
 
-async function loadActivities() {
+async function loadClasses() {
     try {
         const response = await API.teacher.classes();
+        if (response.success) {
+            const select = document.getElementById('classSelect');
+            select.innerHTML = '<option value="">-- Select Class --</option>';
+            classesMap = {};
+
+            response.data.forEach(c => {
+                classesMap[c.class_id] = c;
+                const option = document.createElement('option');
+                option.value = c.class_id;
+                option.textContent = `${c.subject_name || 'Unassigned'} - Grade ${c.grade_level} ${c.section} (${c.school_year})`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load classes:', error);
+    }
+}
+
+function onClassChange() {
+    currentClassId = document.getElementById('classSelect').value;
+    const subjectSelect = document.getElementById('subjectSelect');
+    const activitySelect = document.getElementById('activitySelect');
+    
+    subjectSelect.innerHTML = '<option value="">-- Select Subject --</option>';
+    activitySelect.innerHTML = '<option value="">-- Select Activity --</option>';
+    document.getElementById('scoresSection').style.display = 'none';
+
+    if (!currentClassId) {
+        return;
+    }
+
+    loadSubjectsForClass(currentClassId);
+}
+
+async function loadSubjectsForClass(classId) {
+    try {
+        const response = await API.classes.getSubjects(classId);
+        if (response.success) {
+            const select = document.getElementById('subjectSelect');
+            select.innerHTML = '<option value="">-- Select Subject --</option>';
+            classSubjectsMap = {};
+
+            response.data.forEach(cs => {
+                classSubjectsMap[cs.class_subject_id] = cs;
+                const option = document.createElement('option');
+                option.value = cs.class_subject_id;
+                option.textContent = cs.subject_name;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load subjects:', error);
+    }
+}
+
+function onSubjectChange() {
+    currentClassSubjectId = document.getElementById('subjectSelect').value;
+    const activitySelect = document.getElementById('activitySelect');
+    
+    activitySelect.innerHTML = '<option value="">-- Select Activity --</option>';
+    document.getElementById('scoresSection').style.display = 'none';
+
+    if (!currentClassSubjectId) {
+        return;
+    }
+
+    loadActivitiesForSubject(currentClassSubjectId);
+}
+
+async function loadActivitiesForSubject(classSubjectId) {
+    try {
+        const response = await API.activities.listByClassSubject(classSubjectId);
         if (response.success) {
             const select = document.getElementById('activitySelect');
             select.innerHTML = '<option value="">-- Select Activity --</option>';
 
-            if (response.data.length > 0) {
-                const firstClass = response.data[0];
-                const activitiesResponse = await API.activities.listByClass(firstClass.class_id);
+            if (response.data.length === 0) {
+                select.innerHTML += '<option value="" disabled>No activities</option>';
+                return;
+            }
 
-                if (activitiesResponse.success) {
-                    activitiesResponse.data.forEach(activity => {
-                        const option = document.createElement('option');
-                        option.value = activity.activity_id;
-                        option.textContent = activity.title;
-                        option.dataset.maxScore = activity.max_score;
-                        select.appendChild(option);
-                    });
+            response.data.forEach(activity => {
+                const option = document.createElement('option');
+                option.value = activity.activity_id;
+                option.textContent = activity.title;
+                option.dataset.maxScore = activity.max_score;
+                select.appendChild(option);
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const requestedActivityId = urlParams.get('activity_id');
+            if (requestedActivityId) {
+                select.value = requestedActivityId;
+                if (select.value) {
+                    loadActivityScores();
                 }
             }
         }
@@ -182,8 +295,9 @@ document.getElementById('scoresForm').addEventListener('submit', async (e) => {
     for (let [key, value] of formData.entries()) {
         if (key.startsWith('score[')) {
             const classStudentId = key.match(/score\[(\d+)\]/)[1];
-            if (value && parseFloat(value) <= maxScore) {
-                data.scores[classStudentId] = parseFloat(value);
+            const numeric = parseFloat(value);
+            if (value !== '' && !isNaN(numeric) && numeric >= 0 && numeric <= maxScore) {
+                data.scores[classStudentId] = numeric;
             }
         }
     }
@@ -193,7 +307,7 @@ document.getElementById('scoresForm').addEventListener('submit', async (e) => {
         alert('Scores saved successfully!');
         loadActivityScores();
     } catch (error) {
-        alert('Failed to save scores: ' + error.message);
+        alert('Failed to save scores: ' + (error.message || 'Please try again'));
     }
 });
 
@@ -203,7 +317,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-window.addEventListener('DOMContentLoaded', loadActivities);
+window.addEventListener('DOMContentLoaded', loadClasses);
 </script>
 
 </body>

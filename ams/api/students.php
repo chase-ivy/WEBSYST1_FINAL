@@ -18,6 +18,12 @@ function fetchOne($pdo, $table, $student_id) {
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 }
 
+function fetchOneBy($pdo, $table, $column, $id) {
+    $stmt = $pdo->prepare("SELECT * FROM $table WHERE $column = ? LIMIT 1");
+    $stmt->execute([$id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+}
+
 function fetchParents($pdo, $student_id) {
     $stmt = $pdo->prepare("SELECT e.enrollment_id FROM enrollments e WHERE e.student_id = ? ORDER BY e.enrollment_id DESC LIMIT 1");
     $stmt->execute([$student_id]);
@@ -184,7 +190,7 @@ try {
         $parents   = fetchParents($pdo, $student_id);
         $returning = [];
         if (!empty($latestEnrollment['enrollment_id'])) {
-            $returning = fetchOne($pdo, 'returning_learners', $latestEnrollment['enrollment_id']);
+            $returning = fetchOneBy($pdo, 'returning_learners', 'enrollment_id', $latestEnrollment['enrollment_id']);
         }
         $disability_ids = fetchDisabilities($pdo, $student_id);
 
@@ -346,6 +352,28 @@ try {
 
             updateDisabilities($pdo, $latest['enrollment_id'], $data['disabilities'] ?? []);
         }
+
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
+    if ($action === 'delete') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $student_id = intval($data['student_id'] ?? 0);
+
+        if ($student_id <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Invalid student ID']);
+            exit;
+        }
+
+        $pdo->beginTransaction();
+        $deleteClassStudents = $pdo->prepare('DELETE FROM class_students WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?)');
+        $deleteClassStudents->execute([$student_id]);
+        $deleteEnrollments = $pdo->prepare('DELETE FROM enrollments WHERE student_id = ?');
+        $deleteEnrollments->execute([$student_id]);
+        $deleteStudent = $pdo->prepare('DELETE FROM students WHERE student_id = ?');
+        $deleteStudent->execute([$student_id]);
+        $pdo->commit();
 
         echo json_encode(['success' => true]);
         exit;

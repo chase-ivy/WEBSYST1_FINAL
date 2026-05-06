@@ -140,6 +140,15 @@ $staff = $stmt->fetch(PDO::FETCH_ASSOC);
             <p>Classes assigned to you</p>
         </div>
 
+        <div id="dashboard-error" class="alert-error" style="display:none; margin-bottom:1rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="dashboard-error-msg"></span>
+        </div>
+
         <div class="section-body">
 
             <div class="table-wrap">
@@ -169,23 +178,32 @@ $staff = $stmt->fetch(PDO::FETCH_ASSOC);
 </main>
 </div>
 
-<script src="../../api/client.js"></script>
+<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
 
 <script>
+function showDashboardError(message) {
+    const container = document.getElementById('dashboard-error');
+    const msg = document.getElementById('dashboard-error-msg');
+    if (container && msg) {
+        msg.textContent = message;
+        container.style.display = 'flex';
+    }
+}
+
 async function loadDashboard() {
     try {
         const res = await API.teacher.dashboard();
 
-        if (!res.success) throw new Error('API failed');
+        if (!res.success || !res.data) {
+            throw new Error(res.error || 'Unable to load dashboard data');
+        }
 
         const data = res.data;
 
-        // stats
-        document.getElementById('student-count').textContent = data.total_students || 0;
-        document.getElementById('class-count').textContent = data.class_count || 0;
-        document.getElementById('subject-count').textContent = data.subject_count || 0;
+        document.getElementById('student-count').textContent = data.total_students ?? 0;
+        document.getElementById('class-count').textContent = data.class_count ?? (data.classes ? data.classes.length : 0);
+        document.getElementById('subject-count').textContent = data.subject_count ?? (data.subjects ? data.subjects.length : 0);
 
-        // table
         const tbody = document.getElementById('classes-tbody');
 
         if (!data.classes || data.classes.length === 0) {
@@ -204,13 +222,12 @@ async function loadDashboard() {
         `).join('');
 
     } catch (err) {
-        console.error(err);
+        showDashboardError(err.message || 'Unable to load dashboard');
+        console.error('Teacher dashboard error:', err);
     }
 }
 
 document.addEventListener('DOMContentLoaded', loadDashboard);
-
-// optional auto refresh (matches admin behavior style)
 setInterval(loadDashboard, 30000);
 </script>
 

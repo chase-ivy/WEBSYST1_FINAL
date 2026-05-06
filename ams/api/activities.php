@@ -18,11 +18,26 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 try {
     if ($action === 'list') {
         $class_subject_id = intval($_GET['class_subject_id'] ?? 0);
-        $stmt = $pdo->prepare('SELECT activity_id, title, description, max_score, due_date
-                              FROM activities
-                              WHERE class_subject_id = ?
-                              ORDER BY due_date DESC');
-        $stmt->execute([$class_subject_id]);
+        $class_id = intval($_GET['class_id'] ?? 0);
+
+        if ($class_subject_id > 0) {
+            $stmt = $pdo->prepare('SELECT activity_id, title, description, max_score, due_date
+                                  FROM activities
+                                  WHERE class_subject_id = ?
+                                  ORDER BY due_date DESC');
+            $stmt->execute([$class_subject_id]);
+        } elseif ($class_id > 0) {
+            $stmt = $pdo->prepare('SELECT a.activity_id, a.title, a.description, a.max_score, a.due_date
+                                  FROM activities a
+                                  JOIN class_subjects cs ON a.class_subject_id = cs.class_subject_id
+                                  WHERE cs.class_id = ?
+                                  ORDER BY a.due_date DESC');
+            $stmt->execute([$class_id]);
+        } else {
+            echo json_encode(['success' => true, 'data' => []]);
+            exit;
+        }
+
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     }
     elseif ($action === 'create') {
@@ -56,21 +71,44 @@ try {
     elseif ($action === 'save_score') {
         $data = json_decode(file_get_contents('php://input'), true);
         $activity_id = intval($data['activity_id'] ?? 0);
-        $class_student_id = intval($data['class_student_id'] ?? 0);
-        $score = floatval($data['score'] ?? 0);
 
-        // Check if score exists
-        $check = $pdo->prepare('SELECT activity_score_id FROM activity_scores WHERE activity_id = ? AND class_student_id = ?');
-        $check->execute([$activity_id, $class_student_id]);
-        $existing = $check->fetch(PDO::FETCH_ASSOC);
+        if (isset($data['scores']) && is_array($data['scores'])) {
+            foreach ($data['scores'] as $class_student_id => $score) {
+                $class_student_id = intval($class_student_id);
+                $score = floatval($score);
+                if ($class_student_id <= 0) {
+                    continue;
+                }
 
-        if ($existing) {
-            $stmt = $pdo->prepare('UPDATE activity_scores SET score = ? WHERE activity_score_id = ?');
-            $stmt->execute([$score, $existing['activity_score_id']]);
+                $check = $pdo->prepare('SELECT activity_score_id FROM activity_scores WHERE activity_id = ? AND class_student_id = ?');
+                $check->execute([$activity_id, $class_student_id]);
+                $existing = $check->fetch(PDO::FETCH_ASSOC);
+
+                if ($existing) {
+                    $stmt = $pdo->prepare('UPDATE activity_scores SET score = ? WHERE activity_score_id = ?');
+                    $stmt->execute([$score, $existing['activity_score_id']]);
+                } else {
+                    $stmt = $pdo->prepare('INSERT INTO activity_scores (activity_id, class_student_id, score) VALUES (?, ?, ?)');
+                    $stmt->execute([$activity_id, $class_student_id, $score]);
+                }
+            }
         } else {
-            $stmt = $pdo->prepare('INSERT INTO activity_scores (activity_id, class_student_id, score) VALUES (?, ?, ?)');
-            $stmt->execute([$activity_id, $class_student_id, $score]);
+            $class_student_id = intval($data['class_student_id'] ?? 0);
+            $score = floatval($data['score'] ?? 0);
+
+            $check = $pdo->prepare('SELECT activity_score_id FROM activity_scores WHERE activity_id = ? AND class_student_id = ?');
+            $check->execute([$activity_id, $class_student_id]);
+            $existing = $check->fetch(PDO::FETCH_ASSOC);
+
+            if ($existing) {
+                $stmt = $pdo->prepare('UPDATE activity_scores SET score = ? WHERE activity_score_id = ?');
+                $stmt->execute([$score, $existing['activity_score_id']]);
+            } else {
+                $stmt = $pdo->prepare('INSERT INTO activity_scores (activity_id, class_student_id, score) VALUES (?, ?, ?)');
+                $stmt->execute([$activity_id, $class_student_id, $score]);
+            }
         }
+
         echo json_encode(['success' => true]);
     }
     else {
