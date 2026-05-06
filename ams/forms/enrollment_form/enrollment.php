@@ -581,7 +581,7 @@ footer strong { color: rgba(255,255,255,.8); }
                     <!-- PSA -->
                     <div class="field">
                         <label>PSA Birth Certificate No. (if available)</label>
-                        <input type="number" name="psa_bcn" placeholder="PSA number">
+                        <input type="text" name="psa_bcn" placeholder="PSA number">
                     </div>
 
                     <!-- Name -->
@@ -986,100 +986,73 @@ footer strong { color: rgba(255,255,255,.8); }
 
                 <div class="card-body">
 
-                <div class="card-body">
+                    <div style="background:var(--brand-light); border:1px solid #b3cce8; border-radius:var(--radius-md); padding:12px 14px; font-size:12px; color:#1560a8; margin-bottom:20px; line-height:1.5;">
+                        <strong>Instructions:</strong> Please select the appropriate responses and provide details where indicated.
+                    </div>
 
-                <!-- Parent Info -->
+                    <div class="field">
+                        <label>1. Does your child/ward have any allergies?</label>
+                        <select id="field" onchange="showField()" name="has_allergies">
+                            <option value="" hidden>Choose</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                        <div id="fieldDetails" style="margin-top:12px;"></div>
+                    </div>
 
-                 <!-- THIS IS NOT INCLUDED IN DB -->
-                <!-- <div class="field">
-                    <label>Parent / Guardian Name</label>
-                    <input type="text" name="parent_name">
-                </div>
+                    <div class="field" style="margin-top:18px;">
+                        <label>2. Does your child/ward have any ongoing medical condition?</label>
+                        <select id="Q2" onchange="showQ2()" name="has_med_condition">
+                            <option value="" hidden>Choose</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                        <div id="q2" style="margin-top:12px;"></div>
+                    </div>
 
-                <div class="field">
-                    <label>Contact Number</label>
-                    <input type="text" name="contact">
-                </div> -->
+                    <div class="field" style="margin-top:18px;">
+                        <label>3. Did your child/ward ever have surgery / hospitalization?</label>
+                        <select id="Q3" onchange="showQ3()" name="has_surgery_hospitalization">
+                            <option value="" hidden>Choose</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                        <div id="q3" style="margin-top:12px;"></div>
+                    </div>
 
-                <hr><br>
-                <strong><p>Instruction: Please put a check (✅) on appropriate items and fill up blanks as indicated.</p></strong>
+                    <div class="field" style="margin-top:18px;">
+                        <label>4. Is your child currently taking treatment / medicines?</label>
+                        <select id="Q4" onchange="showQ4()" name="is_taking_treatment">
+                            <option value="" hidden>Choose</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                        <div id="q4" style="margin-top:12px;"></div>
+                    </div>
 
-                <div class="field">
-                <label>1. Does your child/ward have any allergies?</label>
-					<select id="field" onchange="showField()" name="has_allergies" style="width:100%;">
-						<option hidden selected>Choose</option>
-						<option value="1">Yes</option>
-						<option value="0">No</option>
-					</select>
+                    <div class="field" style="margin-top:18px;">
+                        <label>5. Does your family have a history of medical conditions?</label>
+                        <select id="Q5" onchange="showQ5()" name="family_medical_history">
+                            <option value="" hidden>Choose</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                        <div id="q5" style="margin-top:12px;"></div>
+                    </div>
 
-				<div id="fieldDetails"></div>
-</div>
+                    <div class="field" style="margin-top:18px;">
+                        <label>6. Does your child/ward have exposure to cigarette/vape smoke at home?</label>
+                        <select name="exposed_to_cigarette_vape_smoke">
+                            <option value="" hidden>Choose</option>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
 
-
-                <div class="field">
-                <label>2. Does your child/ward have any ongoing medical condition?</label>
-					<select id="Q2" onchange="showQ2()" name="has_med_condition" style="width:100%;">
-						<option hidden selected>Choose</option>
-						<option value="1">Yes</option>
-						<option value="0">No</option>
-					</select>
-
-				<div id="q2"></div>
-                </div>
-
-
-
-                <div class="field">
-                <label>3. Did your child/ward ever have surgery / hospitalization?</label>
-					<select id="Q3" onchange="showQ3()" name="has_surgery_hospitalization" style="width:100%;">
-						<option hidden selected>Choose</option>
-						<option value="1">Yes</option>
-						<option value="0">No</option>
-					</select>
-
-				<div id="q3"></div>
-                </div>
-
-
-                <div class="field">
-                <label>4. Is your  child currently taking treatment / medicines</label>
-                    <select id="Q4" onchange="showQ4()" name="is_taking_treatment" style="width:100%;">
-						<option hidden selected>Choose</option>
-						<option value="1">Yes</option>
-						<option value="0">No</option>
-					</select>
-
-				<div id="q4"></div>
-</div>
-
-
-                <div class="field">
-                <label>5. Does your family have a history of medical conditions?</label>
-
-                    <select id="Q5" onchange="showQ5()" name="family_medical_history" style="width:100%;">
-                        <option hidden selected>Choose</option>
-                        <option value="1">Yes</option>
-                        <option value="0">No</option>
-                    </select>
-
-                    <div id="q5"></div> 
-                </div>
-
-                <div class="field">
-                <label>6. Does your child/ward have exposure to cigarette/vape smoke at home?</label>
-					<select name="exposed_to_cigarette_vape_smoke" style="width:100%;">
-						<option hidden selected>Choose</option>
-						<option value="1">Yes</option>
-						<option value="0">No</option>
-					</select>
-
-                </div>
-
-
-                <div class="field">
-                <label>7. Other pertinent learner information:</label>
-                <input type="text" name="other_pertinent_information" placeholder="Optional">
-                </div>
+                    <div class="field" style="margin-top:18px;">
+                        <label>7. Other pertinent learner information:</label>
+                        <input type="text" name="other_pertinent_information" placeholder="Optional">
+                    </div>
 
                 </div>
 

@@ -13,136 +13,210 @@ if (!is_logged_in()) {
     exit;
 }
 
+function normalizeCheckboxValue($value): int {
+    return in_array((string)$value, ['1', 'true', 'yes', 'on', 'Yes'], true) ? 1 : 0;
+}
+
+function parseIdsValue($value): array {
+    if (is_array($value)) {
+        return array_values(array_filter(array_map('intval', $value), fn($item) => $item > 0));
+    }
+
+    if ($value === null || $value === '') {
+        return [];
+    }
+
+    return [intval($value)];
+}
+
+function getStringValue($value): ?string {
+    if (is_array($value)) {
+        $parts = array_filter(array_map('trim', $value), fn($item) => $item !== '');
+        $value = implode(', ', $parts);
+    }
+
+    $value = trim((string)($value ?? ''));
+    return $value === '' ? null : $value;
+}
+
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 try {
     if ($action === 'get') {
-        $enrollment_id = intval($_GET['enrollment_id'] ?? 0);
-        $stmt = $pdo->prepare('SELECT m.medical_id, m.enrollment_id, m.exposed_to_cigarette_vape_smoke, m.other_pertinent_information
-                              FROM medical_information m
-                              WHERE m.enrollment_id = ?');
-        $stmt->execute([$enrollment_id]);
-        $medical = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($medical) {
-            // Get medical conditions
-            $cond_stmt = $pdo->prepare('SELECT sc.student_condition_id, ct.name as condition_name, sc.description
-                                        FROM student_conditions sc
-                                        JOIN condition_types ct ON sc.condition_type_id = ct.condition_type_id
-                                        JOIN medical_conditions mc ON mc.condition_group_id = ? 
-                                        WHERE mc.medical_id = ?');
-            $cond_stmt->execute([$medical['medical_id'], $medical['medical_id']]);
-            $medical['conditions'] = $cond_stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Get allergies
-            $allergy_stmt = $pdo->prepare('SELECT sa.student_allergy_id, at.name as allergy_type, sa.description
-                                           FROM student_allergies sa
-                                           JOIN allergy_types at ON sa.allergy_type_id = at.allergy_type_id
-                                           JOIN medical_allergies ma ON ma.allergy_group_id = ? 
-                                           WHERE ma.medical_id = ?');
-            $allergy_stmt->execute([$medical['medical_id'], $medical['medical_id']]);
-            $medical['allergies'] = $allergy_stmt->fetchAll(PDO::FETCH_ASSOC);
+        $enrollmentId = intval($_GET['enrollment_id'] ?? 0);
+        if ($enrollmentId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'enrollment_id is required']);
+            exit;
         }
-        
-        echo json_encode(['success' => true, 'data' => $medical]);
-    }
-    elseif ($action === 'save') {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $enrollment_id = intval($data['enrollment_id'] ?? 0);
-        $exposed = intval($data['exposed_to_cigarette_vape_smoke'] ?? 0);
-        $other_info = $data['other_pertinent_information'] ?? null;
 
-        // Check if medical record exists
+        $stmt = $pdo->prepare('SELECT medical_id, enrollment_id, exposed_to_cigarette_vape_smoke, other_pertinent_information FROM medical_information WHERE enrollment_id = ?');
+        $stmt->execute([$enrollmentId]);
+        $medical = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($medical) {
+            $medical['allergies'] = [];
+            $medical['conditions'] = [];
+            $medical['surgeries'] = [];
+            $medical['treatments'] = [];
+            $medical['family_history'] = [];
+
+            $allergiesStmt = $pdo->prepare('SELECT sa.student_allergy_id, sa.allergy_type_id, at.name AS allergy_type, sa.description FROM medical_allergies ma JOIN student_allergies sa ON ma.allergy_group_id = sa.allergy_group_id JOIN allergy_types at ON sa.allergy_type_id = at.allergy_type_id WHERE ma.medical_id = ?');
+            $allergiesStmt->execute([$medical['medical_id']]);
+            $medical['allergies'] = $allergiesStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $conditionsStmt = $pdo->prepare('SELECT sc.student_condition_id, sc.condition_type_id, ct.name AS condition_name, sc.description FROM medical_conditions mc JOIN student_conditions sc ON mc.condition_group_id = sc.condition_group_id JOIN condition_types ct ON sc.condition_type_id = ct.condition_type_id WHERE mc.medical_id = ?');
+            $conditionsStmt->execute([$medical['medical_id']]);
+            $medical['conditions'] = $conditionsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $surgeriesStmt = $pdo->prepare('SELECT surgery_id, has_surgery, surgery_date, hospital_name, body_part FROM medical_surgeries WHERE medical_id = ?');
+            $surgeriesStmt->execute([$medical['medical_id']]);
+            $medical['surgeries'] = $surgeriesStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $treatmentsStmt = $pdo->prepare('SELECT treatment_id, is_taking_treatment, treatment_medicine, schedule_dosage FROM medical_treatments WHERE medical_id = ?');
+            $treatmentsStmt->execute([$medical['medical_id']]);
+            $medical['treatments'] = $treatmentsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $familyStmt = $pdo->prepare('SELECT fmh.family_history_id, fmh.has_family_history, sfc.student_family_condition_id, sfc.family_condition_type_id, fct.name AS condition_name, sfc.description FROM family_medical_history fmh LEFT JOIN student_family_conditions sfc ON fmh.family_history_id = sfc.family_history_id LEFT JOIN family_condition_types fct ON sfc.family_condition_type_id = fct.family_condition_type_id WHERE fmh.medical_id = ?');
+            $familyStmt->execute([$medical['medical_id']]);
+            $familyRows = $familyStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($familyRows)) {
+                $family = [
+                    'family_history_id' => $familyRows[0]['family_history_id'],
+                    'has_family_history' => $familyRows[0]['has_family_history'],
+                    'conditions' => []
+                ];
+
+                foreach ($familyRows as $row) {
+                    if (!empty($row['student_family_condition_id'])) {
+                        $family['conditions'][] = [
+                            'student_family_condition_id' => $row['student_family_condition_id'],
+                            'family_condition_type_id' => $row['family_condition_type_id'],
+                            'condition_name' => $row['condition_name'],
+                            'description' => $row['description']
+                        ];
+                    }
+                }
+
+                $medical['family_history'] = $family;
+            }
+        }
+
+        echo json_encode(['success' => true, 'data' => $medical]);
+        exit;
+    }
+
+    if ($action === 'save') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid request data']);
+            exit;
+        }
+
+        $enrollmentId = intval($data['enrollment_id'] ?? 0);
+        if ($enrollmentId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'enrollment_id is required']);
+            exit;
+        }
+
+        $exposedToSmoke = normalizeCheckboxValue($data['exposed_to_cigarette_vape_smoke'] ?? 0);
+        $otherPertinentInformation = getStringValue($data['other_pertinent_information'] ?? null);
+        $hasAllergies = normalizeCheckboxValue($data['has_allergies'] ?? 0);
+        $allergyTypeIds = parseIdsValue($data['medicine_allergy'] ?? []);
+        $allergyDescription = getStringValue($data['allergy_description'] ?? null);
+        $hasConditions = normalizeCheckboxValue($data['has_med_condition'] ?? 0);
+        $conditionTypeIds = parseIdsValue($data['condition_type_id'] ?? []);
+        $conditionDescription = getStringValue($data['condition_description'] ?? null);
+        $hasSurgery = normalizeCheckboxValue($data['has_surgery_hospitalization'] ?? 0);
+        $surgeryDate = getStringValue($data['surgery_date'] ?? null);
+        $hospitalName = getStringValue($data['hospital_name'] ?? null);
+        $bodyPart = getStringValue($data['body_part'] ?? null);
+        $isTakingTreatment = normalizeCheckboxValue($data['is_taking_treatment'] ?? 0);
+        $treatmentMedicine = getStringValue($data['treatment_medicine'] ?? null);
+        $scheduleDosage = getStringValue($data['schedule_dosage'] ?? null);
+        $hasFamilyHistory = normalizeCheckboxValue($data['family_medical_history'] ?? 0);
+        $familyConditionTypeIds = parseIdsValue($data['family_condition_type_id'] ?? []);
+        $familyConditionDescription = getStringValue($data['family_condition_description'] ?? null);
+
+        $pdo->beginTransaction();
+
         $check = $pdo->prepare('SELECT medical_id FROM medical_information WHERE enrollment_id = ?');
-        $check->execute([$enrollment_id]);
+        $check->execute([$enrollmentId]);
         $existing = $check->fetch(PDO::FETCH_ASSOC);
 
         if ($existing) {
-            $stmt = $pdo->prepare('UPDATE medical_information 
-                                  SET exposed_to_cigarette_vape_smoke = ?, other_pertinent_information = ? 
-                                  WHERE medical_id = ?');
-            $stmt->execute([$exposed, $other_info, $existing['medical_id']]);
-            $medical_id = $existing['medical_id'];
+            $medicalId = intval($existing['medical_id']);
+            $update = $pdo->prepare('UPDATE medical_information SET exposed_to_cigarette_vape_smoke = ?, other_pertinent_information = ? WHERE medical_id = ?');
+            $update->execute([$exposedToSmoke, $otherPertinentInformation, $medicalId]);
+
+            $pdo->prepare('DELETE FROM student_allergies WHERE allergy_group_id IN (SELECT allergy_group_id FROM medical_allergies WHERE medical_id = ?)')->execute([$medicalId]);
+            $pdo->prepare('DELETE FROM medical_allergies WHERE medical_id = ?')->execute([$medicalId]);
+            $pdo->prepare('DELETE FROM student_conditions WHERE condition_group_id IN (SELECT condition_group_id FROM medical_conditions WHERE medical_id = ?)')->execute([$medicalId]);
+            $pdo->prepare('DELETE FROM medical_conditions WHERE medical_id = ?')->execute([$medicalId]);
+            $pdo->prepare('DELETE FROM medical_surgeries WHERE medical_id = ?')->execute([$medicalId]);
+            $pdo->prepare('DELETE FROM medical_treatments WHERE medical_id = ?')->execute([$medicalId]);
+            $pdo->prepare('DELETE FROM student_family_conditions WHERE family_history_id IN (SELECT family_history_id FROM family_medical_history WHERE medical_id = ?)')->execute([$medicalId]);
+            $pdo->prepare('DELETE FROM family_medical_history WHERE medical_id = ?')->execute([$medicalId]);
         } else {
-            $stmt = $pdo->prepare('INSERT INTO medical_information (enrollment_id, exposed_to_cigarette_vape_smoke, other_pertinent_information) 
-                                  VALUES (?, ?, ?)');
-            $stmt->execute([$enrollment_id, $exposed, $other_info]);
-            $medical_id = $pdo->lastInsertId();
+            $insert = $pdo->prepare('INSERT INTO medical_information (enrollment_id, exposed_to_cigarette_vape_smoke, other_pertinent_information) VALUES (?, ?, ?)');
+            $insert->execute([$enrollmentId, $exposedToSmoke, $otherPertinentInformation]);
+            $medicalId = intval($pdo->lastInsertId());
         }
 
-        echo json_encode(['success' => true, 'medical_id' => $medical_id]);
+        $insertAllergies = $pdo->prepare('INSERT INTO medical_allergies (medical_id, has_allergies) VALUES (?, ?)');
+        $insertAllergies->execute([$medicalId, $hasAllergies]);
+        $allergyGroupId = intval($pdo->lastInsertId());
+
+        if (!empty($allergyTypeIds)) {
+            $insertStudentAllergy = $pdo->prepare('INSERT INTO student_allergies (allergy_group_id, allergy_type_id, description) VALUES (?, ?, ?)');
+            foreach ($allergyTypeIds as $typeId) {
+                $insertStudentAllergy->execute([$allergyGroupId, $typeId, $allergyDescription]);
+            }
+        }
+
+        $insertConditions = $pdo->prepare('INSERT INTO medical_conditions (medical_id, has_conditions) VALUES (?, ?)');
+        $insertConditions->execute([$medicalId, $hasConditions]);
+        $conditionGroupId = intval($pdo->lastInsertId());
+
+        if (!empty($conditionTypeIds)) {
+            $insertStudentCondition = $pdo->prepare('INSERT INTO student_conditions (condition_group_id, condition_type_id, description) VALUES (?, ?, ?)');
+            foreach ($conditionTypeIds as $typeId) {
+                $insertStudentCondition->execute([$conditionGroupId, $typeId, $conditionDescription]);
+            }
+        }
+
+        $insertSurgery = $pdo->prepare('INSERT INTO medical_surgeries (medical_id, has_surgery, surgery_date, hospital_name, body_part) VALUES (?, ?, ?, ?, ?)');
+        $insertSurgery->execute([$medicalId, $hasSurgery, $surgeryDate, $hospitalName, $bodyPart]);
+
+        $insertTreatment = $pdo->prepare('INSERT INTO medical_treatments (medical_id, is_taking_treatment, treatment_medicine, schedule_dosage) VALUES (?, ?, ?, ?)');
+        $insertTreatment->execute([$medicalId, $isTakingTreatment, $treatmentMedicine, $scheduleDosage]);
+
+        $insertFamilyHistory = $pdo->prepare('INSERT INTO family_medical_history (medical_id, has_family_history) VALUES (?, ?)');
+        $insertFamilyHistory->execute([$medicalId, $hasFamilyHistory]);
+        $familyHistoryId = intval($pdo->lastInsertId());
+
+        if (!empty($familyConditionTypeIds)) {
+            $insertFamilyCondition = $pdo->prepare('INSERT INTO student_family_conditions (family_history_id, family_condition_type_id, description) VALUES (?, ?, ?)');
+            foreach ($familyConditionTypeIds as $typeId) {
+                $insertFamilyCondition->execute([$familyHistoryId, $typeId, $familyConditionDescription]);
+            }
+        }
+
+        $pdo->commit();
+        echo json_encode(['success' => true, 'medical_id' => $medicalId]);
+        exit;
     }
-    else {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid action']);
-    }
+
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid action']);
 } catch (Exception $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }
-?>
-
-<?php
-
-    $med_state = $pdo->prepare('INSERT INTO medical_allergies (medical_id, has_allergies) VALUES (?, ?)');
-    $med_state->execute([
-        $medical_id, 
-        $_POST['has_allergies'] ?? '0'
-    ]);
-    
-    $allery_group_id = $pdo->lastInsertId();
-    
-    $med_state1 = $pdo->prepare('INSERT INTO student_allergies (allergy_group_id, allergy_type_id, description) VALUES (?, ?, ?)');
-    $med_state1->execute([
-        $allery_group_id,
-        $_POST['medicine_allergy'] ?? '0',
-        $_POST['allergy_description'] ?? ''
-    ]);
-
-
-    $med_state2 = $pdo->prepare('INSERT INTO medical_conditions (medical_id, has_conditions) VALUES (?, ?)');
-    $med_state2->execute([$medical_id, $_POST['has_med_conditions'] ?? '0']);
-
-    $condition_group_id = $pdo->lastInsertId();
-
-    $med_state3 = $pdo->prepare('INSERT INTO student_conditions (condition_group_id, condition_type_id, descriptipion) VALUES (?, ?, ?)');
-    $med_state3->execute([
-        $condition_group_id,
-        $_POST['condition_type_id'] ?? '0',
-        $_POST['condition_description'] ?? ''
-    ]);
-
-    $med_state4 = $pdo->('INSERT INTO medical_surgeries (medical_id, has_surgery, surgery_date, hospital_name, body_part) VALUES (?, ?, ?, ?, ?)');
-    $med_state4->execute([
-        $medical_id,
-        $_POST['has_surgery_hospitalization'] ?? '0',
-        $_POST['surgery_date'] ?? '',
-        $_POST['hospital_name'] ?? '',
-        $_POST['body_part'] ?? ''
-    ]);
-
-    $med_state5 = $pdo->prepare('INSERT INTO medical_treatments (medical_id, is_taking_treatment, treatment_medicine, schedule_dosage) VALUES (?, ?, ?, ?)');
-    $med_state5->execute([
-        $medical_id,
-        $_POST['is_taking_treatment'] ?? '0',
-        $_POST['treatment_medicine'] ?? '',
-        $_POST['schedule_dosage'] ?? ''
-    ]);
-
-    $med_state6 = $pdo->prepare('INSERT INTO family_medical_history (medical_id, has_family_history) VALUES (?,?))');
-    $med_state6->execute([
-        $medical_id,
-        $_POST['has_family_history'] ?? '0'
-    ]);
-
-    $family_history_id = $pdo->lastInsertId();
-
-    $med_state7 = $pdo0->prepare('INSERT INTO student_family_history (family_history_id, family_condition_type_id, description) VALUES (?, ?, ?)');
-    $med_state7->execute([
-        $family_history_id,
-        $_POST['family_condition_type_id'] ?? '0',
-        $_POST['family_condition_description'] ?? ''
-    ]);
-
-
-?>  
+  

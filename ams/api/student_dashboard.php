@@ -51,54 +51,63 @@ try {
         exit;
     }
 
-    $gradesStmt = $pdo->prepare('SELECT s.subject_name, g.grading_period, g.final_grade, g.remarks
-                                 FROM grades g
-                                 JOIN enrollments e ON g.enrollment_id = e.enrollment_id
-                                 JOIN classes c ON e.class_id = c.class_id
-                                 JOIN subjects s ON c.subject_id = s.subject_id
-                                 WHERE e.student_id = ?
-                                 ORDER BY s.subject_name, g.grading_period');
+    $gradesStmt = $pdo->prepare('SELECT subj.name AS subject_name, g.grading_period, g.grade AS final_grade,
+                                         CASE WHEN g.grade >= 75 THEN "Passed" ELSE "Failed" END AS remarks
+                                  FROM grades g
+                                  JOIN class_students cs ON g.class_student_id = cs.class_student_id
+                                  JOIN class_subjects csub ON g.class_subject_id = csub.class_subject_id
+                                  JOIN subjects subj ON csub.subject_id = subj.subject_id
+                                  JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
+                                  WHERE e.student_id = ?
+                                  ORDER BY subj.name, g.grading_period');
     $gradesStmt->execute([$student_id]);
     $grades = $gradesStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $activitiesStmt = $pdo->prepare('SELECT s.subject_name, a.activity_name, a.activity_date, a.max_score, COALESCE(sas.score, 0) AS score
-                                     FROM enrollments e
-                                     JOIN classes c ON e.class_id = c.class_id
-                                     JOIN subjects s ON c.subject_id = s.subject_id
-                                     JOIN activities a ON a.class_id = c.class_id
-                                     LEFT JOIN student_activity_scores sas ON sas.activity_id = a.activity_id AND sas.enrollment_id = e.enrollment_id
-                                     WHERE e.student_id = ?
-                                     ORDER BY a.activity_date DESC');
+    $activitiesStmt = $pdo->prepare('SELECT subj.name AS subject_name, a.title AS activity_name, a.due_date AS activity_date,
+                                             a.max_score, COALESCE(ascore.score, 0) AS score
+                                      FROM enrollments e
+                                      JOIN class_students cs ON cs.enrollment_id = e.enrollment_id
+                                      JOIN class_subjects csub ON cs.class_id = csub.class_id
+                                      JOIN subjects subj ON csub.subject_id = subj.subject_id
+                                      JOIN activities a ON a.class_subject_id = csub.class_subject_id
+                                      LEFT JOIN activity_scores ascore ON ascore.activity_id = a.activity_id
+                                           AND ascore.class_student_id = cs.class_student_id
+                                      WHERE e.student_id = ?
+                                      ORDER BY a.due_date DESC');
     $activitiesStmt->execute([$student_id]);
     $activities = $activitiesStmt->fetchAll(PDO::FETCH_ASSOC);
 
     $attendanceStmt = $pdo->prepare('SELECT
-                                      SUM(CASE WHEN a.status = "Present" THEN 1 ELSE 0 END) AS present,
-                                      SUM(CASE WHEN a.status = "Absent" THEN 1 ELSE 0 END) AS absent,
-                                      SUM(CASE WHEN a.status = "Late" THEN 1 ELSE 0 END) AS late_count,
-                                      SUM(CASE WHEN a.status = "Excused" THEN 1 ELSE 0 END) AS excused
+                                      SUM(CASE WHEN a.status = "present" THEN 1 ELSE 0 END) AS present,
+                                      SUM(CASE WHEN a.status = "absent" THEN 1 ELSE 0 END) AS absent,
+                                      SUM(CASE WHEN a.status = "late" THEN 1 ELSE 0 END) AS late_count,
+                                      SUM(CASE WHEN a.status = "excused" THEN 1 ELSE 0 END) AS excused
                                       FROM attendance a
                                       JOIN class_students cs ON a.class_student_id = cs.class_student_id
                                       JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
                                       WHERE e.student_id = ?');
     $attendanceStmt->execute([$student_id]);
     $attendance = $attendanceStmt->fetch(PDO::FETCH_ASSOC);
+    $attendance = array_map(function ($value) {
+        return $value === null ? 0 : (int)$value;
+    }, $attendance ?: []);
 
-    $attendanceRecordsStmt = $pdo->prepare('SELECT subj.subject_name, a.attendance_date, a.status
+    $attendanceRecordsStmt = $pdo->prepare('SELECT subj.name AS subject_name, a.date AS attendance_date, a.status
                                             FROM attendance a
                                             JOIN class_students cs ON a.class_student_id = cs.class_student_id
                                             JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
-                                            JOIN classes c ON e.class_id = c.class_id
-                                            JOIN subjects subj ON c.subject_id = subj.subject_id
+                                            JOIN class_subjects csub ON cs.class_id = csub.class_id
+                                            JOIN subjects subj ON csub.subject_id = subj.subject_id
                                             WHERE e.student_id = ?
-                                            ORDER BY a.attendance_date DESC');
+                                            ORDER BY a.date DESC');
     $attendanceRecordsStmt->execute([$student_id]);
     $attendance_records = $attendanceRecordsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $reportStmt = $pdo->prepare('SELECT g.grading_period, ROUND(AVG(g.final_grade), 2) AS general_average,
-                                         CASE WHEN AVG(g.final_grade) >= 75 THEN "Passed" ELSE "Failed" END AS remarks
+    $reportStmt = $pdo->prepare('SELECT g.grading_period, ROUND(AVG(g.grade), 2) AS general_average,
+                                         CASE WHEN AVG(g.grade) >= 75 THEN "Passed" ELSE "Failed" END AS remarks
                                   FROM grades g
-                                  JOIN enrollments e ON g.enrollment_id = e.enrollment_id
+                                  JOIN class_students cs ON g.class_student_id = cs.class_student_id
+                                  JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
                                   WHERE e.student_id = ?
                                   GROUP BY g.grading_period
                                   ORDER BY g.grading_period');
