@@ -61,18 +61,13 @@ let teacherClassesCache = null;
 
 async function loadStudents() {
     try {
-        const res = await API.teacher.students();
+        const res = await API.students.list();
 
         if (!res || !res.success) {
             throw new Error(res?.error || 'Failed to load students');
         }
 
-        const unique = {};
-        res.data.forEach(student => {
-            unique[student.student_id] = student;
-        });
-
-        const students = Object.values(unique).sort((a, b) => a.last_name.localeCompare(b.last_name));
+        const students = res.data.sort((a, b) => a.last_name.localeCompare(b.last_name));
 
         renderStudents(students);
 
@@ -586,11 +581,39 @@ async function openEnrollmentModal(studentId) {
     }
 }
 
+function serializeForm(form) {
+    const formData = new FormData(form);
+    const data = {};
+
+    for (const [name, value] of formData.entries()) {
+        if (name.includes('[')) {
+            // Handle array fields like disabilities[]
+            const arrayName = name.replace('[]', '');
+            if (!data[arrayName]) {
+                data[arrayName] = [];
+            }
+            data[arrayName].push(value);
+            continue;
+        }
+
+        if (data[name] !== undefined) {
+            if (!Array.isArray(data[name])) {
+                data[name] = [data[name]];
+            }
+            data[name].push(value);
+        } else {
+            data[name] = value;
+        }
+    }
+
+    return data;
+}
+
 async function saveEnrollmentUpdate(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const studentId = parseInt(form.dataset.studentId, 10);
-    const data = Object.fromEntries(new FormData(form).entries());
+    const data = serializeForm(form);
 
     try {
         const res = await API.students.update(studentId, data);
@@ -619,6 +642,21 @@ async function openAssignClassModal(studentId) {
         const options = teacherClassesCache.map(cls => `
             <option value="${cls.class_id}">${escapeHtml(cls.school_year || '')} • Grade ${escapeHtml(cls.grade_level || '')} • Section ${escapeHtml(cls.section || '')}</option>
         `).join('');
+
+        if (teacherClassesCache.length === 0) {
+            const header = `<h3>Assign Student to Class</h3>`;
+            const body = `
+                <div class="form-group full">
+                    <p>You don't have any classes available to assign students to. Please create a class first.</p>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-secondary" type="button" onclick="closeModal()">Close</button>
+                    <a href="teacher_classes.php" class="btn-primary" style="text-decoration: none; display: inline-block;">Create Class</a>
+                </div>
+            `;
+            showModal({ header, body });
+            return;
+        }
 
         const header = `<h3>Assign Student to Class</h3>`;
         const body = `
@@ -761,7 +799,18 @@ function downloadEnrollmentForm(studentId) {
 }
 
    //INIT
-document.addEventListener('DOMContentLoaded', loadStudents);
+document.addEventListener('DOMContentLoaded', () => {
+    loadStudents();
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    if (editId) {
+        openEnrollmentModal(editId);
+    }
+    const assignId = urlParams.get('assign');
+    if (assignId) {
+        openAssignClassModal(assignId);
+    }
+});
 </script>
 
 </body>

@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main class="main">
         <div class="page-header">
             <h1>Staff Registration</h1>
-            <p>Add a new staff or student account to the system</p>
+            <p>Add a new teacher or staff account to the system</p>
         </div>
 
         <section class="section">
@@ -99,8 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="select-wrap">
                             <select id="role" name="role" required>
                                 <option value="" disabled selected>Select a role...</option>
+                                <option value="teacher">Teacher</option>
                                 <option value="staff">Staff</option>
-                                <option value="student">Student</option>
                             </select>
                         </div>
                     </div>

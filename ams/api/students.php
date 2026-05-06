@@ -58,7 +58,7 @@ function fetchMedical($pdo, $enrollment_id) {
     $conditions = fetchOneBy($pdo, 'medical_conditions', 'medical_id', $medical_id);
     $surgeries = fetchOneBy($pdo, 'medical_surgeries', 'medical_id', $medical_id);
     $treatments = fetchOneBy($pdo, 'medical_treatments', 'medical_id', $medical_id);
-    $family_history = fetchOneBy($pdo, 'medical_family_history', 'medical_id', $medical_id);
+    $family_history = fetchOneBy($pdo, 'family_medical_history', 'medical_id', $medical_id);
     return array_merge($medical, [
         'allergies' => $allergies ?: [],
         'conditions' => $conditions ?: [],
@@ -221,7 +221,7 @@ function updateMedical($pdo, $enrollment_id, $medicalData) {
 
     // Update family history
     $familyHistory = !empty($medicalData['family_medical_history']) ? 1 : 0;
-    $familyStmt = $pdo->prepare("INSERT INTO medical_family_history (medical_id, has_family_history) VALUES (?, ?) ON DUPLICATE KEY UPDATE has_family_history = VALUES(has_family_history)");
+    $familyStmt = $pdo->prepare("INSERT INTO family_medical_history (medical_id, has_family_history) VALUES (?, ?) ON DUPLICATE KEY UPDATE has_family_history = VALUES(has_family_history)");
     $familyStmt->execute([$medical_id, $familyHistory]);
 }
 
@@ -231,9 +231,9 @@ try {
 
     if ($action === 'list') {
         $stmt = $pdo->query("SELECT s.student_id, s.lrn, s.first_name, s.last_name, s.middle_name, s.sex, s.place_of_birth,
-            (SELECT grade_level FROM enrollments e WHERE e.student_id = s.student_id ORDER BY e.enrollment_id DESC LIMIT 1) AS grade_level,
-            (SELECT school_year FROM enrollments e WHERE e.student_id = s.student_id ORDER BY e.enrollment_id DESC LIMIT 1) AS school_year
+            e.grade_level, e.school_year
             FROM students s
+            INNER JOIN enrollments e ON s.student_id = e.student_id
             ORDER BY s.last_name ASC, s.first_name ASC");
 
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
@@ -443,6 +443,15 @@ try {
         }
 
         $pdo->beginTransaction();
+        // Get user_id from student
+        $userStmt = $pdo->prepare('SELECT user_id FROM students WHERE student_id = ?');
+        $userStmt->execute([$student_id]);
+        $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+        if ($user && $user['user_id']) {
+            // Delete associated user account
+            $deleteUser = $pdo->prepare('DELETE FROM users WHERE user_id = ?');
+            $deleteUser->execute([$user['user_id']]);
+        }
         $deleteClassStudents = $pdo->prepare('DELETE FROM class_students WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?)');
         $deleteClassStudents->execute([$student_id]);
         $deleteEnrollments = $pdo->prepare('DELETE FROM enrollments WHERE student_id = ?');

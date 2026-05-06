@@ -132,6 +132,39 @@ $staff = $stmt->fetch(PDO::FETCH_ASSOC);
 
     </div>
 
+    <!-- STUDENTS SECTION -->
+    <section class="section">
+
+        <div class="section-header">
+            <h2>All Students</h2>
+            <p>Manage all enrolled students</p>
+        </div>
+
+        <div class="section-body">
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Grade Level</th>
+                            <th>LRN</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="students-tbody">
+                        <tr class="empty-row">
+                            <td colspan="4">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </section>
+
     <!-- SECTION TABLE -->
     <section class="section">
 
@@ -227,7 +260,63 @@ async function loadDashboard() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadDashboard);
+async function loadStudents() {
+    try {
+        const res = await API.students.list();
+        if (res.success && res.data) {
+            renderStudents(res.data);
+        } else {
+            document.getElementById('students-tbody').innerHTML = '<tr class="empty-row"><td colspan="4">No students found</td></tr>';
+        }
+    } catch (err) {
+        console.error('Load students error:', err);
+        document.getElementById('students-tbody').innerHTML = '<tr class="empty-row"><td colspan="4">Error loading students</td></tr>';
+    }
+}
+
+function renderStudents(students) {
+    const tbody = document.getElementById('students-tbody');
+    tbody.innerHTML = students.map(s => `
+        <tr>
+            <td class="td-primary">${s.first_name} ${s.last_name}</td>
+            <td>${s.grade_level}</td>
+            <td>${s.lrn || 'N/A'}</td>
+            <td>
+                <button class="btn-action" onclick="assignToClass(${s.student_id})">Assign to Class</button>
+                <button class="btn-action" onclick="editStudent(${s.student_id})">Edit Enrollment</button>
+                <button class="btn-action btn-danger" onclick="deleteStudent(${s.student_id})">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function assignToClass(studentId) {
+    window.location.href = `teacher_manage_students.php?assign=${studentId}`;
+}
+
+function editStudent(studentId) {
+    window.location.href = `teacher_manage_students.php?edit=${studentId}`;
+}
+
+async function deleteStudent(studentId) {
+    if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+        try {
+            const res = await API.students.delete(studentId);
+            if (res.success) {
+                loadStudents();
+            } else {
+                alert('Failed to delete student: ' + (res.error || 'Unknown error'));
+            }
+        } catch (err) {
+            alert('Error deleting student: ' + err.message);
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+    loadStudents();
+});
 setInterval(loadDashboard, 30000);
 </script>
 

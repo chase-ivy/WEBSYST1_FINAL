@@ -1056,11 +1056,6 @@ footer strong { color: rgba(255,255,255,.8); }
 
                 </div>
 
-            </div>
-
-
-
-
                 <div class="card-foot">
                     <button type="button" class="btn btn-ghost"  onclick="goTo(3)">← Back</button>
                     <span class="step-count">Step 4 of 5</span>

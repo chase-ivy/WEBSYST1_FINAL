@@ -781,7 +781,7 @@ select:focus-visible {
     z-index: 1000;
 }
 
-..modal-content {
+.modal-content {
     background: var(--surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
@@ -832,6 +832,15 @@ select:focus-visible {
     padding: 24px;
 }
 
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
 .form-actions {
     display: flex;
     gap: 12px;
@@ -861,6 +870,32 @@ select:focus-visible {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
     margin-bottom: 16px;
+}
+
+.form-row label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.form-row input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--canvas);
+    outline: none;
+    transition: border-color var(--t), box-shadow var(--t);
+}
+
+.form-row input:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(21,96,168,.10);
 }
 
 

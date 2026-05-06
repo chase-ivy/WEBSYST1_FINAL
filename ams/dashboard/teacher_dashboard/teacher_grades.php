@@ -56,8 +56,6 @@ require_role(['staff']);
                             <option value="Q2">2nd Quarter</option>
                             <option value="Q3">3rd Quarter</option>
                             <option value="Q4">4th Quarter</option>
-                            <option value="Midterm">Midterm</option>
-                            <option value="Final">Final</option>
                         </select>
                     </div>
                 </div>

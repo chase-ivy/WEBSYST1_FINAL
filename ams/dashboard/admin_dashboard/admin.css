@@ -173,6 +173,27 @@ body {
     border: 1px solid black;
 }
 
+.sidebar .sidebar-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .sidebar-label {
+    padding: 12px 18px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 8px;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.sidebar nav a:first-child {
+    margin-top: 0;
+}
+
 .sidebar a[href*="dashboard"]:hover {
     background: rgb(243, 57, 57);
     color: var(--brand);

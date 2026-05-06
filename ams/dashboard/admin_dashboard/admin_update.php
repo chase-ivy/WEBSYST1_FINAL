@@ -113,8 +113,8 @@ $staffList = getStaffList($pdo);
                             <label for="role">User Role</label>
                             <div class="select-wrap">
                                 <select id="role" name="role" required>
+                                    <option value="teacher" <?php echo $editStaff['role'] === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
                                     <option value="staff" <?php echo $editStaff['role'] === 'staff' ? 'selected' : ''; ?>>Staff</option>
-                                    <option value="student" <?php echo $editStaff['role'] === 'student' ? 'selected' : ''; ?>>Student</option>
                                 </select>
                             </div>
                         </div>
@@ -166,8 +166,8 @@ $staffList = getStaffList($pdo);
                                 <label>Role</label>
                                 <div class="select-wrap">
                                     <select id="js-role">
+                                        <option value="teacher">Teacher</option>
                                         <option value="staff">Staff</option>
-                                        <option value="student">Student</option>
                                     </select>
                                 </div>
                             </div>
