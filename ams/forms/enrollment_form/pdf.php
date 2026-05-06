@@ -11,19 +11,20 @@ if (!isset($pdo) || !($pdo instanceof PDO)) {
     exit;
 }
 
-// if ($_SERVER['REQUEST_METHOD'] !== 'GET' || empty($_GET['student_id'])) {
-//     echo "No student ID provided.";
-//     exit;
-// }
-
-// $student_id = intval($_GET['student_id']);
-
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+if ($_SERVER['REQUEST_METHOD'] !== 'GET' || empty($_GET['student_id'])) {
     echo "No student ID provided.";
     exit;
 }
 
-$student_id = intval($_GET['student_id'] ?? 0);
+$student_id = intval($_GET['student_id']);
+
+// if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+//     echo "No student ID provided.";
+//     exit;
+// }
+
+// $student_id = intval($_GET['student_id'] ?? 0);
+
 $type = $_GET['type'] ?? null;
 
 if (!$student_id) {
