@@ -175,8 +175,8 @@ const API = {
     
     // Grades API
     grades: {
-        getClassGrades: async function(classId) {
-            return API.call('grades', 'class', { class_id: classId });
+        getClassGrades: async function(classSubjectId) {
+            return API.call('grades', 'class', { class_subject_id: classSubjectId });
         },
         getStudentGrades: async function(enrollmentId) {
             return API.call('grades', 'student', { enrollment_id: enrollmentId });

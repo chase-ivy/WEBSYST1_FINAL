@@ -175,62 +175,393 @@ async function openEnrollmentModal(studentId) {
             throw new Error(res?.error || 'Failed to load student details');
         }
 
-        const student = res.data.student || {};
-        const enrollment = res.data.latest_enrollment || {};
+        const data = res.data;
+        const student = data.student || {};
+        const enrollment = data.latest_enrollment || {};
+        const currentAddress = data.current_address || {};
+        const permanentAddress = data.permanent_address || {};
+        const parents = data.parents || {};
+        const returning = data.returning || {};
+        const disabilities = data.disabilities || [];
+        const medical = data.medical || {};
+
         const header = `<h3>Update Enrollment</h3>`;
         const body = `
             <form id="enrollmentForm" data-student-id="${studentId}">
                 <input type="hidden" name="student_id" value="${studentId}" />
-                <div class="form-grid">
-                    <div class="form-group full">
-                        <label for="Learner_Reference_No">LRN</label>
-                        <input id="Learner_Reference_No" name="Learner_Reference_No" value="${escapeHtml(student.lrn || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Learner_First_Name">First name</label>
-                        <input id="Learner_First_Name" name="Learner_First_Name" value="${escapeHtml(student.first_name || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Learner_Last_Name">Last name</label>
-                        <input id="Learner_Last_Name" name="Learner_Last_Name" value="${escapeHtml(student.last_name || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Learner_Middle_Name">Middle name</label>
-                        <input id="Learner_Middle_Name" name="Learner_Middle_Name" value="${escapeHtml(student.middle_name || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Birth_Date">Birth date</label>
-                        <input id="Birth_Date" name="Birth_Date" type="date" value="${escapeHtml(student.birth_date || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Place_of_Birth">Place of birth</label>
-                        <input id="Place_of_Birth" name="Place_of_Birth" value="${escapeHtml(student.place_of_birth || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Grade_Level">Grade level</label>
-                        <input id="Grade_Level" name="Grade_Level" value="${escapeHtml(enrollment.grade_level || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="year_start">School year start</label>
-                        <input id="year_start" name="year_start" value="${escapeHtml(enrollment.year_start || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="year_end">School year end</label>
-                        <input id="year_end" name="year_end" value="${escapeHtml(enrollment.year_end || '')}" />
-                    </div>
-                    <div class="form-group">
-                        <label for="with_lrn">With LRN</label>
-                        <select id="with_lrn" name="with_lrn">
-                            <option value="">Select</option>
-                            <option value="Yes" ${enrollment.with_lrn ? 'selected' : ''}>Yes</option>
-                            <option value="No" ${enrollment.with_lrn ? '' : 'selected'}>No</option>
-                        </select>
-                    </div>
-                    <div class="form-group full">
-                        <label for="Mother_Tongue">Mother tongue</label>
-                        <input id="Mother_Tongue" name="Mother_Tongue" value="${escapeHtml(enrollment.mother_tongue || '')}" />
+                
+                <!-- School Year & Grade -->
+                <div class="form-section">
+                    <h4>School Year & Grade Level</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="year_start">School Year Start</label>
+                            <input id="year_start" name="year_start" type="number" value="${escapeHtml(enrollment.year_start || '')}" min="2000" max="2099" />
+                        </div>
+                        <div class="form-group">
+                            <label for="year_end">School Year End</label>
+                            <input id="year_end" name="year_end" type="number" value="${escapeHtml(enrollment.year_end || '')}" min="2000" max="2099" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Grade_Level">Grade Level</label>
+                            <select id="Grade_Level" name="Grade_Level">
+                                <option value="">Select grade</option>
+                                <option value="Kinder" ${enrollment.grade_level === 'Kinder' ? 'selected' : ''}>Kinder</option>
+                                <option value="Grade 1" ${enrollment.grade_level === 'Grade 1' ? 'selected' : ''}>Grade 1</option>
+                                <option value="Grade 2" ${enrollment.grade_level === 'Grade 2' ? 'selected' : ''}>Grade 2</option>
+                                <option value="Grade 3" ${enrollment.grade_level === 'Grade 3' ? 'selected' : ''}>Grade 3</option>
+                                <option value="Grade 4" ${enrollment.grade_level === 'Grade 4' ? 'selected' : ''}>Grade 4</option>
+                                <option value="Grade 5" ${enrollment.grade_level === 'Grade 5' ? 'selected' : ''}>Grade 5</option>
+                                <option value="Grade 6" ${enrollment.grade_level === 'Grade 6' ? 'selected' : ''}>Grade 6</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
+
+                <!-- LRN & Returning -->
+                <div class="form-section">
+                    <h4>LRN & Learner Status</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="Learner_Reference_No">LRN</label>
+                            <input id="Learner_Reference_No" name="Learner_Reference_No" value="${escapeHtml(student.lrn || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="with_lrn">With LRN?</label>
+                            <select id="with_lrn" name="with_lrn">
+                                <option value="1" ${enrollment.with_lrn == 1 ? 'selected' : ''}>Yes</option>
+                                <option value="0" ${enrollment.with_lrn == 0 ? 'selected' : ''}>No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="returning">Returning Learner?</label>
+                            <select id="returning" name="returning">
+                                <option value="1" ${enrollment.is_returning_learner == 1 ? 'selected' : ''}>Yes</option>
+                                <option value="0" ${enrollment.is_returning_learner == 0 ? 'selected' : ''}>No</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Returning Learner Details -->
+                <div class="form-section" id="returningSection" style="display: ${enrollment.is_returning_learner == 1 ? 'block' : 'none'};">
+                    <h4>Returning Learner Details</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="Returning_Grade_Level">Last Grade Level Completed</label>
+                            <select id="Returning_Grade_Level" name="Returning_Grade_Level">
+                                <option value="">Select</option>
+                                <option value="Kinder" ${returning.last_grade_level_completed === 'Kinder' ? 'selected' : ''}>Kinder</option>
+                                <option value="Grade 1" ${returning.last_grade_level_completed === 'Grade 1' ? 'selected' : ''}>Grade 1</option>
+                                <option value="Grade 2" ${returning.last_grade_level_completed === 'Grade 2' ? 'selected' : ''}>Grade 2</option>
+                                <option value="Grade 3" ${returning.last_grade_level_completed === 'Grade 3' ? 'selected' : ''}>Grade 3</option>
+                                <option value="Grade 4" ${returning.last_grade_level_completed === 'Grade 4' ? 'selected' : ''}>Grade 4</option>
+                                <option value="Grade 5" ${returning.last_grade_level_completed === 'Grade 5' ? 'selected' : ''}>Grade 5</option>
+                                <option value="Grade 6" ${returning.last_grade_level_completed === 'Grade 6' ? 'selected' : ''}>Grade 6</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="Last_School_Year_Completed">Last School Year Completed</label>
+                            <input id="Last_School_Year_Completed" name="Last_School_Year_Completed" type="number" value="${escapeHtml(returning.last_school_year_completed || '')}" />
+                        </div>
+                        <div class="form-group full">
+                            <label for="Last_School_Attended">Last School Attended</label>
+                            <input id="Last_School_Attended" name="Last_School_Attended" value="${escapeHtml(returning.last_school_attended || '')}" />
+                        </div>
+                        <div class="form-group full">
+                            <label for="school_ID">School ID</label>
+                            <input id="school_ID" name="school_ID" value="${escapeHtml(returning.school_id || '')}" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="form-section">
+                    <h4>Personal Information</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="psa_bcn">PSA Birth Certificate No.</label>
+                            <input id="psa_bcn" name="psa_bcn" value="${escapeHtml(enrollment.psa_bcn || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Learner_Last_Name">Last Name</label>
+                            <input id="Learner_Last_Name" name="Learner_Last_Name" value="${escapeHtml(student.last_name || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Learner_First_Name">First Name</label>
+                            <input id="Learner_First_Name" name="Learner_First_Name" value="${escapeHtml(student.first_name || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Learner_Middle_Name">Middle Name</label>
+                            <input id="Learner_Middle_Name" name="Learner_Middle_Name" value="${escapeHtml(student.middle_name || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Learner_Extension_Name">Extension Name</label>
+                            <input id="Learner_Extension_Name" name="Learner_Extension_Name" value="${escapeHtml(student.extension_name || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Birth_Date">Birth Date</label>
+                            <input id="Birth_Date" name="Birth_Date" type="date" value="${escapeHtml(student.birth_date || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="sex">Sex</label>
+                            <select id="sex" name="sex">
+                                <option value="">Select</option>
+                                <option value="Male" ${student.sex === 'Male' ? 'selected' : ''}>Male</option>
+                                <option value="Female" ${student.sex === 'Female' ? 'selected' : ''}>Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="Place_of_Birth">Place of Birth</label>
+                            <input id="Place_of_Birth" name="Place_of_Birth" value="${escapeHtml(student.place_of_birth || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Mother_Tongue">Mother Tongue</label>
+                            <input id="Mother_Tongue" name="Mother_Tongue" value="${escapeHtml(enrollment.mother_tongue || '')}" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Classification -->
+                <div class="form-section">
+                    <h4>Additional Classification</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ip">Indigenous People (IP)?</label>
+                            <select id="ip" name="ip">
+                                <option value="No" ${enrollment.is_indigenous == 0 ? 'selected' : ''}>No</option>
+                                <option value="Yes" ${enrollment.is_indigenous == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="IP_Specify">IP Community / Cultural Group</label>
+                            <input id="IP_Specify" name="IP_Specify" value="${escapeHtml(enrollment.indigenous_group || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="fourps">4Ps Beneficiary?</label>
+                            <select id="fourps" name="fourps">
+                                <option value="No" ${enrollment.is_four_ps_beneficiary == 0 ? 'selected' : ''}>No</option>
+                                <option value="Yes" ${enrollment.is_four_ps_beneficiary == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="FourPs_Specify">4Ps Household ID Number</label>
+                            <input id="FourPs_Specify" name="FourPs_Specify" value="${escapeHtml(enrollment.four_ps_household_id || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="disability">Learner with Disability?</label>
+                            <select id="disability" name="disability">
+                                <option value="No" ${enrollment.is_learner_with_disability == 0 ? 'selected' : ''}>No</option>
+                                <option value="Yes" ${enrollment.is_learner_with_disability == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disabilities -->
+                <div class="form-section" id="disabilitySection" style="display: ${enrollment.is_learner_with_disability == 1 ? 'block' : 'none'};">
+                    <h4>Disabilities</h4>
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>Disability Types</label>
+                            <div>
+                                <label><input type="checkbox" name="disabilities[]" value="1" ${disabilities.includes(1) ? 'checked' : ''}> Visual Impairment</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="2" ${disabilities.includes(2) ? 'checked' : ''}> Hearing Impairment</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="3" ${disabilities.includes(3) ? 'checked' : ''}> Learning Disability</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="4" ${disabilities.includes(4) ? 'checked' : ''}> Intellectual Disability</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="5" ${disabilities.includes(5) ? 'checked' : ''}> Autism Spectrum Disorder</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="6" ${disabilities.includes(6) ? 'checked' : ''}> Emotional / Behavioral Disorder</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="7" ${disabilities.includes(7) ? 'checked' : ''}> Speech / Language Disorder</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="8" ${disabilities.includes(8) ? 'checked' : ''}> Cerebral Palsy</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="9" ${disabilities.includes(9) ? 'checked' : ''}> Orthopedic / Physical Handicap</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="10" ${disabilities.includes(10) ? 'checked' : ''}> Special Health Problem</label><br>
+                                <label><input type="checkbox" name="disabilities[]" value="11" ${disabilities.includes(11) ? 'checked' : ''}> Multiple Disorder</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medical Information -->
+                <div class="form-section">
+                    <h4>Medical Information</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="has_allergies">Does your child/ward have any allergies?</label>
+                            <select id="has_allergies" name="has_allergies">
+                                <option value="0" ${medical.allergies?.has_allergies == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${medical.allergies?.has_allergies == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="has_med_condition">Does your child/ward have any ongoing medical condition?</label>
+                            <select id="has_med_condition" name="has_med_condition">
+                                <option value="0" ${medical.conditions?.has_conditions == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${medical.conditions?.has_conditions == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="has_surgery_hospitalization">Did your child/ward ever have surgery / hospitalization?</label>
+                            <select id="has_surgery_hospitalization" name="has_surgery_hospitalization">
+                                <option value="0" ${medical.surgeries?.has_surgery == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${medical.surgeries?.has_surgery == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="is_taking_treatment">Is your child currently taking treatment / medicines?</label>
+                            <select id="is_taking_treatment" name="is_taking_treatment">
+                                <option value="0" ${medical.treatments?.is_taking_treatment == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${medical.treatments?.is_taking_treatment == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="family_medical_history">Does your family have a history of medical conditions?</label>
+                            <select id="family_medical_history" name="family_medical_history">
+                                <option value="0" ${medical.family_history?.has_family_history == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${medical.family_history?.has_family_history == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="exposed_to_cigarette_vape_smoke">Does your child/ward have exposure to cigarette/vape smoke at home?</label>
+                            <select id="exposed_to_cigarette_vape_smoke" name="exposed_to_cigarette_vape_smoke">
+                                <option value="0" ${medical.exposed_to_cigarette_vape_smoke == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${medical.exposed_to_cigarette_vape_smoke == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group full">
+                            <label for="other_pertinent_information">Other pertinent learner information:</label>
+                            <input id="other_pertinent_information" name="other_pertinent_information" value="${escapeHtml(medical.other_pertinent_information || '')}" placeholder="Optional">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Address -->
+                <div class="form-section">
+                    <h4>Current Address</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="Current_House_No">House No.</label>
+                            <input id="Current_House_No" name="Current_House_No" value="${escapeHtml(currentAddress.house_no || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Current_Street_Name">Street Name</label>
+                            <input id="Current_Street_Name" name="Current_Street_Name" value="${escapeHtml(currentAddress.street_name || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Current_Barangay">Barangay</label>
+                            <input id="Current_Barangay" name="Current_Barangay" value="${escapeHtml(currentAddress.barangay || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Current_Municipality_City">Municipality / City</label>
+                            <input id="Current_Municipality_City" name="Current_Municipality_City" value="${escapeHtml(currentAddress.municipality_city || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Current_Province">Province</label>
+                            <input id="Current_Province" name="Current_Province" value="${escapeHtml(currentAddress.province || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Current_Country">Country</label>
+                            <input id="Current_Country" name="Current_Country" value="${escapeHtml(currentAddress.country || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Current_Zip_Code">Zip Code</label>
+                            <input id="Current_Zip_Code" name="Current_Zip_Code" value="${escapeHtml(currentAddress.zip_code || '')}" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permanent Address -->
+                <div class="form-section">
+                    <h4>Permanent Address</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="Permanent_House_No">House No.</label>
+                            <input id="Permanent_House_No" name="Permanent_House_No" value="${escapeHtml(permanentAddress.house_no || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Permanent_Street_Name">Street Name</label>
+                            <input id="Permanent_Street_Name" name="Permanent_Street_Name" value="${escapeHtml(permanentAddress.street_name || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Permanent_Barangay">Barangay</label>
+                            <input id="Permanent_Barangay" name="Permanent_Barangay" value="${escapeHtml(permanentAddress.barangay || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Permanent_Municipality_City">Municipality / City</label>
+                            <input id="Permanent_Municipality_City" name="Permanent_Municipality_City" value="${escapeHtml(permanentAddress.municipality_city || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Permanent_Province">Province</label>
+                            <input id="Permanent_Province" name="Permanent_Province" value="${escapeHtml(permanentAddress.province || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Permanent_Country">Country</label>
+                            <input id="Permanent_Country" name="Permanent_Country" value="${escapeHtml(permanentAddress.country || '')}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Permanent_Zip_Code">Zip Code</label>
+                            <input id="Permanent_Zip_Code" name="Permanent_Zip_Code" value="${escapeHtml(permanentAddress.zip_code || '')}" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parents / Guardians -->
+                <div class="form-section">
+                    <h4>Parents / Guardians</h4>
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>Father</label>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <input name="father_last_name" placeholder="Last Name" value="${escapeHtml((parents.father || {}).last_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="father_first_name" placeholder="First Name" value="${escapeHtml((parents.father || {}).first_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="father_middle_name" placeholder="Middle Name" value="${escapeHtml((parents.father || {}).middle_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="father_contact_number" placeholder="Contact Number" value="${escapeHtml((parents.father || {}).contact_number || '')}" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group full">
+                            <label>Mother</label>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <input name="mother_last_name" placeholder="Last Name" value="${escapeHtml((parents.mother || {}).last_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="mother_first_name" placeholder="First Name" value="${escapeHtml((parents.mother || {}).first_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="mother_middle_name" placeholder="Middle Name" value="${escapeHtml((parents.mother || {}).middle_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="mother_contact_number" placeholder="Contact Number" value="${escapeHtml((parents.mother || {}).contact_number || '')}" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group full">
+                            <label>Guardian</label>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <input name="guardian_last_name" placeholder="Last Name" value="${escapeHtml((parents.guardian || {}).last_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="guardian_first_name" placeholder="First Name" value="${escapeHtml((parents.guardian || {}).first_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="guardian_middle_name" placeholder="Middle Name" value="${escapeHtml((parents.guardian || {}).middle_name || '')}" />
+                                </div>
+                                <div class="form-group">
+                                    <input name="guardian_contact_number" placeholder="Contact Number" value="${escapeHtml((parents.guardian || {}).contact_number || '')}" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button class="btn-secondary" type="button" onclick="closeModal()">Cancel</button>
                     <button class="btn-primary" type="submit">Save Enrollment</button>
@@ -240,6 +571,14 @@ async function openEnrollmentModal(studentId) {
 
         showModal({ header, body });
         document.getElementById('enrollmentForm').addEventListener('submit', saveEnrollmentUpdate);
+
+        // Toggle sections
+        document.getElementById('returning').addEventListener('change', function() {
+            document.getElementById('returningSection').style.display = this.value === '1' ? 'block' : 'none';
+        });
+        document.getElementById('disability').addEventListener('change', function() {
+            document.getElementById('disabilitySection').style.display = this.value === 'Yes' ? 'block' : 'none';
+        });
     } catch (error) {
         console.error(error);
         showAlert('error', `Unable to open enrollment editor: ${error.message}`);

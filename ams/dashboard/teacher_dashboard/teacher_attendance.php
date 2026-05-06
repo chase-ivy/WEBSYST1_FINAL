@@ -49,7 +49,7 @@ require_role(['staff']);
                     </div>
                 </div>
 
-                <div class="form-actions">
+                    <div class="form-actions">
                     <button type="button" class="btn-primary" onclick="markAllPresent()">Mark All Present</button>
                     <button type="button" class="btn-secondary" onclick="markAllAbsent()">Mark All Absent</button>
                 </div>
@@ -101,7 +101,7 @@ async function loadClasses() {
             const select = document.getElementById('classSelect');
             select.innerHTML = '<option value="">-- Choose a class --</option>' +
                 response.data.map(c =>
-                    `<option value="${c.class_id}">${c.subject_name} - ${c.grade_level} ${c.section}</option>`
+                    `<option value="${c.class_id}">${escapeHtml(c.subject || 'Class')} - ${escapeHtml(c.grade_level)} ${escapeHtml(c.section)}</option>`
                 ).join('');
         }
     } catch (error) {
@@ -134,7 +134,7 @@ function renderTable() {
 
     body.innerHTML = attendanceRecords.map(r => `
         <tr>
-            <td>${r.first_name} ${r.last_name}</td>
+            <td>${escapeHtml(r.first_name + ' ' + r.last_name)}</td>
             <td>
                 <select id="status-${r.class_student_id}" class="status-select">
                     <option value="">-- Select --</option>
@@ -145,7 +145,7 @@ function renderTable() {
                 </select>
             </td>
             <td>
-                <span class="action-link" onclick="save(${r.class_student_id})">Save</span>
+                <button type="button" class="btn-primary btn-sm" onclick="save(${r.class_student_id})">Save</button>
             </td>
         </tr>
     `).join('');

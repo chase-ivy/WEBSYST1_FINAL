@@ -166,7 +166,7 @@ async function loadSubjectsForClass(classId) {
             classSubjectsMap = {};
 
             response.data.forEach(cs => {
-                classSubjectsMap[cs.class_subject_id] = cs;
+                classSubjectsMap[cs.class_subject_id] = { ...cs, class_id: currentClassId };
                 const option = document.createElement('option');
                 option.value = cs.class_subject_id;
                 option.textContent = cs.subject_name;
@@ -244,7 +244,8 @@ async function loadActivityScores() {
 
     try {
         const scoresResponse = await API.activities.getScores(activityId);
-        const studentsResponse = await API.teacher.students();
+        const classId = classSubjectsMap[currentClassSubjectId].class_id;
+        const studentsResponse = await API.classes.getClassStudents(classId);
 
         if (scoresResponse.success && studentsResponse.success) {
             renderScoresTable(studentsResponse.data, scoresResponse.data);
@@ -276,6 +277,7 @@ function renderScoresTable(students, scores) {
                         value="${currentScore || ''}"
                         max="${maxScore}"
                         min="0"
+                        step="1"
                     >
                 </td>
             </tr>
@@ -295,7 +297,7 @@ document.getElementById('scoresForm').addEventListener('submit', async (e) => {
     for (let [key, value] of formData.entries()) {
         if (key.startsWith('score[')) {
             const classStudentId = key.match(/score\[(\d+)\]/)[1];
-            const numeric = parseFloat(value);
+            const numeric = parseInt(value);
             if (value !== '' && !isNaN(numeric) && numeric >= 0 && numeric <= maxScore) {
                 data.scores[classStudentId] = numeric;
             }

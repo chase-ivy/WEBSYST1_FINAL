@@ -44,6 +44,12 @@ require_role(['staff']);
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Select Subject</label>
+                        <select id="subjectSelect">
+                            <option value="">-- Choose Subject --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Grading Period</label>
                         <select id="gradingPeriod">
                             <option value="Q1">1st Quarter</option>
@@ -70,13 +76,12 @@ require_role(['staff']);
                         <thead>
                             <tr>
                                 <th>Student</th>
-                                <th>Subject</th>
                                 <th>Grade</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="gradeTable">
-                            <tr><td colspan="4" class="empty-row">Loading...</td></tr>
+                            <tr><td colspan="3" class="empty-row">Loading grades...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -88,7 +93,9 @@ require_role(['staff']);
 <script src="../../api/client.js"></script>
 <script>
 let currentClassId = null;
+let currentClassSubjectId = null;
 let gradeData = [];
+let classSubjectsMap = {};
 
 async function loadClasses() {
     try {
@@ -97,7 +104,7 @@ async function loadClasses() {
             const select = document.getElementById('classSelect');
             select.innerHTML = '<option value="">-- Choose Class --</option>' +
                 response.data.map(c =>
-                    `<option value="${c.class_id}">${c.grade_level} ${c.section} - ${c.subject_name}</option>`
+                    `<option value="${c.class_id}">${c.grade_level} ${c.section} (${c.school_year})</option>`
                 ).join('');
         }
     } catch (error) {
@@ -106,15 +113,88 @@ async function loadClasses() {
     }
 }
 
+function onClassChange() {
+    currentClassId = document.getElementById('classSelect').value;
+    const subjectSelect = document.getElementById('subjectSelect');
+
+    subjectSelect.innerHTML = '<option value="">-- Choose Subject --</option>';
+    currentClassSubjectId = null;
+    document.getElementById('gradeSection').style.display = 'none';
+
+    if (!currentClassId) {
+        return;
+    }
+
+    loadSubjectsForClass(currentClassId);
+}
+
+async function loadSubjectsForClass(classId) {
+    try {
+        const response = await API.classes.getSubjects(classId);
+        if (response.success) {
+            const select = document.getElementById('subjectSelect');
+            select.innerHTML = '<option value="">-- Choose Subject --</option>';
+            classSubjectsMap = {};
+
+            response.data.forEach(cs => {
+                classSubjectsMap[cs.class_subject_id] = { ...cs, class_id: classId };
+                const option = document.createElement('option');
+                option.value = cs.class_subject_id;
+                option.textContent = cs.subject_name;
+                select.appendChild(option);
+            });
+
+            if (response.data.length === 0) {
+                select.innerHTML = '<option value="" disabled>No subjects available</option>';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load subjects:', error);
+        showMessage('error', 'Failed to load subjects');
+    }
+}
+
+function onSubjectChange() {
+    currentClassSubjectId = document.getElementById('subjectSelect').value;
+
+    document.getElementById('gradeSection').style.display = 'none';
+
+    if (!currentClassSubjectId) {
+        return;
+    }
+
+    document.getElementById('gradeSection').style.display = 'block';
+    loadGrades();
+}
+
 async function loadGrades() {
-    if (!currentClassId) return;
+    if (!currentClassSubjectId) return;
 
     document.getElementById('gradeTable').innerHTML = '<tr><td colspan="4" class="empty-row">Loading grades...</td></tr>';
 
     try {
-        const response = await API.grades.getClassGrades(currentClassId);
+        const response = await API.grades.getClassGrades(currentClassSubjectId);
         if (response.success) {
-            gradeData = response.data;
+            const studentsMap = {};
+            response.data.forEach(item => {
+                const key = item.class_student_id;
+                if (!studentsMap[key]) {
+                    studentsMap[key] = {
+                        class_student_id: item.class_student_id,
+                        class_subject_id: item.class_subject_id,
+                        first_name: item.first_name,
+                        last_name: item.last_name,
+                        grades: {}
+                    };
+                }
+                if (item.grading_period !== null && item.grading_period !== '') {
+                    studentsMap[key].grades[item.grading_period] = {
+                        grade_id: item.grade_id,
+                        grade: item.grade
+                    };
+                }
+            });
+            gradeData = Object.values(studentsMap);
             renderGrades();
         } else {
             showMessage('error', 'Failed to load grades');
@@ -129,32 +209,33 @@ function renderGrades() {
     const tbody = document.getElementById('gradeTable');
 
     if (gradeData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">No grades found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-row">No students found</td></tr>';
         return;
     }
 
     const period = document.getElementById('gradingPeriod').value;
 
-    tbody.innerHTML = gradeData
-        .filter(g => g.grading_period === period)
-        .map(g => `
+    tbody.innerHTML = gradeData.map(student => {
+        const gradeInfo = student.grades[period] || {};
+        const gradeValue = gradeInfo.grade ?? '';
+        return `
             <tr>
-                <td class="td-primary">${escapeHtml(g.first_name + ' ' + g.last_name)}</td>
-                <td>${escapeHtml(g.subject)}</td>
+                <td class="td-primary">${escapeHtml(student.first_name + ' ' + student.last_name)}</td>
                 <td>
                     <input type="number"
-                        id="grade-${g.class_student_id}-${g.grade_id ?? 0}"
-                        value="${g.grade ?? ''}"
+                        id="grade-${student.class_student_id}-${gradeInfo.grade_id ?? 0}"
+                        value="${gradeValue}"
                         min="0" max="100" step="0.5">
                 </td>
                 <td>
-                    <button type="button" class="btn-primary" onclick="saveGrade(${g.class_student_id}, ${g.grade_id ?? 0})">Save</button>
+                    <button type="button" class="btn-primary" onclick="saveGrade(${student.class_student_id}, ${gradeInfo.grade_id ?? 0}, ${student.class_subject_id})">Save</button>
                 </td>
             </tr>
-        `).join('');
+        `;
+    }).join('');
 }
 
-async function saveGrade(class_student_id, grade_id) {
+async function saveGrade(class_student_id, grade_id, class_subject_id) {
     const input = document.querySelector(`input[id^="grade-${class_student_id}-"]`);
     const grade = parseFloat(input.value);
     const grading_period = document.getElementById('gradingPeriod').value;
@@ -167,6 +248,7 @@ async function saveGrade(class_student_id, grade_id) {
     try {
         const response = await API.grades.save({
             class_student_id,
+            class_subject_id,
             grade_id,
             grading_period,
             grade
@@ -194,17 +276,9 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-document.getElementById('classSelect').addEventListener('change', function () {
-    currentClassId = this.value;
+document.getElementById('classSelect').addEventListener('change', onClassChange);
 
-    if (!currentClassId) {
-        document.getElementById('gradeSection').style.display = 'none';
-        return;
-    }
-
-    document.getElementById('gradeSection').style.display = 'block';
-    loadGrades();
-});
+document.getElementById('subjectSelect').addEventListener('change', onSubjectChange);
 
 document.getElementById('gradingPeriod').addEventListener('change', renderGrades);
 

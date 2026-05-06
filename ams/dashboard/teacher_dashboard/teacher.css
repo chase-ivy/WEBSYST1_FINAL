@@ -438,12 +438,31 @@ button:hover,
 /* ── FORM STYLES ────────────────────────────────────────── */
 .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px 24px;
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+    gap: 20px 24px;
 }
 
 .form-grid .form-group.full {
     grid-column: 1 / -1;
+}
+
+.form-section {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.form-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
 }
 
 .form-group {
@@ -762,13 +781,13 @@ select:focus-visible {
     z-index: 1000;
 }
 
-.modal-content {
+..modal-content {
     background: var(--surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
+    width: min(95vw, 1200px);
+    max-width: 1200px;
+    max-height: 92vh;
     overflow-y: auto;
 }
 

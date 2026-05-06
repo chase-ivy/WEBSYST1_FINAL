@@ -48,6 +48,26 @@ function fetchDisabilities($pdo, $student_id) {
     return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'disability_type_id');
 }
 
+function fetchMedical($pdo, $enrollment_id) {
+    $medical = fetchOneBy($pdo, 'medical_information', 'enrollment_id', $enrollment_id);
+    if (empty($medical)) {
+        return [];
+    }
+    $medical_id = $medical['medical_id'];
+    $allergies = fetchOneBy($pdo, 'medical_allergies', 'medical_id', $medical_id);
+    $conditions = fetchOneBy($pdo, 'medical_conditions', 'medical_id', $medical_id);
+    $surgeries = fetchOneBy($pdo, 'medical_surgeries', 'medical_id', $medical_id);
+    $treatments = fetchOneBy($pdo, 'medical_treatments', 'medical_id', $medical_id);
+    $family_history = fetchOneBy($pdo, 'medical_family_history', 'medical_id', $medical_id);
+    return array_merge($medical, [
+        'allergies' => $allergies ?: [],
+        'conditions' => $conditions ?: [],
+        'surgeries' => $surgeries ?: [],
+        'treatments' => $treatments ?: [],
+        'family_history' => $family_history ?: []
+    ]);
+}
+
 function fetchLatestEnrollment($pdo, $student_id) {
     $stmt = $pdo->prepare("SELECT * FROM enrollments WHERE student_id = ? ORDER BY enrollment_id DESC LIMIT 1");
     $stmt->execute([$student_id]);
@@ -156,6 +176,55 @@ function updateDisabilities($pdo, $enrollment_id, $disabilities) {
     }
 }
 
+function updateMedical($pdo, $enrollment_id, $medicalData) {
+    // First, check if medical record exists
+    $existing = fetchOneBy($pdo, 'medical_information', 'enrollment_id', $enrollment_id);
+    if (empty($existing)) {
+        // Insert new
+        $insert = $pdo->prepare("INSERT INTO medical_information (enrollment_id, exposed_to_cigarette_vape_smoke, other_pertinent_information) VALUES (?, ?, ?)");
+        $insert->execute([
+            $enrollment_id,
+            $medicalData['exposed_to_cigarette_vape_smoke'] ?? 0,
+            $medicalData['other_pertinent_information'] ?? ''
+        ]);
+        $medical_id = $pdo->lastInsertId();
+    } else {
+        // Update existing
+        $update = $pdo->prepare("UPDATE medical_information SET exposed_to_cigarette_vape_smoke = ?, other_pertinent_information = ? WHERE medical_id = ?");
+        $update->execute([
+            $medicalData['exposed_to_cigarette_vape_smoke'] ?? 0,
+            $medicalData['other_pertinent_information'] ?? '',
+            $existing['medical_id']
+        ]);
+        $medical_id = $existing['medical_id'];
+    }
+
+    // Update allergies
+    $hasAllergies = !empty($medicalData['has_allergies']) ? 1 : 0;
+    $allergiesStmt = $pdo->prepare("INSERT INTO medical_allergies (medical_id, has_allergies) VALUES (?, ?) ON DUPLICATE KEY UPDATE has_allergies = VALUES(has_allergies)");
+    $allergiesStmt->execute([$medical_id, $hasAllergies]);
+
+    // Update conditions
+    $hasConditions = !empty($medicalData['has_med_condition']) ? 1 : 0;
+    $conditionsStmt = $pdo->prepare("INSERT INTO medical_conditions (medical_id, has_conditions) VALUES (?, ?) ON DUPLICATE KEY UPDATE has_conditions = VALUES(has_conditions)");
+    $conditionsStmt->execute([$medical_id, $hasConditions]);
+
+    // Update surgeries
+    $hasSurgery = !empty($medicalData['has_surgery_hospitalization']) ? 1 : 0;
+    $surgeryStmt = $pdo->prepare("INSERT INTO medical_surgeries (medical_id, has_surgery) VALUES (?, ?) ON DUPLICATE KEY UPDATE has_surgery = VALUES(has_surgery)");
+    $surgeryStmt->execute([$medical_id, $hasSurgery]);
+
+    // Update treatments
+    $isTakingTreatment = !empty($medicalData['is_taking_treatment']) ? 1 : 0;
+    $treatmentStmt = $pdo->prepare("INSERT INTO medical_treatments (medical_id, is_taking_treatment) VALUES (?, ?) ON DUPLICATE KEY UPDATE is_taking_treatment = VALUES(is_taking_treatment)");
+    $treatmentStmt->execute([$medical_id, $isTakingTreatment]);
+
+    // Update family history
+    $familyHistory = !empty($medicalData['family_medical_history']) ? 1 : 0;
+    $familyStmt = $pdo->prepare("INSERT INTO medical_family_history (medical_id, has_family_history) VALUES (?, ?) ON DUPLICATE KEY UPDATE has_family_history = VALUES(has_family_history)");
+    $familyStmt->execute([$medical_id, $familyHistory]);
+}
+
 $action = $_GET['action'] ?? '';
 
 try {
@@ -193,6 +262,10 @@ try {
             $returning = fetchOneBy($pdo, 'returning_learners', 'enrollment_id', $latestEnrollment['enrollment_id']);
         }
         $disability_ids = fetchDisabilities($pdo, $student_id);
+        $medical = [];
+        if (!empty($latestEnrollment['enrollment_id'])) {
+            $medical = fetchMedical($pdo, $latestEnrollment['enrollment_id']);
+        }
 
         $schoolYearStart = '';
         $schoolYearEnd = '';
@@ -212,7 +285,8 @@ try {
                 'permanent_address' => $permanent,
                 'parents' => $parents,
                 'returning' => $returning,
-                'disabilities' => $disability_ids
+                'disabilities' => $disability_ids,
+                'medical' => $medical
             ]
         ]);
         exit;
@@ -351,6 +425,8 @@ try {
             ]);
 
             updateDisabilities($pdo, $latest['enrollment_id'], $data['disabilities'] ?? []);
+
+            updateMedical($pdo, $latest['enrollment_id'], $data);
         }
 
         echo json_encode(['success' => true]);

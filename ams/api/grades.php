@@ -17,18 +17,34 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 try {
     if ($action === 'class') {
-        $class_id = intval($_GET['class_id'] ?? 0);
-        $stmt = $pdo->prepare('SELECT g.grade_id, cs.class_student_id, s.first_name, s.last_name, 
-                                     subj.name as subject, g.grading_period, g.grade
-                              FROM grades g
-                              JOIN class_students cs ON g.class_student_id = cs.class_student_id
-                              JOIN class_subjects csub ON g.class_subject_id = csub.class_subject_id
-                              JOIN subjects subj ON csub.subject_id = subj.subject_id
-                              JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
-                              JOIN students s ON e.student_id = s.student_id
-                              WHERE cs.class_id = ?
-                              ORDER BY s.last_name, s.first_name, g.grading_period');
-        $stmt->execute([$class_id]);
+        $class_subject_id = intval($_GET['class_subject_id'] ?? 0);
+
+        if ($class_subject_id > 0) {
+            $stmt = $pdo->prepare('SELECT cs.class_student_id, csub.class_subject_id, s.first_name, s.last_name, 
+                                         g.grade_id, g.grading_period, g.grade
+                                  FROM class_students cs
+                                  JOIN class_subjects csub ON cs.class_id = csub.class_id
+                                  JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
+                                  JOIN students s ON e.student_id = s.student_id
+                                  LEFT JOIN grades g ON cs.class_student_id = g.class_student_id AND g.class_subject_id = csub.class_subject_id
+                                  WHERE csub.class_subject_id = ?
+                                  ORDER BY s.last_name, s.first_name, g.grading_period');
+            $stmt->execute([$class_subject_id]);
+        } else {
+            $class_id = intval($_GET['class_id'] ?? 0);
+            $stmt = $pdo->prepare('SELECT g.grade_id, cs.class_student_id, s.first_name, s.last_name, 
+                                         subj.name as subject, g.grading_period, g.grade
+                                  FROM grades g
+                                  JOIN class_students cs ON g.class_student_id = cs.class_student_id
+                                  JOIN class_subjects csub ON g.class_subject_id = csub.class_subject_id
+                                  JOIN subjects subj ON csub.subject_id = subj.subject_id
+                                  JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
+                                  JOIN students s ON e.student_id = s.student_id
+                                  WHERE cs.class_id = ?
+                                  ORDER BY s.last_name, s.first_name, g.grading_period');
+            $stmt->execute([$class_id]);
+        }
+
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     }
     elseif ($action === 'student') {

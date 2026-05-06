@@ -75,7 +75,7 @@ try {
         if (isset($data['scores']) && is_array($data['scores'])) {
             foreach ($data['scores'] as $class_student_id => $score) {
                 $class_student_id = intval($class_student_id);
-                $score = floatval($score);
+                $score = intval($score);
                 if ($class_student_id <= 0) {
                     continue;
                 }
@@ -94,7 +94,7 @@ try {
             }
         } else {
             $class_student_id = intval($data['class_student_id'] ?? 0);
-            $score = floatval($data['score'] ?? 0);
+            $score = intval($data['score'] ?? 0);
 
             $check = $pdo->prepare('SELECT activity_score_id FROM activity_scores WHERE activity_id = ? AND class_student_id = ?');
             $check->execute([$activity_id, $class_student_id]);
