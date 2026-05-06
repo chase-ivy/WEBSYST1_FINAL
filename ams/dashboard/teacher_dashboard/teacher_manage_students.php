@@ -127,6 +127,7 @@ function renderStudents(students) {
                     <button class="btn-secondary btn-sm" type="button" onclick="openEnrollmentModal(${student.student_id})">Update Enrollment</button>
                     <button class="btn-secondary btn-sm" type="button" onclick="openAssignClassModal(${student.student_id})">Assign Class</button>
                     <button class="btn-secondary btn-sm" type="button" onclick="openAccountModal(${student.student_id})">Update Account</button>
+                    <button class="btn-secondary btn-sm" type="button" onclick="downloadEnrollmentForm(${student.student_id})">Download Enrollment Form</button>
                     <button class="btn-danger btn-sm" type="button" onclick="confirmDeleteStudent(${student.student_id})">Delete</button>
                 </td>
             </tr>
@@ -753,6 +754,10 @@ function showAlert(type, message) {
     alert.textContent = message;
     document.querySelector('.page-header').insertAdjacentElement('afterend', alert);
     setTimeout(() => alert.remove(), 5000);
+}
+
+function downloadEnrollmentForm(studentId) {
+    window.open(`../../forms/enrollment_form/pdf.php?student_id=${studentId}&type=combined`, '_blank');
 }
 
    //INIT

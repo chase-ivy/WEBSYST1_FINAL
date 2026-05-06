@@ -23,7 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$student_id = intval($_GET['student_id'] ?? 2);
+$student_id = intval($_GET['student_id'] ?? 0);
+$type = $_GET['type'] ?? null;
+
+if (!$student_id) {
+    echo "No student ID provided.";
+    exit;
+}
 
 // ---------------------------------------------------------------------------
 // Helper functions
@@ -450,6 +456,19 @@ $combinedData = array_merge($enrollmentData, $medicalData);
 $generator = new GeneratePDF;
 $results   = [];
 $errors    = [];
+
+if ($type) {
+    try {
+        $path = $generator->generate($combinedData, $type);
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . basename($path) . '"');
+        readfile($path);
+        exit;
+    } catch (Throwable $e) {
+        echo "Error generating PDF: " . $e->getMessage();
+        exit;
+    }
+}
 
 try {
     $results['enrollment'] = $generator->generate($enrollmentData, 'enrollment');
