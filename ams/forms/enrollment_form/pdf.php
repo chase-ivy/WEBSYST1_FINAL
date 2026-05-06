@@ -5,6 +5,12 @@ use Classes\GeneratePDF;
 
 require_once __DIR__ . '/../../config/config.php';
 
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    http_response_code(500);
+    echo "Database connection not initialized. Check config.php.";
+    exit;
+}
+
 // if ($_SERVER['REQUEST_METHOD'] !== 'GET' || empty($_GET['student_id'])) {
 //     echo "No student ID provided.";
 //     exit;
@@ -17,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$student_id = intval($_GET['student_id'] ?? 1);
+$student_id = intval($_GET['student_id'] ?? 2);
 
 // ---------------------------------------------------------------------------
 // Helper functions
@@ -72,6 +78,18 @@ function fetchReturningLearner($pdo, $enrollment_id) {
     $stmt = $pdo->prepare("SELECT * FROM returning_learners WHERE enrollment_id = ? LIMIT 1");
     $stmt->execute([$enrollment_id]);
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+}
+
+function fetchStudentDisabilities($pdo, $enrollment_id) {
+    $stmt = $pdo->prepare("
+        SELECT dt.name AS disability_type, dst.name AS disability_subtype
+        FROM student_disabilities sd
+        JOIN disability_types dt ON sd.disability_type_id = dt.disability_type_id
+        LEFT JOIN disability_subtypes dst ON sd.disability_subtype_id = dst.disability_subtype_id
+        WHERE sd.enrollment_id = ?
+    ");
+    $stmt->execute([$enrollment_id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function fetchStudentAllergies($pdo, $allergy_group_id) {
@@ -132,6 +150,11 @@ $parents           = fetchParents($pdo, $enrollment_id);
 $current           = fetchAddress($pdo, $enrollment_id, 'current');
 $permanent         = fetchAddress($pdo, $enrollment_id, 'permanent');
 $returning_learner = fetchReturningLearner($pdo, $enrollment_id);
+
+// Disabilities — stored in student_disabilities, NOT as columns on enrollments
+$student_disabilities = fetchStudentDisabilities($pdo, $enrollment_id);
+$disabilityTypes    = array_map(fn($d) => strtolower($d['disability_type']),    $student_disabilities);
+$disabilitySubtypes = array_map(fn($d) => strtolower($d['disability_subtype'] ?? ''), $student_disabilities);
 
 $medical_info = fetchMedicalInfo($pdo, $enrollment_id);
 $medical_id   = $medical_info['medical_id'] ?? 0;
@@ -226,8 +249,11 @@ $guardianName = trim(
 // Surgery detail string
 $surgery_detail = '';
 if (!empty($surgeries['has_surgery'])) {
+    $surgDate = !empty($surgeries['surgery_date'])
+        ? date('m/d/Y', strtotime($surgeries['surgery_date']))
+        : '';
     $parts = array_filter([
-        $surgeries['surgery_date']  ?? '',
+        $surgDate,
         $surgeries['hospital_name'] ?? '',
         $surgeries['body_part']     ?? '',
     ]);
@@ -268,38 +294,56 @@ $enrollmentData = [
     'returning_yes'    => ($enrollment['is_returning_learner'] ?? 0) == 1 ? 'Yes' : '',
     'returning_no'     => ($enrollment['is_returning_learner'] ?? 0) == 0 ? 'Yes' : '',
     'mother_tongue'    => safeUpper($enrollment['mother_tongue']),
-    '4ps_beneficiary'  => trim($enrollment['four_ps_household_id'] ?? ''),
+    '4ps_benificiary'  => trim($enrollment['four_ps_household_id'] ?? ''),
     '4ps_yes'          => ($enrollment['is_four_ps_beneficiary'] ?? 0) == 1 ? 'Yes' : '',
     '4ps_no'           => ($enrollment['is_four_ps_beneficiary'] ?? 0) == 0 ? 'Yes' : '',
     'indigenous_group' => safeUpper($enrollment['indigenous_group']),
     'ip_yes'           => ($enrollment['is_indigenous'] ?? 0) == 1 ? 'Yes' : '',
     'ip_no'            => ($enrollment['is_indigenous'] ?? 0) == 0 ? 'Yes' : '',
-    'learner_with_disability' => ($enrollment['is_learner_with_disability'] ?? 0) == 1 ? 'Yes' : '',
+    'is_learner_with_disability_yes' => ($enrollment['is_learner_with_disability'] ?? 0) == 1 ? 'Yes' : '',
+    'is_learner_with_disability_no'  => ($enrollment['is_learner_with_disability'] ?? 0) == 0 ? 'Yes' : '',
+
+    // --- Disability types (sourced from student_disabilities table) ---
+    'visual_impairment'             => chk(in_array('visual impairment',                    $disabilityTypes)),
+    'blind'                         => chk(in_array('blind',                                $disabilitySubtypes)),
+    'low_vision'                    => chk(in_array('low vision',                           $disabilitySubtypes)),
+    'hearing_impairment'            => chk(in_array('hearing impairment',                   $disabilityTypes)),
+    'autism_spectrum_disorder'      => chk(in_array('autism spectrum disorder',             $disabilityTypes)),
+    'speech_language_disorder'      => chk(in_array('speech / language disorder',          $disabilityTypes)),
+    'learning_disability'           => chk(in_array('learning disability',                  $disabilityTypes)),
+    'emotional_behavioral_disorder' => chk(in_array('emotional / behavioral disorder',     $disabilityTypes)),
+    'cerebral_palsy'                => chk(in_array('cerebral palsy',                       $disabilityTypes)),
+    'intellectual_disability'       => chk(in_array('intellectual disability',              $disabilityTypes)),
+    'orthopedic_physical_handicap'  => chk(in_array('orthopedic / physical handicap',      $disabilityTypes)),
+    'social_health_problem'         => chk(in_array('special health problem / chronic disease', $disabilityTypes)),
+    'disability_cancer'             => chk(in_array('cancer',                               $disabilitySubtypes)),
+    'multiple_disorder'             => chk(in_array('multiple disorder',                    $disabilityTypes)),
 
     // --- Returning learner ---
     'returning_grade_level'      => $returning_formattedGrade,
     'last_school_attended'       => safeUpper($returning_learner['last_school_attended']  ?? ''),
     'last_school_year_completed' => trim($returning_learner['last_school_year_completed'] ?? ''),
-    'returning_school_id'        => trim($returning_learner['school_id']                  ?? ''),
+    'school_id'                  => trim($returning_learner['school_id']                  ?? ''),
 
     // --- Current address ---
-    'current_house_no'     => $currentAddr['house_no'],
-    'current_street'       => $currentAddr['street_name'],
-    'current_barangay'     => $currentAddr['barangay'],
-    'current_municipality' => $currentAddr['municipality'],
-    'current_province'     => $currentAddr['province'],
-    'current_country'      => $currentAddr['country'],
-    'current_zip'          => $currentAddr['zip_code'],
+    'house_no'     => $currentAddr['house_no'],
+    'street_name'  => $currentAddr['street_name'],
+    'barangay'     => $currentAddr['barangay'],
+    'municipality_city' => $currentAddr['municipality'],
+    'province'     => $currentAddr['province'],
+    'country'      => $currentAddr['country'],
+    'zip_code'     => $currentAddr['zip_code'],
 
     // --- Permanent address ---
-    'same_address'           => $sameAddress ? 'Yes' : '',
-    'permanent_house_no'     => $permanentAddr['house_no'],
-    'permanent_street'       => $permanentAddr['street_name'],
-    'permanent_barangay'     => $permanentAddr['barangay'],
-    'permanent_municipality' => $permanentAddr['municipality'],
-    'permanent_province'     => $permanentAddr['province'],
-    'permanent_country'      => $permanentAddr['country'],
-    'permanent_zip'          => $permanentAddr['zip_code'],
+    'same_address_yes' => $sameAddress ? 'Yes' : '',
+    'same_address_no'  => $sameAddress ? '' : 'Yes',
+    'house_nop'        => $permanentAddr['house_no'],
+    'street_namep'     => $permanentAddr['street_name'],
+    'barangayp'        => $permanentAddr['barangay'],
+    'municipality_cityp' => $permanentAddr['municipality'],
+    'provincep'        => $permanentAddr['province'],
+    'countryp'         => $permanentAddr['country'],
+    'zip_codep'        => $permanentAddr['zip_code'],
 
     // --- Father ---
     'father_last_name'      => safeUpper($parents['father']['last_name']   ?? ''),
@@ -358,6 +402,7 @@ $medicalData = [
     'error_of_refraction'       => chk(isset($conditionByName['error of refraction (eye ailment)'])),
     'asthma'                    => chk(isset($conditionByName['asthma (lung ailment)'])),
     'seizure'                   => chk(isset($conditionByName['seizure (convulsions)'])),
+    'heart_illness'             => chk(isset($conditionByName['heart illness'])),
     'anemia'                    => chk(isset($conditionByName['anemia'])),
     'bleeding_disorder'         => chk(isset($conditionByName['bleeding disorder'])),
     'fracture_dislocation'      => chk(isset($conditionByName['fracture / dislocation'])),
@@ -383,12 +428,20 @@ $medicalData = [
     'hypertension'         => chk(isset($familyCondByName['hypertension'])),
     'stroke_heart_attack'  => chk(isset($familyCondByName['stroke / heart attack'])),
     'depression'           => chk(isset($familyCondByName['depression'])),
+    'kidney_problems'      => chk(isset($familyCondByName['kidney problems'])),
     'other_family_history' => $familyOtherDesc,
 
     // --- 6 & 7. Cigarette exposure & other info ---
     'exposed_to_cigarette_vape_smoke_yes' => chk(($medical_info['exposed_to_cigarette_vape_smoke'] ?? 0) == 1),
+    'exposed_to_cigarette_vape_smoke_no'  => chk(($medical_info['exposed_to_cigarette_vape_smoke'] ?? 0) == 0),
     'other_pertinent_information'         => trim($medical_info['other_pertinent_information'] ?? ''),
 ];
+
+// ===========================================================================
+// BUILD DATA: COMBINED ENROLLMENT + MEDICAL
+// ===========================================================================
+
+$combinedData = array_merge($enrollmentData, $medicalData);
 
 // ===========================================================================
 // Generate both PDFs separately
@@ -408,6 +461,12 @@ try {
     $results['medical'] = $generator->generate($medicalData, 'medical');
 } catch (Throwable $e) {
     $errors['medical'] = $e->getMessage();
+}
+
+try {
+    $results['combined'] = $generator->generate($combinedData, 'combined');
+} catch (Throwable $e) {
+    $errors['combined'] = $e->getMessage();
 }
 
 foreach ($results as $type => $path) {

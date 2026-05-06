@@ -8,11 +8,12 @@ class GeneratePDF {
     private array $templates = [
         'medical'    => 'medical_form_compressed.pdf',
         'enrollment' => 'enrollment_form_compressed.pdf',
+        'combined'   => 'enrollment_and_medical_form_compressed.pdf',
     ];
 
     /**
      * @param array  $data  Field key-value pairs matching the target PDF's form fields.
-     * @param string $type  'medical' | 'enrollment'  (defaults to 'medical')
+     * @param string $type  'medical' | 'enrollment' | 'combined'  (defaults to 'medical')
      */
     public function generate(array $data, string $type = 'medical'): string {
         if (!array_key_exists($type, $this->templates)) {
