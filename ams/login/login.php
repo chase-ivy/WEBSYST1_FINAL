@@ -477,7 +477,7 @@ unset($_SESSION['login_error']);
                     autocomplete="username"
                     required
                 >
-                <label for="username">Email or LRN</label>
+                <label for="username">Email / LRN</label>
 
                 <span class="type-badge" id="type-badge"></span>
 
