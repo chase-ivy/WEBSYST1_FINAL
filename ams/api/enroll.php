@@ -272,7 +272,10 @@ try {
     // Medical information
     $hasAllergies = normalizeCheckboxValue($data['has_allergies'] ?? 0);
     $allergyTypes = parseIdsValue($data['medicine_allergy'] ?? []);
-    $allergyDescription = getStringValue($data['allergy_description'] ?? null);
+    $allergyDescriptions = $data['allergy_description'] ?? [];
+    if (!is_array($allergyDescriptions)) {
+        $allergyDescriptions = ['default' => trim((string)$allergyDescriptions)];
+    }
 
     $hasMedicalCondition = normalizeCheckboxValue($data['has_med_condition'] ?? 0);
     $conditionTypeIds = parseIdsValue($data['condition_type_id'] ?? []);
@@ -305,7 +308,9 @@ try {
     if (!empty($allergyTypes)) {
         $studentAllergyStmt = $pdo->prepare('INSERT INTO student_allergies (allergy_group_id, allergy_type_id, description) VALUES (?, ?, ?)');
         foreach ($allergyTypes as $typeId) {
-            $studentAllergyStmt->execute([$allergyGroupId, $typeId, $allergyDescription]);
+            $description = trim((string)($allergyDescriptions[$typeId] ?? $allergyDescriptions['default'] ?? ''));
+            $description = $description === '' ? null : $description;
+            $studentAllergyStmt->execute([$allergyGroupId, $typeId, $description]);
         }
     }
 

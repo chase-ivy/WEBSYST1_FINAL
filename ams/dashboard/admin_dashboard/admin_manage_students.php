@@ -131,10 +131,7 @@ function renderStudents(students) {
                 <td>${escapeHtml(student.section || 'N/A')}</td>
                 <td>${escapeHtml(student.school_year || 'N/A')}</td>
                 <td class="td-actions">
-                    <button class="btn-secondary btn-sm" type="button" onclick="openEnrollmentModal(${student.student_id})">Update Enrollment</button>
-                    <button class="btn-secondary btn-sm" type="button" onclick="openAssignClassModal(${student.student_id})">Assign Class</button>
-                    <button class="btn-secondary btn-sm" type="button" onclick="openAccountModal(${student.student_id})">Update Account</button>
-                    <button class="btn-secondary btn-sm" type="button" onclick="downloadEnrollmentForm(${student.student_id})">Download Form</button>
+                    <button class="btn-secondary btn-sm" type="button" onclick="openEnrollmentModal(${student.student_id})">Edit Student</button>
                     <button class="btn-danger btn-sm" type="button" onclick="confirmDeleteStudent(${student.student_id})">Delete</button>
                 </td>
             </tr>
@@ -177,12 +174,20 @@ function closeModal() {
 
 async function openEnrollmentModal(studentId) {
     try {
-        const res = await API.students.get(studentId);
-        if (!res || !res.success) {
-            throw new Error(res?.error || 'Failed to load student details');
+        const [studentRes, accountRes] = await Promise.all([
+            API.students.get(studentId),
+            API.teacher.getStudentAccount(studentId)
+        ]);
+
+        if (!studentRes || !studentRes.success) {
+            throw new Error(studentRes?.error || 'Failed to load student details');
+        }
+        if (!accountRes || !accountRes.success) {
+            throw new Error(accountRes?.error || 'Failed to load student account details');
         }
 
-        const data = res.data;
+        const data = studentRes.data;
+        const account = accountRes.data || {};
         const student = data.student || {};
         const enrollment = data.latest_enrollment || {};
         const currentAddress = data.current_address || {};
@@ -192,11 +197,29 @@ async function openEnrollmentModal(studentId) {
         const disabilities = data.disabilities || [];
         const medical = data.medical || {};
 
-        const header = `<h3>Update Enrollment</h3>`;
+        const header = `<h3>Edit Student</h3>`;
         const body = `
             <form id="enrollmentForm" data-student-id="${studentId}">
                 <input type="hidden" name="student_id" value="${studentId}" />
-                
+
+                <div class="form-section">
+                    <h4>User Account</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input id="username" name="username" type="text" value="${escapeHtml(account.username || '')}" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input id="email" name="email" type="email" value="${escapeHtml(account.email || '')}" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password (leave blank to keep current)</label>
+                            <input id="password" name="password" type="password" />
+                        </div>
+                    </div>
+                </div>
+
                 <!-- School Year & Grade -->
                 <div class="form-section">
                     <h4>School Year & Grade Level</h4>
@@ -285,7 +308,7 @@ async function openEnrollmentModal(studentId) {
         });
     } catch (error) {
         console.error(error);
-        showAlert('error', `Unable to open enrollment editor: ${error.message}`);
+        showAlert('error', `Unable to open student editor: ${error.message}`);
     }
 }
 
@@ -324,142 +347,28 @@ async function saveEnrollmentUpdate(event) {
     const data = serializeForm(form);
 
     try {
+        if (data.username && data.email) {
+            const accountRes = await API.teacher.updateStudentAccount({
+                student_id: studentId,
+                username: data.username.trim(),
+                email: data.email.trim(),
+                password: (data.password || '').trim()
+            });
+            if (!accountRes || !accountRes.success) {
+                throw new Error(accountRes?.error || 'Failed to update student account');
+            }
+        }
+
         const res = await API.students.update(studentId, data);
         if (!res || !res.success) {
             throw new Error(res?.error || 'Failed to update enrollment');
         }
         closeModal();
-        showAlert('success', res.message || 'Enrollment updated successfully.');
+        showAlert('success', res.message || 'Student updated successfully.');
         await loadStudents();
     } catch (error) {
         console.error(error);
-        showAlert('error', error.message || 'Error updating enrollment.');
-    }
-}
-
-async function openAssignClassModal(studentId) {
-    try {
-        const classRes = await API.teacher.classes();
-        if (!classRes || !classRes.success) {
-            throw new Error('Failed to load classes');
-        }
-
-        const assignRes = await API.students.getClassAssignments(studentId);
-        const currentAssignments = assignRes?.data || [];
-
-        const classes = classRes.data || [];
-        const classesList = classes.map(c => ({
-            id: c.class_id,
-            name: `${c.subject_name} - ${c.section} (${c.grade_level})`
-        }));
-
-        const header = `<h3>Assign Classes</h3>`;
-        let body = `
-            <form id="assignClassForm" data-student-id="${studentId}">
-                <div class="form-group">
-                    <label>Classes</label>
-                    <div class="checkbox-group">
-        `;
-
-        classesList.forEach(cls => {
-            const isChecked = currentAssignments.some(a => a.class_id === cls.id);
-            body += `
-                <label class="checkbox-label">
-                    <input type="checkbox" name="class_ids" value="${cls.id}" ${isChecked ? 'checked' : ''} />
-                    ${escapeHtml(cls.name)}
-                </label>
-            `;
-        });
-
-        body += `
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button class="btn-secondary" type="button" onclick="closeModal()">Cancel</button>
-                    <button class="btn-primary" type="submit">Save Assignments</button>
-                </div>
-            </form>
-        `;
-
-        showModal({ header, body });
-        document.getElementById('assignClassForm').addEventListener('submit', saveClassAssignment);
-    } catch (error) {
-        console.error(error);
-        showAlert('error', `Unable to open class assignment: ${error.message}`);
-    }
-}
-
-async function saveClassAssignment(event) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const studentId = parseInt(form.dataset.studentId, 10);
-    const classIds = Array.from(form.querySelectorAll('input[name="class_ids"]:checked')).map(el => el.value);
-
-    try {
-        const res = await API.students.assignClasses(studentId, classIds);
-        if (!res || !res.success) {
-            throw new Error(res?.error || 'Failed to assign classes');
-        }
-        closeModal();
-        showAlert('success', res.message || 'Classes assigned successfully.');
-    } catch (error) {
-        console.error(error);
-        showAlert('error', error.message || 'Error assigning classes.');
-    }
-}
-
-async function openAccountModal(studentId) {
-    try {
-        const res = await API.students.get(studentId);
-        if (!res || !res.success) {
-            throw new Error(res?.error || 'Failed to load student details');
-        }
-
-        const student = res.data.student || {};
-
-        const header = `<h3>Update Student Account</h3>`;
-        const body = `
-            <form id="accountForm" data-student-id="${studentId}">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input id="email" name="email" type="email" value="${escapeHtml(student.email || '')}" />
-                </div>
-                <div class="form-group">
-                    <label for="password">Password (leave blank to keep current)</label>
-                    <input id="password" name="password" type="password" />
-                </div>
-                <div class="form-actions">
-                    <button class="btn-secondary" type="button" onclick="closeModal()">Cancel</button>
-                    <button class="btn-primary" type="submit">Update Account</button>
-                </div>
-            </form>
-        `;
-
-        showModal({ header, body });
-        document.getElementById('accountForm').addEventListener('submit', saveAccountUpdate);
-    } catch (error) {
-        console.error(error);
-        showAlert('error', `Unable to open account editor: ${error.message}`);
-    }
-}
-
-async function saveAccountUpdate(event) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const studentId = parseInt(form.dataset.studentId, 10);
-    const data = Object.fromEntries(new FormData(form).entries());
-    data.student_id = studentId;
-
-    try {
-        const res = await API.teacher.updateStudentAccount(data);
-        if (!res || !res.success) {
-            throw new Error(res?.error || 'Failed to update student account');
-        }
-        closeModal();
-        showAlert('success', res.message || 'Student account updated successfully.');
-    } catch (error) {
-        console.error(error);
-        showAlert('error', error.message || 'Error updating student account.');
+        showAlert('error', error.message || 'Error updating student.');
     }
 }
 
@@ -490,10 +399,6 @@ function showAlert(type, message) {
     alert.textContent = message;
     document.querySelector('.page-header').insertAdjacentElement('afterend', alert);
     setTimeout(() => alert.remove(), 5000);
-}
-
-function downloadEnrollmentForm(studentId) {
-    window.open(`../../forms/enrollment_form/pdf.php?student_id=${studentId}&type=combined`, '_blank');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

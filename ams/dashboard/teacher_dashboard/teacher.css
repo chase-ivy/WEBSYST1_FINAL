@@ -149,7 +149,7 @@ body {
 }
 
 .sidebar nav a:hover {
-    background: var(--overlay);
+    background: rgb(243, 57, 57);
     color: var(--text);
 }
 
@@ -174,7 +174,7 @@ body {
 }
 
 .sidebar a[href*="logout"]:hover {
-    background: #fff1f1;
+    background: rgb(243, 57, 57);
     color: var(--brand);
 }
 
@@ -501,6 +501,11 @@ button:hover,
     transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
     appearance: none;
     -webkit-appearance: none;
+}
+
+#grade-level:hover,
+#grade-level:focus {
+    border-color: var(--brand);
 }
 
 .form-group input:focus,

@@ -6,9 +6,9 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../login/auth.php';
 
-if (!is_logged_in()) {
+if (!is_logged_in() || !in_array($_SESSION['role'], ['staff', 'admin'], true)) {
     http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
 }
 
@@ -225,6 +225,18 @@ function updateMedical($pdo, $enrollment_id, $medicalData) {
     $familyStmt->execute([$medical_id, $familyHistory]);
 }
 
+function getValue(array $data, string $key, $default = null) {
+    return array_key_exists($key, $data) ? $data[$key] : $default;
+}
+
+function getBoolValue(array $data, string $key, $default = null) {
+    if (!array_key_exists($key, $data)) {
+        return $default;
+    }
+    $value = $data[$key];
+    return in_array((string)$value, ['1', 'Yes', 'yes', 'true', 'on'], true) ? 1 : 0;
+}
+
 $action = $_GET['action'] ?? '';
 
 try {
@@ -331,6 +343,8 @@ try {
 
         $data = json_decode(file_get_contents("php://input"), true);
         $student_id = intval($data['student_id']);
+        $currentStudent = fetchOne($pdo, 'students', $student_id);
+        $latest = fetchLatestEnrollment($pdo, $student_id);
 
         // 1. students
         $pdo->prepare("
@@ -338,95 +352,122 @@ try {
             SET lrn=?, first_name=?, last_name=?, middle_name=?, extension_name=?, birth_date=?, sex=?, place_of_birth=?
             WHERE student_id=?
         ")->execute([
-            $data['Learner_Reference_No'] ?? '',
-            $data['Learner_First_Name'] ?? '',
-            $data['Learner_Last_Name'] ?? '',
-            $data['Learner_Middle_Name'] ?? '',
-            $data['Learner_Extension_Name'] ?? '',
-            $data['Birth_Date'] ?? '',
-            $data['sex'] ?? '',
-            $data['Place_of_Birth'] ?? '',
+            getValue($data, 'Learner_Reference_No', $currentStudent['lrn'] ?? ''),
+            getValue($data, 'Learner_First_Name', $currentStudent['first_name'] ?? ''),
+            getValue($data, 'Learner_Last_Name', $currentStudent['last_name'] ?? ''),
+            getValue($data, 'Learner_Middle_Name', $currentStudent['middle_name'] ?? ''),
+            getValue($data, 'Learner_Extension_Name', $currentStudent['extension_name'] ?? ''),
+            getValue($data, 'Birth_Date', $currentStudent['birth_date'] ?? ''),
+            getValue($data, 'sex', $currentStudent['sex'] ?? ''),
+            getValue($data, 'Place_of_Birth', $currentStudent['place_of_birth'] ?? ''),
             $student_id
         ]);
 
-        $latest = fetchLatestEnrollment($pdo, $student_id);
         if (!empty($latest['enrollment_id'])) {
-            $schoolYear = trim(($data['year_start'] ?? '') . '-' . ($data['year_end'] ?? ''));
-            $withLrn = !empty($data['with_lrn']) && in_array((string)$data['with_lrn'], ['1', 'Yes'], true) ? 1 : 0;
-            $isIndigenous = (!empty($data['ip']) && $data['ip'] === 'Yes') ? 1 : 0;
-            $isFourPs = (!empty($data['fourps']) && $data['fourps'] === 'Yes') ? 1 : 0;
-            $isLearnerWithDisability = !empty($data['disabilities']) ? 1 : 0;
-            $isReturning = !empty($data['returning']) && $data['returning'] === '1' ? 1 : 0;
-            $age = isset($data['Birth_Date']) && trim($data['Birth_Date']) !== '' ? (int) floor((time() - strtotime($data['Birth_Date'])) / 31557600) : null;
+            $schoolYear = null;
+            if (array_key_exists('year_start', $data) || array_key_exists('year_end', $data)) {
+                $schoolYear = trim((string) getValue($data, 'year_start', '') . '-' . (string) getValue($data, 'year_end', ''));
+                if ($schoolYear === '-') {
+                    $schoolYear = $latest['school_year'];
+                }
+            } else {
+                $schoolYear = $latest['school_year'];
+            }
+
+            $withLrn = getBoolValue($data, 'with_lrn', $latest['with_lrn'] ?? 0);
+            $isIndigenous = getBoolValue($data, 'ip', $latest['is_indigenous'] ?? 0);
+            $isFourPs = getBoolValue($data, 'fourps', $latest['is_four_ps_beneficiary'] ?? 0);
+            $isLearnerWithDisability = array_key_exists('disabilities', $data) ? (!empty($data['disabilities']) ? 1 : 0) : ($latest['is_learner_with_disability'] ?? 0);
+            $isReturning = array_key_exists('returning', $data) ? getBoolValue($data, 'returning', $latest['is_returning_learner'] ?? 0) : ($latest['is_returning_learner'] ?? 0);
+            $age = array_key_exists('Birth_Date', $data) && trim((string) $data['Birth_Date']) !== '' ? (int) floor((time() - strtotime($data['Birth_Date'])) / 31557600) : ($latest['age'] ?? null);
 
             $pdo->prepare("UPDATE enrollments SET school_year = ?, grade_level = ?, with_lrn = ?, psa_bcn = ?, age = ?, mother_tongue = ?, is_indigenous = ?, indigenous_group = ?, is_four_ps_beneficiary = ?, four_ps_household_id = ?, is_learner_with_disability = ?, is_returning_learner = ? WHERE enrollment_id = ?")
                 ->execute([
                     $schoolYear,
-                    $data['Grade_Level'] ?? $latest['grade_level'],
+                    getValue($data, 'Grade_Level', $latest['grade_level'] ?? ''),
                     $withLrn,
-                    $data['psa_bcn'] ?? $latest['psa_bcn'],
+                    getValue($data, 'psa_bcn', $latest['psa_bcn'] ?? ''),
                     $age,
-                    $data['Mother_Tongue'] ?? $latest['mother_tongue'],
+                    getValue($data, 'Mother_Tongue', $latest['mother_tongue'] ?? ''),
                     $isIndigenous,
-                    $data['IP_Specify'] ?? $latest['indigenous_group'],
+                    getValue($data, 'IP_Specify', $latest['indigenous_group'] ?? ''),
                     $isFourPs,
-                    $data['FourPs_Specify'] ?? $latest['four_ps_household_id'],
+                    getValue($data, 'FourPs_Specify', $latest['four_ps_household_id'] ?? ''),
                     $isLearnerWithDisability,
                     $isReturning,
                     $latest['enrollment_id']
                 ]);
 
-            upsertEnrollmentAddress($pdo, $latest['enrollment_id'], 'current', [
-                'house_no' => $data['Current_House_No'] ?? '',
-                'street_name' => $data['Current_Street_Name'] ?? '',
-                'barangay' => $data['Current_Barangay'] ?? '',
-                'municipality_city' => $data['Current_Municipality_City'] ?? '',
-                'province' => $data['Current_Province'] ?? '',
-                'country' => $data['Current_Country'] ?? '',
-                'zip_code' => $data['Current_Zip_Code'] ?? ''
-            ]);
+            $currentAddress = fetchEnrollmentAddress($pdo, $latest['enrollment_id'], 'current');
+            $permanentAddress = fetchEnrollmentAddress($pdo, $latest['enrollment_id'], 'permanent');
 
-            upsertEnrollmentAddress($pdo, $latest['enrollment_id'], 'permanent', [
-                'house_no' => $data['Permanent_House_No'] ?? '',
-                'street_name' => $data['Permanent_Street_Name'] ?? '',
-                'barangay' => $data['Permanent_Barangay'] ?? '',
-                'municipality_city' => $data['Permanent_Municipality_City'] ?? '',
-                'province' => $data['Permanent_Province'] ?? '',
-                'country' => $data['Permanent_Country'] ?? '',
-                'zip_code' => $data['Permanent_Zip_Code'] ?? ''
-            ]);
+            if (array_key_exists('Current_House_No', $data) || array_key_exists('Current_Street_Name', $data) || array_key_exists('Current_Barangay', $data) || array_key_exists('Current_Municipality_City', $data) || array_key_exists('Current_Province', $data) || array_key_exists('Current_Country', $data) || array_key_exists('Current_Zip_Code', $data)) {
+                upsertEnrollmentAddress($pdo, $latest['enrollment_id'], 'current', [
+                    'house_no' => getValue($data, 'Current_House_No', $currentAddress['house_no'] ?? ''),
+                    'street_name' => getValue($data, 'Current_Street_Name', $currentAddress['street_name'] ?? ''),
+                    'barangay' => getValue($data, 'Current_Barangay', $currentAddress['barangay'] ?? ''),
+                    'municipality_city' => getValue($data, 'Current_Municipality_City', $currentAddress['municipality_city'] ?? ''),
+                    'province' => getValue($data, 'Current_Province', $currentAddress['province'] ?? ''),
+                    'country' => getValue($data, 'Current_Country', $currentAddress['country'] ?? ''),
+                    'zip_code' => getValue($data, 'Current_Zip_Code', $currentAddress['zip_code'] ?? '')
+                ]);
+            }
 
-            updateOrInsertParent($pdo, $latest['enrollment_id'], 'father', [
-                'last_name' => $data['father_last_name'] ?? '',
-                'first_name' => $data['father_first_name'] ?? '',
-                'middle_name' => $data['father_middle_name'] ?? '',
-                'contact_number' => $data['father_contact_number'] ?? ''
-            ]);
+            if (array_key_exists('Permanent_House_No', $data) || array_key_exists('Permanent_Street_Name', $data) || array_key_exists('Permanent_Barangay', $data) || array_key_exists('Permanent_Municipality_City', $data) || array_key_exists('Permanent_Province', $data) || array_key_exists('Permanent_Country', $data) || array_key_exists('Permanent_Zip_Code', $data)) {
+                upsertEnrollmentAddress($pdo, $latest['enrollment_id'], 'permanent', [
+                    'house_no' => getValue($data, 'Permanent_House_No', $permanentAddress['house_no'] ?? ''),
+                    'street_name' => getValue($data, 'Permanent_Street_Name', $permanentAddress['street_name'] ?? ''),
+                    'barangay' => getValue($data, 'Permanent_Barangay', $permanentAddress['barangay'] ?? ''),
+                    'municipality_city' => getValue($data, 'Permanent_Municipality_City', $permanentAddress['municipality_city'] ?? ''),
+                    'province' => getValue($data, 'Permanent_Province', $permanentAddress['province'] ?? ''),
+                    'country' => getValue($data, 'Permanent_Country', $permanentAddress['country'] ?? ''),
+                    'zip_code' => getValue($data, 'Permanent_Zip_Code', $permanentAddress['zip_code'] ?? '')
+                ]);
+            }
 
-            updateOrInsertParent($pdo, $latest['enrollment_id'], 'mother', [
-                'last_name' => $data['mother_last_name'] ?? '',
-                'first_name' => $data['mother_first_name'] ?? '',
-                'middle_name' => $data['mother_middle_name'] ?? '',
-                'contact_number' => $data['mother_contact_number'] ?? ''
-            ]);
+            if (array_key_exists('father_last_name', $data) || array_key_exists('father_first_name', $data) || array_key_exists('father_middle_name', $data) || array_key_exists('father_contact_number', $data)) {
+                updateOrInsertParent($pdo, $latest['enrollment_id'], 'father', [
+                    'last_name' => getValue($data, 'father_last_name', ''),
+                    'first_name' => getValue($data, 'father_first_name', ''),
+                    'middle_name' => getValue($data, 'father_middle_name', ''),
+                    'contact_number' => getValue($data, 'father_contact_number', '')
+                ]);
+            }
 
-            updateOrInsertParent($pdo, $latest['enrollment_id'], 'guardian', [
-                'last_name' => $data['guardian_last_name'] ?? '',
-                'first_name' => $data['guardian_first_name'] ?? '',
-                'middle_name' => $data['guardian_middle_name'] ?? '',
-                'contact_number' => $data['guardian_contact_number'] ?? ''
-            ]);
+            if (array_key_exists('mother_last_name', $data) || array_key_exists('mother_first_name', $data) || array_key_exists('mother_middle_name', $data) || array_key_exists('mother_contact_number', $data)) {
+                updateOrInsertParent($pdo, $latest['enrollment_id'], 'mother', [
+                    'last_name' => getValue($data, 'mother_last_name', ''),
+                    'first_name' => getValue($data, 'mother_first_name', ''),
+                    'middle_name' => getValue($data, 'mother_middle_name', ''),
+                    'contact_number' => getValue($data, 'mother_contact_number', '')
+                ]);
+            }
 
-            updateReturningLearner($pdo, $latest['enrollment_id'], $isReturning, [
-                'last_grade_level_completed' => $data['Returning_Grade_Level'] ?? '',
-                'last_school_attended' => $data['Last_School_Attended'] ?? '',
-                'last_school_year_completed' => $data['Last_School_Year_Completed'] ?? '',
-                'school_id' => $data['school_ID'] ?? ''
-            ]);
+            if (array_key_exists('guardian_last_name', $data) || array_key_exists('guardian_first_name', $data) || array_key_exists('guardian_middle_name', $data) || array_key_exists('guardian_contact_number', $data)) {
+                updateOrInsertParent($pdo, $latest['enrollment_id'], 'guardian', [
+                    'last_name' => getValue($data, 'guardian_last_name', ''),
+                    'first_name' => getValue($data, 'guardian_first_name', ''),
+                    'middle_name' => getValue($data, 'guardian_middle_name', ''),
+                    'contact_number' => getValue($data, 'guardian_contact_number', '')
+                ]);
+            }
 
-            updateDisabilities($pdo, $latest['enrollment_id'], $data['disabilities'] ?? []);
+            if (array_key_exists('returning', $data)) {
+                updateReturningLearner($pdo, $latest['enrollment_id'], $isReturning, [
+                    'last_grade_level_completed' => getValue($data, 'Returning_Grade_Level', ''),
+                    'last_school_attended' => getValue($data, 'Last_School_Attended', ''),
+                    'last_school_year_completed' => getValue($data, 'Last_School_Year_Completed', ''),
+                    'school_id' => getValue($data, 'school_ID', '')
+                ]);
+            }
 
-            updateMedical($pdo, $latest['enrollment_id'], $data);
+            if (array_key_exists('disabilities', $data)) {
+                updateDisabilities($pdo, $latest['enrollment_id'], $data['disabilities']);
+            }
+
+            if (array_key_exists('exposed_to_cigarette_vape_smoke', $data) || array_key_exists('other_pertinent_information', $data) || array_key_exists('has_allergies', $data) || array_key_exists('has_med_condition', $data) || array_key_exists('has_surgery_hospitalization', $data) || array_key_exists('is_taking_treatment', $data) || array_key_exists('family_medical_history', $data)) {
+                updateMedical($pdo, $latest['enrollment_id'], $data);
+            }
         }
 
         echo json_encode(['success' => true]);

@@ -6,45 +6,61 @@ function showField(){
 
 	if (field === "1"){
 		card.innerHTML = `
-		<div style="background:var(--canvas); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; display:flex; flex-direction:column; gap:10px;">
-			<div style="display:flex; flex-direction:column; gap:6px;">
-				<label style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">
-					<input type="checkbox" id="has_allergy_box" name="medicine_allergy" value="1" style="accent-color:var(--brand);">
-					Medicine
-				</label>
-				<div id="allergyBox" style="display:none; margin-left:20px;">
-					<input type="text" name="has_allergy" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%;">
-				</div>
-			</div>
+<div style="background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; display:flex; flex-direction:column; gap:12px;">
 
-			<div style="display:flex; flex-direction:column; gap:6px;">
-				<label style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">
-					<input type="checkbox" name="medicine_allergy" value="2" style="accent-color:var(--brand);">
-					Pollen
-				</label>
-			</div>
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer;">
+      <input type="checkbox" id="medicine_allergy_checkbox" name="medicine_allergy[]" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+      Medicine
+    </label>
+    <div id="medicineAllergyBox" style="display:none; margin-left:23px;">
+      <input type="text" name="allergy_description[1]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+    </div>
+  </div>
 
-			<div style="display:flex; flex-direction:column; gap:6px;">
-				<label style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">
-					<input type="checkbox" id="food_allergy_checkbox" name="medicine_allergy" value="3" style="accent-color:var(--brand);">
-					Food
-				</label>
-				<div id="foodAllergyBox" style="display:none; margin-left:20px;">
-					<input type="text" name="allergy_description" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%;">
-				</div>
-			</div>
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer;">
+      <input type="checkbox" id="pollen_allergy_checkbox" name="medicine_allergy[]" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+      Pollen
+    </label>
+  </div>
 
-			<div style="display:flex; flex-direction:column; gap:6px;">
-				<label style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;">
-					<input type="checkbox" id="other_allergy_checkbox" name="medicine_allergy" value="4" style="accent-color:var(--brand);">
-					Others
-				</label>
-				<div id="otherAllergyBox" style="display:none; margin-left:20px;">
-					<input type="text" name="allergy_description" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%;">
-				</div>
-			</div>
-		</div>
-		`;
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer;">
+      <input type="checkbox" id="food_allergy_checkbox" name="medicine_allergy[]" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+      Food
+    </label>
+    <div id="foodAllergyBox" style="display:none; margin-left:23px;">
+      <input type="text" name="allergy_description[3]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+    </div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer;">
+      <input type="checkbox" id="other_allergy_checkbox" name="medicine_allergy[]" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+      Others
+    </label>
+    <div id="otherAllergyBox" style="display:none; margin-left:23px;">
+      <input type="text" name="allergy_description[4]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+    </div>
+  </div>
+
+</div>
+`;
+
+		const attachToggle = (checkboxId, boxId) => {
+			const checkbox = document.getElementById(checkboxId);
+			const box = document.getElementById(boxId);
+			if (!checkbox || !box) return;
+			checkbox.addEventListener('change', () => {
+				box.style.display = checkbox.checked ? 'block' : 'none';
+			});
+			box.style.display = checkbox.checked ? 'block' : 'none';
+		};
+
+		attachToggle('medicine_allergy_checkbox', 'medicineAllergyBox');
+		attachToggle('food_allergy_checkbox', 'foodAllergyBox');
+		attachToggle('other_allergy_checkbox', 'otherAllergyBox');
 	}
 }
 
@@ -195,42 +211,6 @@ function showQ5(){
 		</div>
 		`;
 	}
-
-	// EVENT LISTENERS FOR CONDITIONAL FIELDS
-
-	// Medicine Allergy
-	setTimeout(() => {
-		const checkbox = document.getElementById('has_allergy_box');
-		const box = document.getElementById('allergyBox');
-		if (checkbox) {
-			checkbox.addEventListener('change', function () {
-				if (box) box.style.display = this.checked ? 'block' : 'none';
-			});		
-		}
-	}, 0);
-
-	// Food Allergy
-	setTimeout(() => {
-		const checkbox = document.getElementById('food_allergy_checkbox');
-		const box = document.getElementById('foodAllergyBox');
-		if (checkbox) {
-			checkbox.addEventListener('change', function () {
-				if (box) box.style.display = this.checked ? 'block' : 'none';
-			});
-		}
-	}, 0);
-
-	// Other Allergy
-	setTimeout(() => {
-		const checkbox = document.getElementById('other_allergy_checkbox');
-		const box = document.getElementById('otherAllergyBox');
-		if (checkbox) {
-			checkbox.addEventListener('change', function () {
-				if (box) box.style.display = this.checked ? 'block' : 'none';
-			});
-		}
-	}, 0);
-
 	// Medical Condition Others
 	setTimeout(() => {
 		const checkbox = document.getElementById('has_medical_condition');

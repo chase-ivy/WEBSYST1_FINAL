@@ -99,7 +99,16 @@ $teacherId = $_SESSION['user_id'];
                 </div>
                 <div class="form-row">
                     <label>Grade Level</label>
-                    <input type="text" id="grade-level" required />
+                    <select id="grade-level" required aria-label="Grade Level">
+                        <option value="" hidden>Select grade level</option>
+                        <option value="Kinder">Kinder</option>
+                        <option value="Grade 1">Grade 1</option>
+                        <option value="Grade 2">Grade 2</option>
+                        <option value="Grade 3">Grade 3</option>
+                        <option value="Grade 4">Grade 4</option>
+                        <option value="Grade 5">Grade 5</option>
+                        <option value="Grade 6">Grade 6</option>
+                    </select>
                 </div>
                 <div class="form-row">
                     <label>Section</label>
@@ -215,7 +224,7 @@ async function loadClasses() {
         tbody.innerHTML = classes.map(c => `
             <tr>
                 <td class="td-primary">${escapeHtml(c.subject || 'N/A')}</td>
-                <td>Grade ${escapeHtml(c.grade_level)}</td>
+                <td>${escapeHtml(c.grade_level)}</td>
                 <td>${escapeHtml(c.section)}</td>
                 <td>${escapeHtml(c.student_count ?? 0)}</td>
                 <td>${escapeHtml(c.school_year)}</td>

@@ -23,7 +23,25 @@ try {
     }
 
     if ($_SESSION['role'] === 'student') {
-        $student_id = intval($_SESSION['user_id']);
+        $sessionId = intval($_SESSION['user_id']);
+        $student_id = 0;
+
+        $checkStudent = $pdo->prepare('SELECT student_id FROM students WHERE student_id = ? LIMIT 1');
+        $checkStudent->execute([$sessionId]);
+        if ($checkStudent->fetch()) {
+            $student_id = $sessionId;
+        } else {
+            $checkStudent = $pdo->prepare('SELECT student_id FROM students WHERE user_id = ? LIMIT 1');
+            $checkStudent->execute([$sessionId]);
+            $student = $checkStudent->fetch(PDO::FETCH_ASSOC);
+            $student_id = $student['student_id'] ?? 0;
+        }
+
+        if ($student_id <= 0) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Student not found for current session']);
+            exit;
+        }
     } else {
         $student_id = intval($_GET['student_id'] ?? 0);
         if ($student_id <= 0) {

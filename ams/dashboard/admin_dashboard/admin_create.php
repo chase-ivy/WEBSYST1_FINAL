@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         trim($_POST['username'] ?? ''),
         trim($_POST['email'] ?? ''),
         trim($_POST['password'] ?? ''),
-        trim($_POST['role'] ?? '')
+        'staff'
     );
 
     if ($result['success']) {
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main class="main">
         <div class="page-header">
             <h1>Staff Registration</h1>
-            <p>Add a new teacher or staff account to the system</p>
+            <p>Add a new staff account to the system</p>
         </div>
 
         <section class="section">
@@ -95,17 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="form-group">
-                        <label for="role">Assigned Role</label>
-                        <div class="select-wrap">
-                            <select id="role" name="role" required>
-                                <option value="" disabled selected>Select a role...</option>
-                                <option value="teacher">Teacher</option>
-                                <option value="staff">Staff</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
                         <label for="password">Password</label>
                         <input id="password" type="password" name="password" placeholder="Min. 6 characters" required>
                     </div>
@@ -136,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const data = {
             username: document.getElementById('username').value.trim(),
             email: document.getElementById('email').value.trim(),
-            role: document.getElementById('role').value,
+            role: 'staff',
             password: document.getElementById('password').value.trim()
         };
 

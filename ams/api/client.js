@@ -33,12 +33,14 @@ const API = {
             try {
                 result = JSON.parse(text);
             } catch (parseError) {
-                console.error('API Error: invalid JSON response', text);
-                throw new Error('Invalid JSON response from API');
+                console.error('API Error: invalid JSON response', response.status, text);
+                throw new Error(`Invalid JSON response from API (${response.status})`);
             }
 
             if (!response.ok) {
-                throw new Error(result.error || 'API request failed');
+                const message = result.error || `API request failed (${response.status})`;
+                console.error('API Error:', message, result);
+                throw new Error(message);
             }
 
             return result;

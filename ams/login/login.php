@@ -87,7 +87,7 @@ unset($_SESSION['login_error']);
         --text:         #000000;
         --muted:        #6b7280;
         --surface:      #ffffff;
-        --canvas:       #f5f7fa;
+        --canvas:       #d4e3f8;
         --shadow-sm:    0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
         --shadow-md:    0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
         --radius-sm:    6px;
@@ -201,18 +201,26 @@ unset($_SESSION['login_error']);
         justify-content: center;
         align-items: center;
         padding: 40px 24px;
-        background: var(--canvas);
-        border: 1px solid rgba(0, 0, 0, 1);
+        background: radial-gradient(circle at top left, rgba(78,3,3,0.08), transparent 28%),
+                    radial-gradient(circle at bottom right, rgba(78,3,3,0.05), transparent 24%),
+                    linear-gradient(180deg, #fbfbfb 0%, #f5f7fa 100%);
+        border: 1px solid rgba(78,3,3,0.08);
     }
     .box {
         width: 100%;
-        max-width: 400px;
+        max-width: 480px;
         background: var(--surface);
-        border: 1px solid rgba(0, 0, 0, 1);
+        border: 5px solid rgba(99, 7, 7, 0.12);
         border-radius: var(--radius-xl);
-        padding: 40px 38px;
-        box-shadow: var(--shadow-md);
+        padding: 45px 40px;
+        box-shadow: 20px 30px 55px rgba(78,3,3,0.08);
+        transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
         animation: up .45s both;
+    }
+    .box:hover {
+        transform: translateY(-2px);
+        border-color: rgba(78,3,3,0.22);
+        box-shadow: 0 24px 72px rgba(78,3,3,0.16);
     }
     @keyframes up {
         from { opacity:0; transform:translateY(14px); }
@@ -430,7 +438,27 @@ unset($_SESSION['login_error']);
 
     @media(max-width:820px) {
         .left { display: none; }
-        .right { background: var(--canvas); }
+        .right {
+            background: var(--canvas);
+            padding: 28px 16px;
+        }
+        .box {
+            max-width: 100%;
+            padding: 32px 24px;
+            box-shadow: var(--shadow-md);
+        }
+    }
+
+    @media(max-width:540px) {
+        .box {
+            padding: 24px 18px;
+        }
+        .box h2 {
+            font-size: 22px;
+        }
+        .box .sub {
+            font-size: 12px;
+        }
     }
     </style>
 </head>

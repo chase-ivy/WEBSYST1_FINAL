@@ -241,6 +241,56 @@ a { text-decoration: none; color: inherit; }
 .field input::placeholder      { color: #b0b8c4; }
 .field select option[value=""] { color: var(--muted); }
 
+.allergy-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+@media (max-width: 900px) {
+    .allergy-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.allergy-item {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    background: var(--canvas);
+    display: grid;
+    gap: 10px;
+}
+
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.checkbox-label input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--brand);
+}
+
+.allergy-specify {
+    display: grid;
+    gap: 8px;
+}
+
+.allergy-specify label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
 /* ── RADIO PILLS ─────────────────────────────────────────── */
 .radio-group {
     display: flex;
@@ -1261,6 +1311,22 @@ footer strong { color: rgba(255,255,255,.8); }
             container.textContent = message;
         }
 
+        async function generateEnrollmentPdf(studentId) {
+            const url = new URL('pdf.php', window.location.href);
+            url.searchParams.set('student_id', studentId);
+            url.searchParams.set('type', 'combined');
+
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error('PDF generation failed: ' + text);
+            }
+        }
+
         document.getElementById('enrollmentForm').addEventListener('submit', async function (event) {
             event.preventDefault();
             const submitButton = event.target.querySelector('button[type="submit"]');
@@ -1270,7 +1336,9 @@ footer strong { color: rgba(255,255,255,.8); }
             try {
                 const payload = serializeForm(event.target);
                 const response = await API.enroll.create(payload);
-                showMessage('success', 'Enrollment submitted successfully. Student ID: ' + response.student_id + (response.enrollment_id ? ', Enrollment ID: ' + response.enrollment_id : '') + '. Redirecting to teacher dashboard...');
+                await generateEnrollmentPdf(response.student_id);
+
+                showMessage('success', 'Enrollment submitted successfully. Student ID: ' + response.student_id + (response.enrollment_id ? ', Enrollment ID: ' + response.enrollment_id : '') + '. Form PDF generated. Redirecting to teacher dashboard...');
                 
                 // Redirect to teacher dashboard after 2 seconds
                 setTimeout(() => {
