@@ -163,19 +163,77 @@ try {
         $studentRow = $stmt->fetch(PDO::FETCH_ASSOC);
         $userId = intval($studentRow['user_id'] ?? 0);
 
-        if ($userId > 0) {
-            $deleteUser = $pdo->prepare('DELETE FROM users WHERE user_id = ?');
-            $deleteUser->execute([$userId]);
+        $enrollmentIds = $pdo->prepare('SELECT enrollment_id FROM enrollments WHERE student_id = ?');
+        $enrollmentIds->execute([$student_id]);
+        $enrollments = $enrollmentIds->fetchAll(PDO::FETCH_COLUMN, 0);
+
+        foreach ($enrollments as $enrollmentId) {
+            $medicalStmt = $pdo->prepare('SELECT medical_id FROM medical_information WHERE enrollment_id = ? LIMIT 1');
+            $medicalStmt->execute([$enrollmentId]);
+            $medicalRow = $medicalStmt->fetch(PDO::FETCH_ASSOC);
+            if ($medicalRow) {
+                $medicalId = intval($medicalRow['medical_id']);
+                $allergyStmt = $pdo->prepare('SELECT allergy_group_id FROM medical_allergies WHERE medical_id = ? LIMIT 1');
+                $allergyStmt->execute([$medicalId]);
+                $allergyRow = $allergyStmt->fetch(PDO::FETCH_ASSOC);
+                if ($allergyRow) {
+                    $pdo->prepare('DELETE FROM student_allergies WHERE allergy_group_id = ?')->execute([intval($allergyRow['allergy_group_id'])]);
+                }
+                $conditionStmt = $pdo->prepare('SELECT condition_group_id FROM medical_conditions WHERE medical_id = ? LIMIT 1');
+                $conditionStmt->execute([$medicalId]);
+                $conditionRow = $conditionStmt->fetch(PDO::FETCH_ASSOC);
+                if ($conditionRow) {
+                    $pdo->prepare('DELETE FROM student_conditions WHERE condition_group_id = ?')->execute([intval($conditionRow['condition_group_id'])]);
+                }
+                $familyStmt = $pdo->prepare('SELECT family_history_id FROM family_medical_history WHERE medical_id = ? LIMIT 1');
+                $familyStmt->execute([$medicalId]);
+                $familyRow = $familyStmt->fetch(PDO::FETCH_ASSOC);
+                if ($familyRow) {
+                    $pdo->prepare('DELETE FROM student_family_conditions WHERE family_history_id = ?')->execute([intval($familyRow['family_history_id'])]);
+                }
+                $pdo->prepare('DELETE FROM medical_allergies WHERE medical_id = ?')->execute([$medicalId]);
+                $pdo->prepare('DELETE FROM medical_conditions WHERE medical_id = ?')->execute([$medicalId]);
+                $pdo->prepare('DELETE FROM medical_surgeries WHERE medical_id = ?')->execute([$medicalId]);
+                $pdo->prepare('DELETE FROM medical_treatments WHERE medical_id = ?')->execute([$medicalId]);
+                $pdo->prepare('DELETE FROM family_medical_history WHERE medical_id = ?')->execute([$medicalId]);
+                $pdo->prepare('DELETE FROM medical_information WHERE medical_id = ?')->execute([$medicalId]);
+            }
         }
+
+        $deleteActivityScores = $pdo->prepare('DELETE FROM activity_scores WHERE class_student_id IN (SELECT class_student_id FROM class_students WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?))');
+        $deleteActivityScores->execute([$student_id]);
+
+        $deleteAttendance = $pdo->prepare('DELETE FROM attendance WHERE class_student_id IN (SELECT class_student_id FROM class_students WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?))');
+        $deleteAttendance->execute([$student_id]);
+
+        $deleteGrades = $pdo->prepare('DELETE FROM grades WHERE class_student_id IN (SELECT class_student_id FROM class_students WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?))');
+        $deleteGrades->execute([$student_id]);
 
         $deleteClassStudents = $pdo->prepare('DELETE FROM class_students WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?)');
         $deleteClassStudents->execute([$student_id]);
+
+        $deleteAddresses = $pdo->prepare('DELETE FROM addresses WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?)');
+        $deleteAddresses->execute([$student_id]);
+
+        $deleteEnrollmentParents = $pdo->prepare('DELETE FROM enrollment_parents WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?)');
+        $deleteEnrollmentParents->execute([$student_id]);
+
+        $deleteReturningLearners = $pdo->prepare('DELETE FROM returning_learners WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?)');
+        $deleteReturningLearners->execute([$student_id]);
+
+        $deleteDisabilities = $pdo->prepare('DELETE FROM student_disabilities WHERE enrollment_id IN (SELECT enrollment_id FROM enrollments WHERE student_id = ?)');
+        $deleteDisabilities->execute([$student_id]);
 
         $deleteEnrollments = $pdo->prepare('DELETE FROM enrollments WHERE student_id = ?');
         $deleteEnrollments->execute([$student_id]);
 
         $deleteStudent = $pdo->prepare('DELETE FROM students WHERE student_id = ?');
         $deleteStudent->execute([$student_id]);
+
+        if ($userId > 0) {
+            $deleteUser = $pdo->prepare('DELETE FROM users WHERE user_id = ?');
+            $deleteUser->execute([$userId]);
+        }
 
         $pdo->commit();
 

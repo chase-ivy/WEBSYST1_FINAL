@@ -3,6 +3,10 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/config.php';
 
+if (!ob_get_level()) {
+    ob_start();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
@@ -169,13 +173,18 @@ try {
     $isLearnerWithDisability = !empty($data['disabilityDetails']) ? 1 : 0;
     $age = isset($data['Birth_Date']) && trim($data['Birth_Date']) !== '' ? (int) floor((time() - strtotime($data['Birth_Date'])) / 31557600) : null;
 
+    $lrnValue = trim($data['Learner_Reference_No'] ?? '');
+    if ($lrnValue === '') {
+        $lrnValue = null;
+    }
+
     $stmt = $pdo->prepare('INSERT INTO students (
         lrn, last_name, first_name, middle_name, extension_name,
         birth_date, sex, place_of_birth
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 
     $stmt->execute([
-        trim($data['Learner_Reference_No'] ?? ''),
+        $lrnValue,
         trim($data['Learner_Last_Name'] ?? ''),
         trim($data['Learner_First_Name'] ?? ''),
         trim($data['Learner_Middle_Name'] ?? ''),
@@ -370,6 +379,9 @@ try {
     }
 
     $pdo->commit();
+    if (ob_get_length() !== false) {
+        ob_end_clean();
+    }
     echo json_encode([
         'success' => true,
         'student_id' => $studentId,
@@ -380,6 +392,9 @@ try {
 } catch (Exception $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
+    }
+    if (ob_get_length() !== false) {
+        ob_end_clean();
     }
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);

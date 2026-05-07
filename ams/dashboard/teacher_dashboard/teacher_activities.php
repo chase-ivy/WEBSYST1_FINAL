@@ -176,7 +176,7 @@ async function loadActivities() {
     document.getElementById('activityList').innerHTML = '<div class="empty-row">Loading activities...</div>';
 
     try {
-        const response = await API.activities.listByClass(currentClassSubjectId);
+        const response = await API.activities.listByClassSubject(currentClassSubjectId);
         if (response.success) {
             let html = '<div class="table-wrap"><table>';
             html += '<thead><tr><th>Title</th><th>Max Score</th><th>Actions</th></tr></thead><tbody>';

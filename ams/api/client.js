@@ -29,11 +29,12 @@ const API = {
         try {
             const response = await fetch(url.toString(), options);
             const text = await response.text();
+            const cleaned = text.replace(/^\uFEFF/, '');
             let result;
             try {
-                result = JSON.parse(text);
+                result = JSON.parse(cleaned);
             } catch (parseError) {
-                console.error('API Error: invalid JSON response', response.status, text);
+                console.error('API Error: invalid JSON response', response.status, cleaned);
                 throw new Error(`Invalid JSON response from API (${response.status})`);
             }
 

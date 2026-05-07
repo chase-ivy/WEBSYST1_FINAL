@@ -128,7 +128,7 @@ async function loadStudentDashboard() {
                             <circle cx="12" cy="7" r="4"/>
                         </svg>
                     </div>
-                    <div class="stat-value">${student.first_name} ${student.last_name}</div>
+                    <div class="stat-value" style="font-size: 1.125rem; font-weight: bold;">${student.first_name} ${student.last_name}</div>
                     <div class="stat-label">Student Name</div>
                 </div>
                 <div class="stat-card">
@@ -139,7 +139,7 @@ async function loadStudentDashboard() {
                             <path d="M3 21h18"/>
                         </svg>
                     </div>
-                    <div class="stat-value">${student.lrn || '-'}</div>
+                    <div class="stat-value" style="font-size: 1.375rem; font-weight: bold;">${student.lrn || '-'}</div>
                     <div class="stat-label">LRN</div>
                 </div>
                 <div class="stat-card">
@@ -148,7 +148,7 @@ async function loadStudentDashboard() {
                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                         </svg>
                     </div>
-                    <div class="stat-value">${overallAverage}</div>
+                    <div class="stat-value" style="font-size: 1.125rem; font-weight: bold;">${overallAverage}</div>
                     <div class="stat-label">Overall Average</div>
                 </div>
                 <div class="stat-card">
@@ -159,7 +159,7 @@ async function loadStudentDashboard() {
                             <path d="M3 21h18"/>
                         </svg>
                     </div>
-                    <div class="stat-value">${overallRemarks}</div>
+                    <div class="stat-value" style="font-size: 1.125rem; font-weight: bold;">${overallRemarks}</div>
                     <div class="stat-label">Remarks</div>
                 </div>
             </div>
