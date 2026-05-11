@@ -80,15 +80,6 @@ $staffList = getStaffList($pdo);
                 $studentStmt = $pdo->query("SELECT COUNT(*) as total FROM students");
                 $studentCount = $studentStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
             ?>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <svg viewBox="0 0 24 24"><path d="M18 21H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/><path d="M10 13.5h4"/><path d="M9 9h0"/><path d="M15 9h0"/></svg>
-                </div>
-                <div>
-                    <div class="stat-value" id="student-count"><?php echo $studentCount; ?></div>
-                    <div class="stat-label">Total Student Accounts</div>
-                </div>
-            </div>
         </div>
 
         <!-- Action Cards -->
