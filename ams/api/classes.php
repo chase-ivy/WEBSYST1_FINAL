@@ -227,8 +227,38 @@ try {
             exit;
         }
 
+        $dependencyErrors = [];
+
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM class_students WHERE class_id = ?');
+        $stmt->execute([$class_id]);
+        if ((int) $stmt->fetchColumn() > 0) {
+            $dependencyErrors[] = 'Students are still assigned to this class. Remove all students before deleting the class.';
+        }
+
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM class_subjects WHERE class_id = ?');
+        $stmt->execute([$class_id]);
+        if ((int) $stmt->fetchColumn() > 0) {
+            $dependencyErrors[] = 'Subjects are still assigned to this class. Unassign all subjects before deleting the class.';
+        }
+
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM activities a JOIN class_subjects cs ON a.class_subject_id = cs.class_subject_id WHERE cs.class_id = ?');
+        $stmt->execute([$class_id]);
+        if ((int) $stmt->fetchColumn() > 0) {
+            $dependencyErrors[] = 'Activities still exist for this class. Delete or move activities before deleting the class.';
+        }
+
+        if (!empty($dependencyErrors)) {
+            echo json_encode(['success' => false, 'error' => implode(' ', $dependencyErrors)]);
+            exit;
+        }
+
         $stmt = $pdo->prepare('DELETE FROM classes WHERE class_id = ?');
         $stmt->execute([$class_id]);
+
+        if ($stmt->rowCount() === 0) {
+            echo json_encode(['success' => false, 'error' => 'Unable to delete the class.']);
+            exit;
+        }
 
         echo json_encode(['success' => true]);
         exit;

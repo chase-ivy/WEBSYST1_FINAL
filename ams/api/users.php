@@ -116,8 +116,46 @@ try {
             exit;
         }
 
-        $stmt = $pdo->prepare('DELETE FROM users WHERE user_id = ? AND (role <> ? OR role IS NULL)');
-        $stmt->execute([$user_id, 'admin']);
+        $stmt = $pdo->prepare('SELECT role FROM users WHERE user_id = ? LIMIT 1');
+        $stmt->execute([$user_id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            echo json_encode(['success' => false, 'errors' => ['Staff member not found.']]);
+            exit;
+        }
+
+        if (!in_array($user['role'], ['teacher', 'staff'], true)) {
+            echo json_encode(['success' => false, 'errors' => ['Only teacher or staff accounts can be deleted from this screen.']]);
+            exit;
+        }
+
+        $dependencyErrors = [];
+
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM classes WHERE adviser_id = ?');
+        $stmt->execute([$user_id]);
+        if ((int) $stmt->fetchColumn() > 0) {
+            $dependencyErrors[] = 'This staff member is assigned as a class adviser. Remove or reassign their classes before deleting.';
+        }
+
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM class_subjects WHERE teacher_id = ?');
+        $stmt->execute([$user_id]);
+        if ((int) $stmt->fetchColumn() > 0) {
+            $dependencyErrors[] = 'This staff member is assigned to one or more subjects. Unassign their subjects before deleting.';
+        }
+
+        if (!empty($dependencyErrors)) {
+            echo json_encode(['success' => false, 'errors' => $dependencyErrors]);
+            exit;
+        }
+
+        $stmt = $pdo->prepare('DELETE FROM users WHERE user_id = ? AND role IN (\'teacher\', \'staff\')');
+        $stmt->execute([$user_id]);
+
+        if ($stmt->rowCount() === 0) {
+            echo json_encode(['success' => false, 'errors' => ['Unable to delete staff member.']]);
+            exit;
+        }
 
         echo json_encode(['success' => true, 'message' => 'Staff member deleted successfully.']);
     } else {
