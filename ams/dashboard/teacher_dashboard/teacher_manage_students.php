@@ -388,6 +388,7 @@ async function openEnrollmentModal(studentId) {
                                 <option value="1" ${medical.allergies?.has_allergies == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
+                        <div class="form-group full" id="has_allergies_details"></div>
                         <div class="form-group">
                             <label for="has_med_condition">Does your child/ward have any ongoing medical condition?</label>
                             <select id="has_med_condition" name="has_med_condition">
@@ -395,6 +396,7 @@ async function openEnrollmentModal(studentId) {
                                 <option value="1" ${medical.conditions?.has_conditions == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
+                        <div class="form-group full" id="has_med_condition_details"></div>
                         <div class="form-group">
                             <label for="has_surgery_hospitalization">Did your child/ward ever have surgery / hospitalization?</label>
                             <select id="has_surgery_hospitalization" name="has_surgery_hospitalization">
@@ -402,6 +404,7 @@ async function openEnrollmentModal(studentId) {
                                 <option value="1" ${medical.surgeries?.has_surgery == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
+                        <div class="form-group full" id="has_surgery_hospitalization_details"></div>
                         <div class="form-group">
                             <label for="is_taking_treatment">Is your child currently taking treatment / medicines?</label>
                             <select id="is_taking_treatment" name="is_taking_treatment">
@@ -409,6 +412,7 @@ async function openEnrollmentModal(studentId) {
                                 <option value="1" ${medical.treatments?.is_taking_treatment == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
+                        <div class="form-group full" id="is_taking_treatment_details"></div>
                         <div class="form-group">
                             <label for="family_medical_history">Does your family have a history of medical conditions?</label>
                             <select id="family_medical_history" name="family_medical_history">
@@ -416,6 +420,7 @@ async function openEnrollmentModal(studentId) {
                                 <option value="1" ${medical.family_history?.has_family_history == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
+                        <div class="form-group full" id="family_medical_history_details"></div>
                         <div class="form-group">
                             <label for="exposed_to_cigarette_vape_smoke">Does your child/ward have exposure to cigarette/vape smoke at home?</label>
                             <select id="exposed_to_cigarette_vape_smoke" name="exposed_to_cigarette_vape_smoke">
@@ -575,10 +580,241 @@ async function openEnrollmentModal(studentId) {
         document.getElementById('disability').addEventListener('change', function() {
             document.getElementById('disabilitySection').style.display = this.value === 'Yes' ? 'block' : 'none';
         });
+
+        const medicalData = medical || {};
+
+        const allergiesToggle = document.getElementById('has_allergies');
+        const conditionsToggle = document.getElementById('has_med_condition');
+        const surgeryToggle = document.getElementById('has_surgery_hospitalization');
+        const treatmentToggle = document.getElementById('is_taking_treatment');
+        const familyHistoryToggle = document.getElementById('family_medical_history');
+
+        allergiesToggle.addEventListener('change', function() {
+            renderAllergyDetails(this.value === '1');
+        });
+        conditionsToggle.addEventListener('change', function() {
+            renderConditionDetails(this.value === '1');
+        });
+        surgeryToggle.addEventListener('change', function() {
+            renderSurgeryDetails(this.value === '1');
+        });
+        treatmentToggle.addEventListener('change', function() {
+            renderTreatmentDetails(this.value === '1');
+        });
+        familyHistoryToggle.addEventListener('change', function() {
+            renderFamilyHistoryDetails(this.value === '1');
+        });
+
+        renderAllergyDetails(allergiesToggle.value === '1');
+        renderConditionDetails(conditionsToggle.value === '1');
+        renderSurgeryDetails(surgeryToggle.value === '1');
+        renderTreatmentDetails(treatmentToggle.value === '1');
+        renderFamilyHistoryDetails(familyHistoryToggle.value === '1');
     } catch (error) {
         console.error(error);
         showAlert('error', `Unable to open enrollment editor: ${error.message}`);
     }
+}
+
+function renderAllergyDetails(show) {
+    const target = document.getElementById('has_allergies_details');
+    if (!target) return;
+    target.innerHTML = '';
+    if (!show) return;
+
+    target.innerHTML = `
+        <div style="display:grid; gap:10px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" id="medicine_allergy_checkbox" name="medicine_allergy[]" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Medicine
+            </label>
+            <div id="medicineAllergyBox" style="display:none; margin-left:23px;">
+                <input type="text" name="allergy_description[1]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+            </div>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" id="pollen_allergy_checkbox" name="medicine_allergy[]" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Pollen
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" id="food_allergy_checkbox" name="medicine_allergy[]" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Food
+            </label>
+            <div id="foodAllergyBox" style="display:none; margin-left:23px;">
+                <input type="text" name="allergy_description[3]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+            </div>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" id="other_allergy_checkbox" name="medicine_allergy[]" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Others
+            </label>
+            <div id="otherAllergyBox" style="display:none; margin-left:23px;">
+                <input type="text" name="allergy_description[4]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+            </div>
+        </div>
+    `;
+
+    attachToggle('medicine_allergy_checkbox', 'medicineAllergyBox');
+    attachToggle('food_allergy_checkbox', 'foodAllergyBox');
+    attachToggle('other_allergy_checkbox', 'otherAllergyBox');
+}
+
+function renderConditionDetails(show) {
+    const target = document.getElementById('has_med_condition_details');
+    if (!target) return;
+    target.innerHTML = '';
+    if (!show) return;
+
+    target.innerHTML = `
+        <div style="display:grid; gap:10px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="condition_type_id" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Error of refraction (Eye Ailment)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="condition_type_id" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Asthma (Lung Ailment)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="condition_type_id" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Seizure (Convulsions)
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="condition_type_id" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Heart Illness
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="condition_type_id" value="5" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Anemia
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="condition_type_id" value="6" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Bleeding disorder
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="condition_type_id" value="7" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Fracture / Dislocation
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" id="has_medical_condition" name="condition_type_id" value="8" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Others
+            </label>
+            <div id="medical_condition_details" class="medical-detail-input-wrapper" style="display:none;">
+                <input type="text" name="condition_description" placeholder="Please specify" class="medical-detail-input">
+            </div>
+        </div>
+    `;
+
+    attachToggle('has_medical_condition', 'medical_condition_details');
+}
+
+function renderSurgeryDetails(show) {
+    const target = document.getElementById('has_surgery_hospitalization_details');
+    if (!target) return;
+    target.innerHTML = '';
+    if (!show) return;
+
+    target.innerHTML = `
+        <div class="medical-detail-panel">
+            <div class="medical-detail-grid-1">
+                <div class="medical-detail-field">
+                    <label>Surgery Date</label>
+                    <input type="date" name="surgery_date" class="medical-detail-input">
+                </div>
+                <div class="medical-detail-field">
+                    <label>Hospital Name</label>
+                    <input type="text" name="hospital_name" placeholder="Hospital name" class="medical-detail-input">
+                </div>
+                <div class="medical-detail-field" style="grid-column:1 / -1;">
+                    <label>Body Part Affected</label>
+                    <input type="text" name="body_part" placeholder="What part of the body?" class="medical-detail-input">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderTreatmentDetails(show) {
+    const target = document.getElementById('is_taking_treatment_details');
+    if (!target) return;
+    target.innerHTML = '';
+    if (!show) return;
+
+    target.innerHTML = `
+        <div class="medical-detail-panel">
+            <div class="medical-detail-grid-1">
+                <div class="medical-detail-field">
+                    <label>Medicine / Treatment Type</label>
+                    <input type="text" name="treatment_medicine" placeholder="Name of medicine or treatment" class="medical-detail-input">
+                </div>
+                <div class="medical-detail-field">
+                    <label>Dosage Schedule</label>
+                    <input type="text" name="schedule_dosage" placeholder="e.g., 2x daily, morning/evening" class="medical-detail-input">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderFamilyHistoryDetails(show) {
+    const target = document.getElementById('family_medical_history_details');
+    if (!target) return;
+    target.innerHTML = '';
+    if (!show) return;
+
+    target.innerHTML = `
+        <div style="display:grid; gap:10px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="family_condition_type_id" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Tuberculosis
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" id="has_cancer" name="family_condition_type_id" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Cancer
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="family_condition_type_id" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Diabetes Mellitus
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="family_condition_type_id" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Hypertension
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="family_condition_type_id" value="5" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Stroke / Heart attack
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="family_condition_type_id" value="6" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Depression
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" name="family_condition_type_id" value="7" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Kidney problems
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" id="has_other" name="family_condition_type_id" value="8" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                Others
+            </label>
+            <div id="otherBox" class="medical-detail-input-wrapper" style="display:none;">
+                <input type="text" name="family_condition_description" placeholder="Please specify" class="medical-detail-input">
+            </div>
+            <div id="cancerBox" class="medical-detail-input-wrapper" style="display:none;">
+                <input type="text" name="family_condition_description" placeholder="Specify type of cancer" class="medical-detail-input">
+            </div>
+        </div>
+    `;
+
+    attachToggle('has_cancer', 'cancerBox');
+    attachToggle('has_other', 'otherBox');
+}
+
+function attachToggle(checkboxId, boxId) {
+    const checkbox = document.getElementById(checkboxId);
+    const box = document.getElementById(boxId);
+    if (!checkbox || !box) return;
+    checkbox.addEventListener('change', function() {
+        box.style.display = this.checked ? 'block' : 'none';
+    });
+    box.style.display = checkbox.checked ? 'block' : 'none';
 }
 
 function serializeForm(form) {
