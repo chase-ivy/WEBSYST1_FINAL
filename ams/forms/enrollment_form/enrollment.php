@@ -1292,6 +1292,15 @@ function showQ2(){
 		</div>
 		`;
 	}
+    // Medical Condition Others
+	const medicalCheckbox = document.getElementById('has_medical_condition');
+	const medicalBox = document.getElementById('medical_condition_details');
+	if (medicalCheckbox && medicalBox) {
+		medicalCheckbox.addEventListener('change', function () {
+			medicalBox.style.display = this.checked ? 'block' : 'none';
+		});
+		medicalBox.style.display = medicalCheckbox.checked ? 'block' : 'none';
+	}
 }
 
 function showQ3(){
@@ -1391,15 +1400,6 @@ function showQ5(){
 			</div>
 		</div>
 		`;
-	}
-	// Medical Condition Others
-	const medicalCheckbox = document.getElementById('has_medical_condition');
-	const medicalBox = document.getElementById('medical_condition_details');
-	if (medicalCheckbox && medicalBox) {
-		medicalCheckbox.addEventListener('change', function () {
-			medicalBox.style.display = this.checked ? 'block' : 'none';
-		});
-		medicalBox.style.display = medicalCheckbox.checked ? 'block' : 'none';
 	}
 
 	// Family History - Cancer
