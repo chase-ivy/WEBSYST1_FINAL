@@ -220,10 +220,18 @@ async function openEnrollmentModal(studentId) {
             ? (medicalFamilyHistory.conditions.find(item => item.condition_name?.toLowerCase().includes('other')) || {}).description || ''
             : '';
 
+        // Determine medical flags (inferred from data presence)
+        const hasAllergies = medicalAllergyItems.length > 0 ? 1 : 0;
+        const hasConditions = medicalConditionItems.length > 0 ? 1 : 0;
+        const hasSurgery = medicalSurgery.surgery_date || medicalSurgery.hospital_name ? 1 : 0;
+        const isTakingTreatment = medicalTreatment.treatment_medicine || medicalTreatment.schedule_dosage ? 1 : 0;
+        const hasFamilyHistory = selectedFamilyConditionIds.length > 0 ? 1 : 0;
+
         const header = `<h3>Update Enrollment</h3>`;
         const body = `
-            <form id="enrollmentForm" data-student-id="${studentId}">
+            <form id="enrollmentForm" data-student-id="${studentId}" data-enrollment-id="${enrollment.enrollment_id || ''}">
                 <input type="hidden" name="student_id" value="${studentId}" />
+                <input type="hidden" name="enrollment_id" value="${enrollment.enrollment_id || ''}" />
                 
                 <!-- School Year & Grade -->
                 <div class="form-section">
@@ -423,40 +431,40 @@ async function openEnrollmentModal(studentId) {
                         <div class="form-group">
                             <label for="has_allergies">Does your child/ward have any allergies?</label>
                             <select id="has_allergies" name="has_allergies">
-                                <option value="0" ${medical.allergies?.has_allergies == 0 ? 'selected' : ''}>No</option>
-                                <option value="1" ${medical.allergies?.has_allergies == 1 ? 'selected' : ''}>Yes</option>
+                                <option value="0" ${hasAllergies == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${hasAllergies == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
                         <div class="form-group full" id="has_allergies_details"></div>
                         <div class="form-group">
                             <label for="has_med_condition">Does your child/ward have any ongoing medical condition?</label>
                             <select id="has_med_condition" name="has_med_condition">
-                                <option value="0" ${medical.conditions?.has_conditions == 0 ? 'selected' : ''}>No</option>
-                                <option value="1" ${medical.conditions?.has_conditions == 1 ? 'selected' : ''}>Yes</option>
+                                <option value="0" ${hasConditions == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${hasConditions == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
                         <div class="form-group full" id="has_med_condition_details"></div>
                         <div class="form-group">
                             <label for="has_surgery_hospitalization">Did your child/ward ever have surgery / hospitalization?</label>
                             <select id="has_surgery_hospitalization" name="has_surgery_hospitalization">
-                                <option value="0" ${medical.surgeries?.has_surgery == 0 ? 'selected' : ''}>No</option>
-                                <option value="1" ${medical.surgeries?.has_surgery == 1 ? 'selected' : ''}>Yes</option>
+                                <option value="0" ${hasSurgery == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${hasSurgery == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
                         <div class="form-group full" id="has_surgery_hospitalization_details"></div>
                         <div class="form-group">
                             <label for="is_taking_treatment">Is your child currently taking treatment / medicines?</label>
                             <select id="is_taking_treatment" name="is_taking_treatment">
-                                <option value="0" ${medical.treatments?.is_taking_treatment == 0 ? 'selected' : ''}>No</option>
-                                <option value="1" ${medical.treatments?.is_taking_treatment == 1 ? 'selected' : ''}>Yes</option>
+                                <option value="0" ${isTakingTreatment == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${isTakingTreatment == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
                         <div class="form-group full" id="is_taking_treatment_details"></div>
                         <div class="form-group">
                             <label for="family_medical_history">Does your family have a history of medical conditions?</label>
                             <select id="family_medical_history" name="family_medical_history">
-                                <option value="0" ${medical.family_history?.has_family_history == 0 ? 'selected' : ''}>No</option>
-                                <option value="1" ${medical.family_history?.has_family_history == 1 ? 'selected' : ''}>Yes</option>
+                                <option value="0" ${hasFamilyHistory == 0 ? 'selected' : ''}>No</option>
+                                <option value="1" ${hasFamilyHistory == 1 ? 'selected' : ''}>Yes</option>
                             </select>
                         </div>
                         <div class="form-group full" id="family_medical_history_details"></div>
@@ -902,13 +910,46 @@ async function saveEnrollmentUpdate(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const studentId = parseInt(form.dataset.studentId, 10);
+    const enrollmentId = parseInt(form.dataset.enrollmentId, 10);
     const data = serializeForm(form);
 
     try {
-        const res = await API.students.update(studentId, data);
+        // Medical-related field names
+        const medicalFields = [
+            'has_allergies', 'medicine_allergy', 'allergy_description',
+            'has_med_condition', 'condition_type_id', 'condition_description',
+            'has_surgery_hospitalization', 'surgery_date', 'hospital_name', 'body_part',
+            'is_taking_treatment', 'treatment_medicine', 'schedule_dosage',
+            'family_medical_history', 'family_condition_type_id', 'family_condition_description',
+            'exposed_to_cigarette_vape_smoke', 'other_pertinent_information'
+        ];
+
+        // Separate medical and enrollment data
+        const medicalData = { enrollment_id: enrollmentId };
+        const enrollmentData = { student_id: studentId };
+
+        for (const [key, value] of Object.entries(data)) {
+            if (medicalFields.includes(key)) {
+                medicalData[key] = value;
+            } else if (key !== 'student_id') {
+                enrollmentData[key] = value;
+            }
+        }
+
+        // Update enrollment information
+        const res = await API.students.update(studentId, enrollmentData);
         if (!res || !res.success) {
             throw new Error(res?.error || 'Failed to update enrollment');
         }
+
+        // Update medical information
+        if (enrollmentId > 0) {
+            const medRes = await API.medical.save(medicalData);
+            if (!medRes || !medRes.success) {
+                throw new Error(medRes?.error || 'Failed to update medical information');
+            }
+        }
+
         closeModal();
         showAlert('success', 'Student enrollment information updated.');
         await loadStudents();
