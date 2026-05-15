@@ -132,7 +132,10 @@ try {
         }
         $hasConditions = normalizeCheckboxValue($data['has_med_condition'] ?? 0);
         $conditionTypeIds = parseIdsValue($data['condition_type_id'] ?? []);
-        $conditionDescription = getStringValue($data['condition_description'] ?? null);
+        $conditionDescriptions = $data['condition_description'] ?? [];
+        if (!is_array($conditionDescriptions)) {
+            $conditionDescriptions = ['default' => trim((string)$conditionDescriptions)];
+        }
         $hasSurgery = normalizeCheckboxValue($data['has_surgery_hospitalization'] ?? 0);
         $surgeryDate = getStringValue($data['surgery_date'] ?? null);
         $hospitalName = getStringValue($data['hospital_name'] ?? null);
@@ -142,7 +145,10 @@ try {
         $scheduleDosage = getStringValue($data['schedule_dosage'] ?? null);
         $hasFamilyHistory = normalizeCheckboxValue($data['family_medical_history'] ?? 0);
         $familyConditionTypeIds = parseIdsValue($data['family_condition_type_id'] ?? []);
-        $familyConditionDescription = getStringValue($data['family_condition_description'] ?? null);
+        $familyConditionDescriptions = $data['family_condition_description'] ?? [];
+        if (!is_array($familyConditionDescriptions)) {
+            $familyConditionDescriptions = ['default' => trim((string)$familyConditionDescriptions)];
+        }
 
         $pdo->beginTransaction();
 
@@ -189,7 +195,9 @@ try {
         if (!empty($conditionTypeIds)) {
             $insertStudentCondition = $pdo->prepare('INSERT INTO student_conditions (condition_group_id, condition_type_id, description) VALUES (?, ?, ?)');
             foreach ($conditionTypeIds as $typeId) {
-                $insertStudentCondition->execute([$conditionGroupId, $typeId, $conditionDescription]);
+                $description = trim((string)($conditionDescriptions[$typeId] ?? $conditionDescriptions['default'] ?? ''));
+                $description = $description === '' ? null : $description;
+                $insertStudentCondition->execute([$conditionGroupId, $typeId, $description]);
             }
         }
 
@@ -206,7 +214,9 @@ try {
         if (!empty($familyConditionTypeIds)) {
             $insertFamilyCondition = $pdo->prepare('INSERT INTO student_family_conditions (family_history_id, family_condition_type_id, description) VALUES (?, ?, ?)');
             foreach ($familyConditionTypeIds as $typeId) {
-                $insertFamilyCondition->execute([$familyHistoryId, $typeId, $familyConditionDescription]);
+                $description = trim((string)($familyConditionDescriptions[$typeId] ?? $familyConditionDescriptions['default'] ?? ''));
+                $description = $description === '' ? null : $description;
+                $insertFamilyCondition->execute([$familyHistoryId, $typeId, $description]);
             }
         }
 

@@ -737,7 +737,7 @@ function renderConditionDetails(show, selectedIds = [], description = '') {
                 Others
             </label>
             <div id="medical_condition_details" class="medical-detail-input-wrapper" style="display:${selectedIds.includes(8) ? 'block' : 'none'};">
-                <input type="text" name="condition_description" placeholder="Please specify" class="medical-detail-input" value="${escapeHtml(description)}">
+                <input type="text" name="condition_description[8]" placeholder="Please specify" class="medical-detail-input" value="${escapeHtml(description)}">
             </div>
         </div>
     `;
@@ -833,11 +833,11 @@ function renderFamilyHistoryDetails(show, selectedIds = [], cancerDescription = 
                 <input type="checkbox" id="has_other" name="family_condition_type_id[]" value="8" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(8) ? 'checked' : ''}>
                 Others
             </label>
-            <div id="otherBox" class="medical-detail-input-wrapper" style="display:${selectedIds.includes(8) ? 'block' : 'none'};">
-                <input type="text" name="family_condition_description" placeholder="Please specify" class="medical-detail-input" value="${escapeHtml(otherDescription)}">
-            </div>
             <div id="cancerBox" class="medical-detail-input-wrapper" style="display:${selectedIds.includes(2) ? 'block' : 'none'};">
-                <input type="text" name="family_condition_description" placeholder="Specify type of cancer" class="medical-detail-input" value="${escapeHtml(cancerDescription)}">
+                <input type="text" name="family_condition_description[2]" placeholder="Specify type of cancer" class="medical-detail-input" value="${escapeHtml(cancerDescription)}">
+            </div>
+            <div id="otherBox" class="medical-detail-input-wrapper" style="display:${selectedIds.includes(8) ? 'block' : 'none'};">
+                <input type="text" name="family_condition_description[8]" placeholder="Please specify" class="medical-detail-input" value="${escapeHtml(otherDescription)}">
             </div>
         </div>
     `;
@@ -861,9 +861,22 @@ function serializeForm(form) {
     const data = {};
 
     for (const [name, value] of formData.entries()) {
-        if (name.includes('[')) {
-            // Handle array fields like disabilities[]
-            const arrayName = name.replace('[]', '');
+        // Handle keyed arrays like allergy_description[1], condition_description[8], etc.
+        const keyedMatch = name.match(/^([^\[]+)\[([^\]]+)\]$/);
+        if (keyedMatch) {
+            const fieldName = keyedMatch[1];  // e.g., "allergy_description"
+            const key = keyedMatch[2];        // e.g., "1"
+            
+            if (!data[fieldName]) {
+                data[fieldName] = {};
+            }
+            data[fieldName][key] = value;
+            continue;
+        }
+
+        // Handle simple arrays like disabilities[], medicine_allergy[]
+        if (name.endsWith('[]')) {
+            const arrayName = name.slice(0, -2);  // Remove []
             if (!data[arrayName]) {
                 data[arrayName] = [];
             }
@@ -871,6 +884,7 @@ function serializeForm(form) {
             continue;
         }
 
+        // Handle regular fields with duplicate names (turn into array)
         if (data[name] !== undefined) {
             if (!Array.isArray(data[name])) {
                 data[name] = [data[name]];

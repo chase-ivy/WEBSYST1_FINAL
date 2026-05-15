@@ -1485,6 +1485,7 @@ function showQ5(){
             parts.forEach((part, index) => {
                 const isLast = index === parts.length - 1;
                 const nextPart = parts[index + 1];
+                const nextPartIsNumeric = /^\d+$/.test(nextPart);
 
                 if (part === '') {
                     if (isLast) {
@@ -1494,19 +1495,30 @@ function showQ5(){
                             current = [];
                         }
                         if (current.length === 0) {
-                            current.push(nextPart === '' ? [] : {});
+                            current.push(nextPartIsNumeric ? {} : []);
                         }
                         current = current[current.length - 1];
                     }
                 } else {
                     if (isLast) {
-                        if (current[part] === undefined) {
-                            current[part] = [];
+                        // For keyed arrays (numeric keys), use object notation; otherwise use array
+                        const isNumericKey = /^\d+$/.test(part);
+                        if (isNumericKey) {
+                            if (typeof current[part] !== 'object' || current[part] === null) {
+                                current[part] = value;
+                            }
+                        } else {
+                            if (current[part] === undefined) {
+                                current[part] = [];
+                            }
+                            if (!Array.isArray(current[part])) {
+                                current[part] = [current[part]];
+                            }
+                            current[part].push(value);
                         }
-                        current[part].push(value);
                     } else {
                         if (current[part] === undefined) {
-                            current[part] = nextPart === '' ? [] : {};
+                            current[part] = nextPartIsNumeric ? {} : [];
                         }
                         current = current[part];
                     }
