@@ -181,6 +181,45 @@ async function openEnrollmentModal(studentId) {
         const disabilities = data.disabilities || [];
         const medical = data.medical || {};
 
+        let medicalAllergyItems = [];
+        let medicalConditionItems = [];
+        let medicalSurgery = {};
+        let medicalTreatment = {};
+        let medicalFamilyHistory = {};
+        if (enrollment.enrollment_id) {
+            try {
+                const medicalRes = await API.medical.getByEnrollment(enrollment.enrollment_id);
+                if (medicalRes && medicalRes.success && medicalRes.data) {
+                    medicalAllergyItems = Array.isArray(medicalRes.data.allergies) ? medicalRes.data.allergies : [];
+                    medicalConditionItems = Array.isArray(medicalRes.data.conditions) ? medicalRes.data.conditions : [];
+                    medicalSurgery = Array.isArray(medicalRes.data.surgeries) ? medicalRes.data.surgeries[0] || {} : {};
+                    medicalTreatment = Array.isArray(medicalRes.data.treatments) ? medicalRes.data.treatments[0] || {} : {};
+                    medicalFamilyHistory = medicalRes.data.family_history || {};
+                }
+            } catch (err) {
+                console.warn('Medical detail fetch failed', err);
+            }
+        }
+
+        const selectedAllergyIds = medicalAllergyItems.map(item => Number(item.allergy_type_id));
+        const allergyDescriptions = medicalAllergyItems.reduce((map, item) => {
+            map[Number(item.allergy_type_id)] = item.description || '';
+            return map;
+        }, {});
+
+        const selectedConditionIds = medicalConditionItems.map(item => Number(item.condition_type_id));
+        const conditionDescription = (medicalConditionItems.find(item => Number(item.condition_type_id) === 8) || {}).description || '';
+
+        const selectedFamilyConditionIds = Array.isArray(medicalFamilyHistory.conditions)
+            ? medicalFamilyHistory.conditions.map(item => Number(item.family_condition_type_id))
+            : [];
+        const familyCancerDescription = Array.isArray(medicalFamilyHistory.conditions)
+            ? (medicalFamilyHistory.conditions.find(item => item.condition_name?.toLowerCase().includes('cancer')) || {}).description || ''
+            : '';
+        const familyOtherDescription = Array.isArray(medicalFamilyHistory.conditions)
+            ? (medicalFamilyHistory.conditions.find(item => item.condition_name?.toLowerCase().includes('other')) || {}).description || ''
+            : '';
+
         const header = `<h3>Update Enrollment</h3>`;
         const body = `
             <form id="enrollmentForm" data-student-id="${studentId}">
@@ -590,33 +629,33 @@ async function openEnrollmentModal(studentId) {
         const familyHistoryToggle = document.getElementById('family_medical_history');
 
         allergiesToggle.addEventListener('change', function() {
-            renderAllergyDetails(this.value === '1');
+            renderAllergyDetails(this.value === '1', selectedAllergyIds, allergyDescriptions);
         });
         conditionsToggle.addEventListener('change', function() {
-            renderConditionDetails(this.value === '1');
+            renderConditionDetails(this.value === '1', selectedConditionIds, conditionDescription);
         });
         surgeryToggle.addEventListener('change', function() {
-            renderSurgeryDetails(this.value === '1');
+            renderSurgeryDetails(this.value === '1', medicalSurgery);
         });
         treatmentToggle.addEventListener('change', function() {
-            renderTreatmentDetails(this.value === '1');
+            renderTreatmentDetails(this.value === '1', medicalTreatment);
         });
         familyHistoryToggle.addEventListener('change', function() {
-            renderFamilyHistoryDetails(this.value === '1');
+            renderFamilyHistoryDetails(this.value === '1', selectedFamilyConditionIds, familyCancerDescription, familyOtherDescription);
         });
 
-        renderAllergyDetails(allergiesToggle.value === '1');
-        renderConditionDetails(conditionsToggle.value === '1');
-        renderSurgeryDetails(surgeryToggle.value === '1');
-        renderTreatmentDetails(treatmentToggle.value === '1');
-        renderFamilyHistoryDetails(familyHistoryToggle.value === '1');
+        renderAllergyDetails(allergiesToggle.value === '1', selectedAllergyIds, allergyDescriptions);
+        renderConditionDetails(conditionsToggle.value === '1', selectedConditionIds, conditionDescription);
+        renderSurgeryDetails(surgeryToggle.value === '1', medicalSurgery);
+        renderTreatmentDetails(treatmentToggle.value === '1', medicalTreatment);
+        renderFamilyHistoryDetails(familyHistoryToggle.value === '1', selectedFamilyConditionIds, familyCancerDescription, familyOtherDescription);
     } catch (error) {
         console.error(error);
         showAlert('error', `Unable to open enrollment editor: ${error.message}`);
     }
 }
 
-function renderAllergyDetails(show) {
+function renderAllergyDetails(show, selectedIds = [], descriptions = {}) {
     const target = document.getElementById('has_allergies_details');
     if (!target) return;
     target.innerHTML = '';
@@ -625,29 +664,29 @@ function renderAllergyDetails(show) {
     target.innerHTML = `
         <div style="display:grid; gap:10px;">
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" id="medicine_allergy_checkbox" name="medicine_allergy[]" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" id="medicine_allergy_checkbox" name="medicine_allergy[]" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(1) ? 'checked' : ''}>
                 Medicine
             </label>
-            <div id="medicineAllergyBox" style="display:none; margin-left:23px;">
-                <input type="text" name="allergy_description[1]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+            <div id="medicineAllergyBox" style="display:${selectedIds.includes(1) ? 'block' : 'none'}; margin-left:23px;">
+                <input type="text" name="allergy_description[1]" placeholder="Please specify" value="${escapeHtml(descriptions[1] || '')}" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
             </div>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" id="pollen_allergy_checkbox" name="medicine_allergy[]" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" id="pollen_allergy_checkbox" name="medicine_allergy[]" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(2) ? 'checked' : ''}>
                 Pollen
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" id="food_allergy_checkbox" name="medicine_allergy[]" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" id="food_allergy_checkbox" name="medicine_allergy[]" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(3) ? 'checked' : ''}>
                 Food
             </label>
-            <div id="foodAllergyBox" style="display:none; margin-left:23px;">
-                <input type="text" name="allergy_description[3]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+            <div id="foodAllergyBox" style="display:${selectedIds.includes(3) ? 'block' : 'none'}; margin-left:23px;">
+                <input type="text" name="allergy_description[3]" placeholder="Please specify" value="${escapeHtml(descriptions[3] || '')}" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
             </div>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" id="other_allergy_checkbox" name="medicine_allergy[]" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" id="other_allergy_checkbox" name="medicine_allergy[]" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(4) ? 'checked' : ''}>
                 Others
             </label>
-            <div id="otherAllergyBox" style="display:none; margin-left:23px;">
-                <input type="text" name="allergy_description[4]" placeholder="Please specify" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
+            <div id="otherAllergyBox" style="display:${selectedIds.includes(4) ? 'block' : 'none'}; margin-left:23px;">
+                <input type="text" name="allergy_description[4]" placeholder="Please specify" value="${escapeHtml(descriptions[4] || '')}" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; background:var(--canvas);">
             </div>
         </div>
     `;
@@ -657,7 +696,7 @@ function renderAllergyDetails(show) {
     attachToggle('other_allergy_checkbox', 'otherAllergyBox');
 }
 
-function renderConditionDetails(show) {
+function renderConditionDetails(show, selectedIds = [], description = '') {
     const target = document.getElementById('has_med_condition_details');
     if (!target) return;
     target.innerHTML = '';
@@ -666,39 +705,39 @@ function renderConditionDetails(show) {
     target.innerHTML = `
         <div style="display:grid; gap:10px;">
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="condition_type_id" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="condition_type_id[]" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(1) ? 'checked' : ''}>
                 Error of refraction (Eye Ailment)
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="condition_type_id" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="condition_type_id[]" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(2) ? 'checked' : ''}>
                 Asthma (Lung Ailment)
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="condition_type_id" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="condition_type_id[]" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(3) ? 'checked' : ''}>
                 Seizure (Convulsions)
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="condition_type_id" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="condition_type_id[]" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(4) ? 'checked' : ''}>
                 Heart Illness
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="condition_type_id" value="5" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="condition_type_id[]" value="5" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(5) ? 'checked' : ''}>
                 Anemia
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="condition_type_id" value="6" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="condition_type_id[]" value="6" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(6) ? 'checked' : ''}>
                 Bleeding disorder
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="condition_type_id" value="7" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="condition_type_id[]" value="7" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(7) ? 'checked' : ''}>
                 Fracture / Dislocation
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" id="has_medical_condition" name="condition_type_id" value="8" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" id="has_medical_condition" name="condition_type_id[]" value="8" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(8) ? 'checked' : ''}>
                 Others
             </label>
-            <div id="medical_condition_details" class="medical-detail-input-wrapper" style="display:none;">
-                <input type="text" name="condition_description" placeholder="Please specify" class="medical-detail-input">
+            <div id="medical_condition_details" class="medical-detail-input-wrapper" style="display:${selectedIds.includes(8) ? 'block' : 'none'};">
+                <input type="text" name="condition_description" placeholder="Please specify" class="medical-detail-input" value="${escapeHtml(description)}">
             </div>
         </div>
     `;
@@ -706,7 +745,7 @@ function renderConditionDetails(show) {
     attachToggle('has_medical_condition', 'medical_condition_details');
 }
 
-function renderSurgeryDetails(show) {
+function renderSurgeryDetails(show, surgery = {}) {
     const target = document.getElementById('has_surgery_hospitalization_details');
     if (!target) return;
     target.innerHTML = '';
@@ -717,22 +756,22 @@ function renderSurgeryDetails(show) {
             <div class="medical-detail-grid-1">
                 <div class="medical-detail-field">
                     <label>Surgery Date</label>
-                    <input type="date" name="surgery_date" class="medical-detail-input">
+                    <input type="date" name="surgery_date" class="medical-detail-input" value="${escapeHtml(surgery.surgery_date || '')}" />
                 </div>
                 <div class="medical-detail-field">
                     <label>Hospital Name</label>
-                    <input type="text" name="hospital_name" placeholder="Hospital name" class="medical-detail-input">
+                    <input type="text" name="hospital_name" placeholder="Hospital name" class="medical-detail-input" value="${escapeHtml(surgery.hospital_name || '')}" />
                 </div>
                 <div class="medical-detail-field" style="grid-column:1 / -1;">
                     <label>Body Part Affected</label>
-                    <input type="text" name="body_part" placeholder="What part of the body?" class="medical-detail-input">
+                    <input type="text" name="body_part" placeholder="What part of the body?" class="medical-detail-input" value="${escapeHtml(surgery.body_part || '')}" />
                 </div>
             </div>
         </div>
     `;
 }
 
-function renderTreatmentDetails(show) {
+function renderTreatmentDetails(show, treatment = {}) {
     const target = document.getElementById('is_taking_treatment_details');
     if (!target) return;
     target.innerHTML = '';
@@ -743,18 +782,18 @@ function renderTreatmentDetails(show) {
             <div class="medical-detail-grid-1">
                 <div class="medical-detail-field">
                     <label>Medicine / Treatment Type</label>
-                    <input type="text" name="treatment_medicine" placeholder="Name of medicine or treatment" class="medical-detail-input">
+                    <input type="text" name="treatment_medicine" placeholder="Name of medicine or treatment" class="medical-detail-input" value="${escapeHtml(treatment.treatment_medicine || '')}" />
                 </div>
                 <div class="medical-detail-field">
                     <label>Dosage Schedule</label>
-                    <input type="text" name="schedule_dosage" placeholder="e.g., 2x daily, morning/evening" class="medical-detail-input">
+                    <input type="text" name="schedule_dosage" placeholder="e.g., 2x daily, morning/evening" class="medical-detail-input" value="${escapeHtml(treatment.schedule_dosage || '')}" />
                 </div>
             </div>
         </div>
     `;
 }
 
-function renderFamilyHistoryDetails(show) {
+function renderFamilyHistoryDetails(show, selectedIds = [], cancerDescription = '', otherDescription = '') {
     const target = document.getElementById('family_medical_history_details');
     if (!target) return;
     target.innerHTML = '';
@@ -763,42 +802,42 @@ function renderFamilyHistoryDetails(show) {
     target.innerHTML = `
         <div style="display:grid; gap:10px;">
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="family_condition_type_id" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="family_condition_type_id[]" value="1" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(1) ? 'checked' : ''}>
                 Tuberculosis
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" id="has_cancer" name="family_condition_type_id" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" id="has_cancer" name="family_condition_type_id[]" value="2" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(2) ? 'checked' : ''}>
                 Cancer
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="family_condition_type_id" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="family_condition_type_id[]" value="3" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(3) ? 'checked' : ''}>
                 Diabetes Mellitus
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="family_condition_type_id" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="family_condition_type_id[]" value="4" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(4) ? 'checked' : ''}>
                 Hypertension
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="family_condition_type_id" value="5" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="family_condition_type_id[]" value="5" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(5) ? 'checked' : ''}>
                 Stroke / Heart attack
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="family_condition_type_id" value="6" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="family_condition_type_id[]" value="6" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(6) ? 'checked' : ''}>
                 Depression
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" name="family_condition_type_id" value="7" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" name="family_condition_type_id[]" value="7" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(7) ? 'checked' : ''}>
                 Kidney problems
             </label>
             <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
-                <input type="checkbox" id="has_other" name="family_condition_type_id" value="8" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;">
+                <input type="checkbox" id="has_other" name="family_condition_type_id[]" value="8" style="width:15px; height:15px; accent-color:var(--brand); flex-shrink:0;" ${selectedIds.includes(8) ? 'checked' : ''}>
                 Others
             </label>
-            <div id="otherBox" class="medical-detail-input-wrapper" style="display:none;">
-                <input type="text" name="family_condition_description" placeholder="Please specify" class="medical-detail-input">
+            <div id="otherBox" class="medical-detail-input-wrapper" style="display:${selectedIds.includes(8) ? 'block' : 'none'};">
+                <input type="text" name="family_condition_description" placeholder="Please specify" class="medical-detail-input" value="${escapeHtml(otherDescription)}">
             </div>
-            <div id="cancerBox" class="medical-detail-input-wrapper" style="display:none;">
-                <input type="text" name="family_condition_description" placeholder="Specify type of cancer" class="medical-detail-input">
+            <div id="cancerBox" class="medical-detail-input-wrapper" style="display:${selectedIds.includes(2) ? 'block' : 'none'};">
+                <input type="text" name="family_condition_description" placeholder="Specify type of cancer" class="medical-detail-input" value="${escapeHtml(cancerDescription)}">
             </div>
         </div>
     `;
