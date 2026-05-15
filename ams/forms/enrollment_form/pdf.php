@@ -213,6 +213,11 @@ $gradeMap = [
 $formattedGrade           = $gradeMap[trim($enrollment['grade_level'] ?? '')] ?? '';
 $returning_formattedGrade = $gradeMap[trim($returning_learner['last_grade_level_completed'] ?? '')] ?? '';
 
+// School year
+$yearStart    = intval($enrollment['year_start'] ?? 0);
+$yearEnd      = intval($enrollment['year_end'] ?? 0);
+$schoolYear   = ($yearStart && $yearEnd) ? "{$yearStart}-{$yearEnd}" : '';
+
 // Address arrays
 $currentAddr = [
     'house_no'     => trim($current['house_no']          ?? ''),
@@ -293,6 +298,9 @@ $enrollmentData = [
 
     // --- Grade level ---
     'grade_level'    => $formattedGrade,
+
+    // --- School year ---
+    'school_year'    => $enrollment['school_year'] ?? '',
 
     // --- Enrollment flags ---
     'psa_bcn'          => trim($enrollment['psa_bcn'] ?? ''),
@@ -385,6 +393,7 @@ $medicalData = [
                                       . safeUpper($student['middle_name']) . ' '
                                       . safeUpper($student['extension_name']),
     'grade_level'                    => $formattedGrade,
+    'school_year'                    => $enrollment['school_year'] ?? '',
     'birth_date'                     => $student['birth_date'] ?? '',
     'age'                            => computeAge($student['birth_date']),
     'sex'                            => $student['sex'] ?? '',
