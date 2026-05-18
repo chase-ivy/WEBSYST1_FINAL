@@ -11,7 +11,6 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
         'scores'     => ['Scores', 'teacher_scores.php'],
         'grades'     => ['Grades', 'teacher_grades.php'],
         'attendance' => ['Attendance', 'teacher_attendance.php'],
-        'logout'     => ['Logout', '../../login/logout.php']
     ];
 
     echo '<aside class="sidebar">';
@@ -34,5 +33,6 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
     }
     echo '</nav>';
 
+    echo '<a href="../../login/logout.php">Logout</a>';
     echo '</aside>';
 }

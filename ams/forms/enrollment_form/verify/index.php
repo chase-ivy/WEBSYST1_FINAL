@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Verify Enrollments · Gibraltar AMES</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../enrollment.css" rel="stylesheet">
+</head>
+<body>
+
+    <!-- TOP NAV -->
+    <div class="topbar">
+        <div class="topbar-logo">
+            <img src="../../../style/logo.png" alt="Logo">
+            <span>Gibraltar Elementary School</span>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="card">
+            <div class="card-head">
+                <h2>Verify Pending Enrollments</h2>
+                <p>Choose a pending enrollment to review and archive into student records.</p>
+            </div>
+            <div class="card-body">
+                <div class="grid-2" style="align-items:center;">
+                    <div class="field span-2">
+                        <label>Select pending enrollment</label>
+                        <select id="enrollmentSelect"><option value="">Loading…</option></select>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button id="clearBtn" class="btn btn-ghost" style="align-self:flex-end;">Clear</button>
+                    </div>
+                </div>
+                <div id="veMessage" class="message" style="display:block; margin-top:12px;"></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+            <div class="card-head">
+                <h2>Review Enrollment Details</h2>
+                <p>Verify all enrollment data in the stepper below before archiving.</p>
+            </div>
+            <div class="card-body">
+                <div class="stepper" id="stepper">
+                    <div class="step active" id="s1">
+                        <div class="step-dot">1</div>
+                        <span class="step-label">Learner Info</span>
+                    </div>
+                    <div class="step" id="s2">
+                        <div class="step-dot">2</div>
+                        <span class="step-label">Address</span>
+                    </div>
+                    <div class="step" id="s3">
+                        <div class="step-dot">3</div>
+                        <span class="step-label">Parents</span>
+                    </div>
+                    <div class="step" id="s4">
+                        <div class="step-dot">4</div>
+                        <span class="step-label">Medical</span>
+                    </div>
+                    <div class="step" id="s5">
+                        <div class="step-dot">5</div>
+                        <span class="step-label">Review</span>
+                    </div>
+                </div>
+                <form id="enrollmentForm" novalidate>
+                    <input type="hidden" name="student_record_verified" id="studentRecordVerifiedInput" value="0">
+                    <input type="hidden" name="medical_record_verified" id="medicalRecordVerifiedInput" value="0">
+
+                    <?php include '../parts/step1.php'; ?>
+                    <?php include '../parts/step2.php'; ?>
+                    <?php include '../parts/step3.php'; ?>
+                    <?php include '../parts/step4.php'; ?>
+                    <?php include '../parts/step5.php'; ?>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 <strong>Gibraltar Elementary School — AMES</strong>.
+    </footer>
+
+    <script src='../../../api/client.js'></script>
+    <script src="../enrollment.js"></script>
+    <script src="verify_enrollment.js"></script>
+</body>
+</html>

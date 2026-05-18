@@ -187,6 +187,14 @@ function computeDefaultSchoolYear(): string {
 // Main transaction
 // ─────────────────────────────────────────────────────────────────────────────
 
+$studentVerified = normalizeCheckboxValue($data['student_record_verified'] ?? 0);
+$medicalVerified = normalizeCheckboxValue($data['medical_record_verified'] ?? 0);
+if (!$studentVerified || !$medicalVerified) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Both student record and medical record must be verified before enrollment can be submitted.']);
+    exit;
+}
+
 try {
     $pdo->beginTransaction();
 
