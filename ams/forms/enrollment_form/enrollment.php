@@ -1,19 +1,3 @@
-<?php
-require_once __DIR__ . '/../../config/config.php';
-
-$motherTongueOptions = [];
-$indigenousGroupOptions = [];
-
-try {
-    $stmt = $pdo->query('SELECT name FROM mother_tongues WHERE is_active = 1 ORDER BY name ASC');
-    $motherTongueOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    $stmt = $pdo->query('SELECT name FROM indigenous_groups WHERE is_active = 1 ORDER BY name ASC');
-    $indigenousGroupOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
-} catch (Throwable $e) {
-    // keep empty arrays if the lookup fails
-}
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -707,9 +691,6 @@ footer strong { color: rgba(255,255,255,.8); }
                             <label>Mother Tongue</label>
                             <select name="Mother_Tongue" id="Mother_Tongue" onchange="toggleMotherTongueOther()">
                                 <option value="" hidden>Select mother tongue</option>
-                                <?php foreach ($motherTongueOptions as $tongue): ?>
-                                    <option value="<?= htmlspecialchars($tongue, ENT_QUOTES) ?>"><?= htmlspecialchars($tongue) ?></option>
-                                <?php endforeach; ?>
                                 <option value="Other">Other</option>
                             </select>
                             <input type="text" name="Mother_Tongue_Other" id="Mother_Tongue_Other" placeholder="Specify other mother tongue" style="display:none; margin-top:10px; padding:10px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text); background:var(--canvas);">
@@ -750,9 +731,6 @@ footer strong { color: rgba(255,255,255,.8); }
                             <label>IP Community / Cultural Group</label>
                             <select name="IP_Group" id="IP_Group" onchange="toggleIpOther()">
                                 <option value="" hidden>Select IP group</option>
-                                <?php foreach ($indigenousGroupOptions as $group): ?>
-                                    <option value="<?= htmlspecialchars($group, ENT_QUOTES) ?>"><?= htmlspecialchars($group) ?></option>
-                                <?php endforeach; ?>
                                 <option value="Other">Other</option>
                             </select>
                             <input type="text" name="IP_Specify" id="IP_Specify" placeholder="Specify other IP group" style="display:none; margin-top:10px; padding:10px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text); background:var(--canvas);">
@@ -1509,6 +1487,49 @@ function showQ5(){
                 other.style.display = 'none';
                 other.value = '';
             }
+        }
+
+        async function loadEnrollmentLookups() {
+            const motherTongueSelect = document.getElementById('Mother_Tongue');
+            const ipGroupSelect = document.getElementById('IP_Group');
+
+            if (!motherTongueSelect || !ipGroupSelect || !API?.lookups) {
+                return;
+            }
+
+            try {
+                const response = await API.lookups.listAll();
+                const motherTongues = response.data?.motherTongues || [];
+                const indigenousGroups = response.data?.indigenousGroups || [];
+
+                populateLookupSelect(motherTongueSelect, motherTongues);
+                populateLookupSelect(ipGroupSelect, indigenousGroups);
+            } catch (error) {
+                console.error('Failed to load lookup values:', error);
+            }
+        }
+
+        function populateLookupSelect(select, values) {
+            const otherOption = Array.from(select.options).find(option => option.value === 'Other');
+            select.querySelectorAll('option').forEach(option => {
+                if (option.value !== '' && option.value !== 'Other') {
+                    option.remove();
+                }
+            });
+
+            values.forEach(value => {
+                if (!value) return;
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                select.insertBefore(option, otherOption || null);
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadEnrollmentLookups);
+        } else {
+            loadEnrollmentLookups();
         }
 
         function sameAddr(yes) {

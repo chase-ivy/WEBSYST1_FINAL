@@ -158,6 +158,18 @@ const API = {
             return API.call('enroll', 'create', data, 'POST');
         }
     },
+
+    lookups: {
+        listMotherTongues: async function() {
+            return API.call('lookups', 'mother_tongues');
+        },
+        listIndigenousGroups: async function() {
+            return API.call('lookups', 'indigenous_groups');
+        },
+        listAll: async function() {
+            return API.call('lookups', 'all');
+        }
+    },
     
     // Subjects API
     subjects: {
