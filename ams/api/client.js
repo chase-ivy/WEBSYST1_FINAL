@@ -4,7 +4,7 @@
  */
 
 const API = {
-    BASE: '/WEBSYST1_FINAL/ams/api',
+    BASE: '/login/WEBSYST1_FINAL/ams/api',
     
     // Helper function for API calls
     call: async function(endpoint, action, data = null, method = 'GET') {

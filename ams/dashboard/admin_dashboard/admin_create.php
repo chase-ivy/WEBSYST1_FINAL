@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </main>
 </div>
 
-<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
+<script src="../../api/client.js"></script>
 <script>
     const createForm = document.getElementById('create-staff-form');
     const createAlert = document.getElementById('create-alert');
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const data = {
             username: document.getElementById('username').value.trim(),
             email: document.getElementById('email').value.trim(),
-            role: 'staff',
+            role: document.getElementById('role').value.trim(),
             password: document.getElementById('password').value.trim()
         };
 

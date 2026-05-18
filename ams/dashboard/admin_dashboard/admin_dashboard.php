@@ -177,7 +177,7 @@ $staffList = getStaffList($pdo);
     </main>
 </div>
 
-<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
+<script src="../../api/client.js"></script>
 <script>
     function getRoleBadgeClass(role) {
         const map = { admin: 'badge-admin', teacher: 'badge-teacher', staff: 'badge-staff' };

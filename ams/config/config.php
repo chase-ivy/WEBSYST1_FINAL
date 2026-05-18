@@ -1,6 +1,6 @@
 <?php
 $host = "localhost";
-$db   = "gems_db";
+$db   = "gems_db [login]";
 $user = "root";
 $pass = "";
 $char = "utf8mb4";

@@ -187,7 +187,7 @@ $staffList = getStaffList($pdo);
     </main>
 </div>
 
-<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
+<script src="../../api/client.js"></script>
 <script>
     const alertContainer = document.getElementById('js-alert-container');
 
