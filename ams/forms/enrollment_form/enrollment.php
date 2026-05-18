@@ -1,3 +1,19 @@
+<?php
+require_once __DIR__ . '/../../config/config.php';
+
+$motherTongueOptions = [];
+$indigenousGroupOptions = [];
+
+try {
+    $stmt = $pdo->query('SELECT name FROM mother_tongues WHERE is_active = 1 ORDER BY name ASC');
+    $motherTongueOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $stmt = $pdo->query('SELECT name FROM indigenous_groups WHERE is_active = 1 ORDER BY name ASC');
+    $indigenousGroupOptions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (Throwable $e) {
+    // keep empty arrays if the lookup fails
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -689,7 +705,14 @@ footer strong { color: rgba(255,255,255,.8); }
                     <div class="grid-2" style="margin-top:16px;">
                         <div class="field">
                             <label>Mother Tongue</label>
-                            <input type="text" name="Mother_Tongue" placeholder="e.g. Ilocano">
+                            <select name="Mother_Tongue" id="Mother_Tongue" onchange="toggleMotherTongueOther()">
+                                <option value="" hidden>Select mother tongue</option>
+                                <?php foreach ($motherTongueOptions as $tongue): ?>
+                                    <option value="<?= htmlspecialchars($tongue, ENT_QUOTES) ?>"><?= htmlspecialchars($tongue) ?></option>
+                                <?php endforeach; ?>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input type="text" name="Mother_Tongue_Other" id="Mother_Tongue_Other" placeholder="Specify other mother tongue" style="display:none; margin-top:10px; padding:10px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text); background:var(--canvas);">
                         </div>
                     </div>
 
@@ -725,7 +748,14 @@ footer strong { color: rgba(255,255,255,.8); }
                     <div class="collapse" id="ipBox" style="margin-top:10px;">
                         <div class="field">
                             <label>IP Community / Cultural Group</label>
-                            <input type="text" name="IP_Specify" placeholder="Specify IP group">
+                            <select name="IP_Group" id="IP_Group" onchange="toggleIpOther()">
+                                <option value="" hidden>Select IP group</option>
+                                <?php foreach ($indigenousGroupOptions as $group): ?>
+                                    <option value="<?= htmlspecialchars($group, ENT_QUOTES) ?>"><?= htmlspecialchars($group) ?></option>
+                                <?php endforeach; ?>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input type="text" name="IP_Specify" id="IP_Specify" placeholder="Specify other IP group" style="display:none; margin-top:10px; padding:10px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text); background:var(--canvas);">
                         </div>
                     </div>
 
@@ -751,6 +781,12 @@ footer strong { color: rgba(255,255,255,.8); }
                     </div>
 
                     <!-- Disability Types (collapsible) -->
+                    <!-- IDs match disability_types table (DB):
+                         1=Visual Impairment, 2=Hearing Impairment, 3=Learning Disability,
+                         4=Intellectual Disability, 5=Autism Spectrum Disorder,
+                         6=Emotional/Behavioral Disorder, 7=Orthopedic/Physical Handicap,
+                         8=Speech/Language Disorder, 9=Chronic Illness, 10=Others
+                         Subtypes (disability_subtypes): 1=Blind, 2=Low Vision (type 1 only) -->
         <div class="collapse" id="disabilityBox">
                         <div class="disability-grid" style="margin-top:10px;">
                             <label class="check-item">
@@ -777,23 +813,16 @@ footer strong { color: rgba(255,255,255,.8); }
                                 <input type="checkbox" name="disabilityDetails[6][]" value="6"> Emotional / Behavioral Disorder
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disabilityDetails[7][]" value="7"> Speech / Language Disorder
+                                <input type="checkbox" name="disabilityDetails[7][]" value="7"> Orthopedic / Physical Handicap
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disabilityDetails[8][]" value="8"> Cerebral Palsy  
+                                <input type="checkbox" name="disabilityDetails[8][]" value="8"> Speech / Language Disorder
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="disabilityDetails[9][]" value="9"> Orthopedic / Physical Handicap
+                                <input type="checkbox" name="disabilityDetails[9][]" value="9"> Chronic Illness
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" id="special_health" name="disabilityDetails[10][]" value="10"> Special Health Problem
-
-                                <div id="healthOptionsBox" style="display:none; margin-left:15px;">
-                                    <input type="checkbox" name="disability_sub[10][]" value="3"> Cancer
-                                </div>
-                            </label>
-                            <label class="check-item">
-                                <input type="checkbox" name="disabilityDetails[11][]" value="11"> Multiple Disorder
+                                <input type="checkbox" name="disabilityDetails[10][]" value="10"> Others (Multiple Disorder, Cerebral Palsy, etc.)
                             </label>
                         </div>
                     </div>
@@ -1456,6 +1485,30 @@ function showQ5(){
 
         function toggle(id, open) {
             document.getElementById(id).classList.toggle('open', open);
+        }
+
+        function toggleMotherTongueOther() {
+            const select = document.getElementById('Mother_Tongue');
+            const other  = document.getElementById('Mother_Tongue_Other');
+            if (!select || !other) return;
+            if (select.value === 'Other') {
+                other.style.display = 'block';
+            } else {
+                other.style.display = 'none';
+                other.value = '';
+            }
+        }
+
+        function toggleIpOther() {
+            const select = document.getElementById('IP_Group');
+            const other  = document.getElementById('IP_Specify');
+            if (!select || !other) return;
+            if (select.value === 'Other') {
+                other.style.display = 'block';
+            } else {
+                other.style.display = 'none';
+                other.value = '';
+            }
         }
 
         function sameAddr(yes) {

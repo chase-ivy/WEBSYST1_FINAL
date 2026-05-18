@@ -27,25 +27,26 @@ if (!is_array($data)) {
     exit;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper functions
+// ─────────────────────────────────────────────────────────────────────────────
+
 function parseDisabilityRows(array $data): array {
     $rows = [];
     if (empty($data['disabilityDetails']) || !is_array($data['disabilityDetails'])) {
         return $rows;
     }
-
     foreach ($data['disabilityDetails'] as $typeId => $values) {
         $typeId = intval($typeId);
         if ($typeId === 0 || !is_array($values)) {
             continue;
         }
-
         $subtypes = [];
         if (!empty($data['disability_sub'][$typeId]) && is_array($data['disability_sub'][$typeId])) {
             foreach ($data['disability_sub'][$typeId] as $subId) {
                 $subtypes[] = intval($subId);
             }
         }
-
         if (!empty($subtypes)) {
             foreach (array_unique($subtypes) as $subId) {
                 $rows[] = ['type_id' => $typeId, 'subtype_id' => $subId];
@@ -54,84 +55,59 @@ function parseDisabilityRows(array $data): array {
             $rows[] = ['type_id' => $typeId, 'subtype_id' => null];
         }
     }
-
     return $rows;
 }
 
-function insertParent(PDO $pdo, int $enrollmentId, string $relationship, string $lastName, string $firstName, string $middleName, string $contactNumber): ?int {
-    $lastName = trim($lastName);
-    $firstName = trim($firstName);
-    $middleName = trim($middleName);
+/**
+ * Insert a parent/guardian into student_parent_guardians.
+ * parent_guardian_type_id: 1=Father, 2=Mother, 3=Guardian
+ */
+function insertParentGuardian(PDO $pdo, int $studentId, int $typeId, string $lastName, string $firstName, string $middleName, string $contactNumber): void {
+    $lastName    = trim($lastName);
+    $firstName   = trim($firstName);
+    $middleName  = trim($middleName);
     $contactNumber = trim($contactNumber);
 
+    // Skip entirely empty records
     if ($lastName === '' && $firstName === '' && $middleName === '' && $contactNumber === '') {
-        return null;
+        return;
     }
 
-    $stmt = $pdo->prepare('INSERT INTO parents (last_name, first_name, middle_name, contact_number) VALUES (?, ?, ?, ?)');
-    $stmt->execute([
-        $lastName,
-        $firstName,
-        $middleName,
-        $contactNumber
-    ]);
-
-    $parentId = intval($pdo->lastInsertId());
-    if ($parentId > 0) {
-        $link = $pdo->prepare('INSERT INTO enrollment_parents (enrollment_id, parent_id, relationship) VALUES (?, ?, ?)');
-        $link->execute([$enrollmentId, $parentId, $relationship]);
-    }
-
-    return $parentId > 0 ? $parentId : null;
+    $stmt = $pdo->prepare('
+        INSERT INTO student_parent_guardians
+            (student_id, parent_guardian_type_id, last_name, first_name, middle_name, contact_number)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ');
+    $stmt->execute([$studentId, $typeId, $lastName, $firstName, $middleName, $contactNumber]);
 }
 
-function createUserForStudent(PDO $pdo, int $studentId, string $firstName, string $lastName, string $lrn, ?string $email = null, ?string $password = null): ?int {
-    $email = trim($email ?? '');
-    $password = trim($password ?? '');
-    
-    // Generate username from first name + last name + random suffix
-    $baseUsername = strtolower(str_replace(' ', '.', $firstName . '.' . $lastName));
-    $baseUsername = preg_replace('/[^a-z0-9._-]/', '', $baseUsername);
-    
-    // Ensure unique username
-    $username = $baseUsername;
-    $suffix = 1;
+/**
+ * Create a users row for the new student and return the user_id.
+ * The student row must already exist so we can link it afterwards.
+ */
+function createUserForStudent(PDO $pdo, string $firstName, string $lastName, string $lrn, string $email = '', string $password = ''): ?int {
+    $base = strtolower(preg_replace('/[^a-z0-9._-]/i', '', str_replace(' ', '.', "$firstName.$lastName")));
+    $username = $base;
+    $suffix   = 1;
     while (true) {
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE username = ?');
-        $stmt->execute([$username]);
-        if ($stmt->fetchColumn() === 0) {
-            break;
-        }
-        $username = $baseUsername . $suffix;
-        $suffix++;
+        $chk = $pdo->prepare('SELECT COUNT(*) FROM users WHERE username = ?');
+        $chk->execute([$username]);
+        if ((int)$chk->fetchColumn() === 0) break;
+        $username = $base . $suffix++;
     }
-    
-    // Use provided email or generate one from username
+
     if ($email === '') {
         $email = $username . '@student.local';
     }
-    
-    // Generate password if not provided
     if ($password === '') {
-        // Use LRN if available, otherwise generate random password
-        if (!empty($lrn) && strlen(trim($lrn)) > 0) {
-            $password = $lrn; // Use LRN as default password
-        } else {
-            // Generate random 8-character password
-            $password = bin2hex(random_bytes(4)); // 8 hex chars
-        }
+        $password = ($lrn !== '') ? $lrn : bin2hex(random_bytes(4));
     }
-    
-    // Hash password
-    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-    
-    // Create user account
+
     try {
         $stmt = $pdo->prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)');
-        $stmt->execute([$username, $email, $passwordHash, 'student']);
-        
-        $userId = intval($pdo->lastInsertId());
-        return $userId > 0 ? $userId : null;
+        $stmt->execute([$username, $email, password_hash($password, PASSWORD_DEFAULT), 'student']);
+        $id = intval($pdo->lastInsertId());
+        return $id > 0 ? $id : null;
     } catch (Exception $e) {
         return null;
     }
@@ -143,259 +119,414 @@ function normalizeCheckboxValue($value): int {
 
 function parseIdsValue($value): array {
     if (is_array($value)) {
-        return array_values(array_filter(array_map('intval', $value), fn($item) => $item > 0));
+        return array_values(array_filter(array_map('intval', $value), fn($v) => $v > 0));
     }
-
-    if ($value === null || $value === '') {
-        return [];
-    }
-
+    if ($value === null || $value === '') return [];
     return [intval($value)];
 }
 
 function getStringValue($value): ?string {
     if (is_array($value)) {
-        $value = implode(', ', array_filter(array_map('trim', $value), fn($item) => $item !== ''));
+        $value = implode(', ', array_filter(array_map('trim', $value), fn($v) => $v !== ''));
     }
-
     $value = trim((string)($value ?? ''));
     return $value === '' ? null : $value;
 }
 
+/**
+ * Resolve a free-text mother tongue name to its mother_tongue_id.
+ * If the name is not found, insert it and return the new ID.
+ * Returns null if the incoming name is blank.
+ */
+function resolveMotherTongueId(PDO $pdo, ?string $name): ?int {
+    $name = trim((string)$name);
+    if ($name === '') return null;
+
+    $stmt = $pdo->prepare('SELECT mother_tongue_id FROM mother_tongues WHERE LOWER(name) = LOWER(?) AND is_active = 1 LIMIT 1');
+    $stmt->execute([$name]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) {
+        return (int)$row['mother_tongue_id'];
+    }
+
+    $insert = $pdo->prepare('INSERT INTO mother_tongues (name, is_active) VALUES (?, 1)');
+    $insert->execute([$name]);
+    return intval($pdo->lastInsertId());
+}
+
+/**
+ * Resolve a free-text indigenous group name to its indigenous_group_id.
+ * If the name is not found, insert it and return the new ID.
+ * Returns null if the incoming name is blank.
+ */
+function resolveIndigenousGroupId(PDO $pdo, ?string $name): ?int {
+    $name = trim((string)$name);
+    if ($name === '') return null;
+
+    $stmt = $pdo->prepare('SELECT indigenous_group_id FROM indigenous_groups WHERE LOWER(name) = LOWER(?) AND is_active = 1 LIMIT 1');
+    $stmt->execute([$name]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) {
+        return (int)$row['indigenous_group_id'];
+    }
+
+    $insert = $pdo->prepare('INSERT INTO indigenous_groups (name, is_active) VALUES (?, 1)');
+    $insert->execute([$name]);
+    return intval($pdo->lastInsertId());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main transaction
+// ─────────────────────────────────────────────────────────────────────────────
+
 try {
     $pdo->beginTransaction();
 
-    $schoolYear = trim(($data['year_start'] ?? '') . '-' . ($data['year_end'] ?? ''));
-    $withLrn = !empty($data['with_lrn']) && in_array((string)$data['with_lrn'], ['1', 'Yes'], true) ? 1 : 0;
-    $returning = !empty($data['returning']) && in_array((string)$data['returning'], ['1', 'Yes'], true) ? 1 : 0;
-    $ipValue = (isset($data['ip']) && $data['ip'] === 'Yes') ? trim($data['IP_Specify'] ?? '') : null;
-    $fourpsValue = (isset($data['fourps']) && $data['fourps'] === 'Yes') ? trim($data['FourPs_Specify'] ?? '') : null;
-    $isLearnerWithDisability = !empty($data['disabilityDetails']) ? 1 : 0;
-    $age = isset($data['Birth_Date']) && trim($data['Birth_Date']) !== '' ? (int) floor((time() - strtotime($data['Birth_Date'])) / 31557600) : null;
+    // ── Derived values ────────────────────────────────────────────────────────
+    $schoolYear  = trim(($data['year_start'] ?? '') . '-' . ($data['year_end'] ?? ''));
+    $withLrn     = !empty($data['with_lrn'])  && in_array((string)$data['with_lrn'],  ['1','Yes'], true) ? 1 : 0;
+    $returning   = !empty($data['returning']) && in_array((string)$data['returning'], ['1','Yes'], true) ? 1 : 0;
+    $isIp        = (isset($data['ip'])     && $data['ip']     === 'Yes') ? 1 : 0;
+    $isFourPs    = (isset($data['fourps']) && $data['fourps'] === 'Yes') ? 1 : 0;
+    $fourPsId    = $isFourPs ? trim($data['FourPs_Specify'] ?? '') : null;
+    $isDisabled  = !empty($data['disabilityDetails']) ? 1 : 0;
 
-    $lrnValue = trim($data['Learner_Reference_No'] ?? '');
-    if ($lrnValue === '') {
-        $lrnValue = null;
+    $lrnValue    = trim($data['Learner_Reference_No'] ?? '') ?: null;
+    $motherTongueName  = trim($data['Mother_Tongue'] ?? '');
+    if ($motherTongueName === 'Other') {
+        $motherTongueName = trim($data['Mother_Tongue_Other'] ?? '');
     }
 
-    $stmt = $pdo->prepare('INSERT INTO students (
-        lrn, last_name, first_name, middle_name, extension_name,
-        birth_date, sex, place_of_birth
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    $indigenousName = null;
+    if ($isIp) {
+        $selectedIpGroup = trim($data['IP_Group'] ?? '');
+        $indigenousName  = ($selectedIpGroup === 'Other') ? trim($data['IP_Specify'] ?? '') : $selectedIpGroup;
+    }
 
-    $stmt->execute([
-        $lrnValue,
-        trim($data['Learner_Last_Name'] ?? ''),
-        trim($data['Learner_First_Name'] ?? ''),
-        trim($data['Learner_Middle_Name'] ?? ''),
-        trim($data['Learner_Extension_Name'] ?? ''),
-        trim($data['Birth_Date'] ?? ''),
-        trim($data['sex'] ?? ''),
-        trim($data['Place_of_Birth'] ?? '')
-    ]);
+    // Resolve FK IDs from lookup tables
+    $motherTongueId   = resolveMotherTongueId($pdo, $motherTongueName);
+    $indigenousGroupId = resolveIndigenousGroupId($pdo, $indigenousName);
 
-    $studentId = intval($pdo->lastInsertId());
-    
-    // Create user account for the student
-    $firstName = trim($data['Learner_First_Name'] ?? '');
-    $lastName = trim($data['Learner_Last_Name'] ?? '');
-    $lrn = trim($data['Learner_Reference_No'] ?? '');
-    $userEmail = trim($data['user_email'] ?? '');
+    // ── 1. Create user account first (students.user_id is NOT NULL) ───────────
+    $firstName    = trim($data['Learner_First_Name']  ?? '');
+    $lastName     = trim($data['Learner_Last_Name']   ?? '');
+    $userEmail    = trim($data['user_email']    ?? '');
     $userPassword = trim($data['user_password'] ?? '');
-    
-    $userId = createUserForStudent($pdo, $studentId, $firstName, $lastName, $lrn, $userEmail, $userPassword);
-    
-    // Link user account to student if user was created successfully
-    if ($userId !== null && $userId > 0) {
-        $updateStmt = $pdo->prepare('UPDATE students SET user_id = ? WHERE student_id = ?');
-        $updateStmt->execute([$userId, $studentId]);
+
+    $userId = createUserForStudent($pdo, $firstName, $lastName, $lrnValue ?? '', $userEmail, $userPassword);
+    if ($userId === null) {
+        throw new Exception('Failed to create user account for student.');
     }
 
-    $enrollmentStmt = $pdo->prepare('INSERT INTO enrollments (
-        student_id, school_year, grade_level, with_lrn, psa_bcn,
-        age, mother_tongue, is_indigenous, indigenous_group, is_four_ps_beneficiary,
-        four_ps_household_id, is_learner_with_disability, is_returning_learner
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    // ── 2. Insert student ─────────────────────────────────────────────────────
+    $stmt = $pdo->prepare('
+        INSERT INTO students
+            (user_id, lrn, last_name, first_name, middle_name, extension_name,
+             birth_date, sex, place_of_birth)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ');
+    $stmt->execute([
+        $userId,
+        $lrnValue,
+        $lastName,
+        $firstName,
+        trim($data['Learner_Middle_Name']    ?? '') ?: null,
+        trim($data['Learner_Extension_Name'] ?? '') ?: null,
+        trim($data['Birth_Date']             ?? ''),
+        trim($data['sex']                    ?? ''),
+        trim($data['Place_of_Birth']         ?? '') ?: null,
+    ]);
+    $studentId = intval($pdo->lastInsertId());
 
-    $enrollmentStmt->execute([
+    // ── 3. Insert enrollment ──────────────────────────────────────────────────
+    $enrollStmt = $pdo->prepare('
+        INSERT INTO enrollments
+            (student_id, school_year, mother_tongue_id,
+             is_indigenous, indigenous_group_id,
+             is_four_ps_beneficiary, four_ps_household_id,
+             is_learner_with_disability, is_returning_learner)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ');
+    $enrollStmt->execute([
         $studentId,
         $schoolYear,
-        trim($data['Grade_Level'] ?? ''),
-        $withLrn,
-        trim($data['psa_bcn'] ?? ''),
-        $age,
-        trim($data['Mother_Tongue'] ?? ''),
-        !empty($ipValue) ? 1 : 0,
-        $ipValue,
-        !empty($fourpsValue) ? 1 : 0,
-        trim($data['FourPs_Specify'] ?? ''),
-        $isLearnerWithDisability,
-        $returning
+        $motherTongueId,
+        $isIp,
+        $indigenousGroupId,
+        $isFourPs,
+        $fourPsId,
+        $isDisabled,
+        $returning,
     ]);
-
     $enrollmentId = intval($pdo->lastInsertId());
 
-    $permHouse = trim($data['Permanent_House_No'] ?? '');
-    $permStreet = trim($data['Permanent_Street_Name'] ?? '');
-    $permBarangay = trim($data['Permanent_Barangay'] ?? '');
-    $permCity = trim($data['Permanent_Municipality_City'] ?? '');
-    $permProvince = trim($data['Permanent_Province'] ?? '');
-    $permCountry = trim($data['Permanent_Country'] ?? '');
-    $permZip = trim($data['Permanent_Zip_Code'] ?? '');
+    // ── 4. Insert student_school_records (snapshot) ───────────────────────────
+    $gradeLevel = trim($data['Grade_Level'] ?? '');
+    $ssrStmt = $pdo->prepare('
+        INSERT INTO student_school_records
+            (enrollment_id, student_id, school_year, grade_level,
+             lrn, last_name, first_name, middle_name, extension_name,
+             birth_date, sex, place_of_birth,
+             mother_tongue, indigenous_group, four_ps_household_id,
+             is_learner_with_disability, is_returning_learner)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ');
+    $ssrStmt->execute([
+        $enrollmentId,
+        $studentId,
+        $schoolYear,
+        $gradeLevel,
+        $lrnValue,
+        $lastName,
+        $firstName,
+        trim($data['Learner_Middle_Name']    ?? '') ?: null,
+        trim($data['Learner_Extension_Name'] ?? '') ?: null,
+        trim($data['Birth_Date']             ?? ''),
+        trim($data['sex']                    ?? ''),
+        trim($data['Place_of_Birth']         ?? '') ?: null,
+        $motherTongueName ?: null,
+        $indigenousName,
+        $fourPsId,
+        $isDisabled,
+        $returning,
+    ]);
+    $schoolRecordId = intval($pdo->lastInsertId());
+
+    // ── 5. Addresses → student_addresses (keyed by student_id) ───────────────
+    $permHouse    = trim($data['Permanent_House_No']          ?? '');
+    $permStreet   = trim($data['Permanent_Street_Name']       ?? '');
+    $permBarangay = trim($data['Permanent_Barangay']          ?? '');
+    $permCity     = trim($data['Permanent_Municipality_City'] ?? '');
+    $permProvince = trim($data['Permanent_Province']          ?? '');
+    $permCountry  = trim($data['Permanent_Country']           ?? '');
+    $permZip      = trim($data['Permanent_Zip_Code']          ?? '');
 
     if (isset($data['same_address']) && $data['same_address'] === 'Yes') {
-        $permHouse = trim($data['Current_House_No'] ?? '');
-        $permStreet = trim($data['Current_Street_Name'] ?? '');
-        $permBarangay = trim($data['Current_Barangay'] ?? '');
-        $permCity = trim($data['Current_Municipality_City'] ?? '');
-        $permProvince = trim($data['Current_Province'] ?? '');
-        $permCountry = trim($data['Current_Country'] ?? '');
-        $permZip = trim($data['Current_Zip_Code'] ?? '');
+        $permHouse    = trim($data['Current_House_No']          ?? '');
+        $permStreet   = trim($data['Current_Street_Name']       ?? '');
+        $permBarangay = trim($data['Current_Barangay']          ?? '');
+        $permCity     = trim($data['Current_Municipality_City'] ?? '');
+        $permProvince = trim($data['Current_Province']          ?? '');
+        $permCountry  = trim($data['Current_Country']           ?? '');
+        $permZip      = trim($data['Current_Zip_Code']          ?? '');
     }
 
-    $addressStmt = $pdo->prepare('INSERT INTO addresses (enrollment_id, address_type, house_no, street_name, barangay, municipality_city, province, country, zip_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    $addressStmt->execute([
-        $enrollmentId,
-        'current',
-        trim($data['Current_House_No'] ?? ''),
-        trim($data['Current_Street_Name'] ?? ''),
-        trim($data['Current_Barangay'] ?? ''),
+    $addrStmt = $pdo->prepare('
+        INSERT INTO student_addresses
+            (student_id, address_type, house_no, street_name, barangay,
+             municipality_city, province, country, zip_code)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ');
+    $addrStmt->execute([
+        $studentId, 'current',
+        trim($data['Current_House_No']          ?? ''),
+        trim($data['Current_Street_Name']       ?? ''),
+        trim($data['Current_Barangay']          ?? ''),
         trim($data['Current_Municipality_City'] ?? ''),
-        trim($data['Current_Province'] ?? ''),
-        trim($data['Current_Country'] ?? ''),
-        trim($data['Current_Zip_Code'] ?? '')
+        trim($data['Current_Province']          ?? ''),
+        trim($data['Current_Country']           ?? '') ?: 'Philippines',
+        trim($data['Current_Zip_Code']          ?? ''),
+    ]);
+    $addrStmt->execute([
+        $studentId, 'permanent',
+        $permHouse, $permStreet, $permBarangay,
+        $permCity, $permProvince,
+        $permCountry ?: 'Philippines',
+        $permZip,
     ]);
 
-    $addressStmt->execute([
-        $enrollmentId,
-        'permanent',
-        $permHouse,
-        $permStreet,
-        $permBarangay,
-        $permCity,
-        $permProvince,
-        $permCountry,
-        $permZip
-    ]);
+    // ── 6. Medical information → enrollment_medical_information ──────────────
+    $exposedToSmoke        = normalizeCheckboxValue($data['exposed_to_cigarette_vape_smoke'] ?? 0);
+    $otherPertinentInfo    = getStringValue($data['other_pertinent_information'] ?? null);
 
-    // Medical information
-    $hasAllergies = normalizeCheckboxValue($data['has_allergies'] ?? 0);
-    $allergyTypes = parseIdsValue($data['medicine_allergy'] ?? []);
+    $medStmt = $pdo->prepare('
+        INSERT INTO enrollment_medical_information
+            (enrollment_id, exposed_to_cigarette_vape_smoke, other_pertinent_information)
+        VALUES (?, ?, ?)
+    ');
+    $medStmt->execute([$enrollmentId, $exposedToSmoke, $otherPertinentInfo]);
+    $medicalInfoId = intval($pdo->lastInsertId());
+
+    // ── 7. Allergies → enrollment_medical_allergies ───────────────────────────
+    $allergyTypeIds     = parseIdsValue($data['medicine_allergy'] ?? []);
     $allergyDescriptions = $data['allergy_description'] ?? [];
     if (!is_array($allergyDescriptions)) {
         $allergyDescriptions = ['default' => trim((string)$allergyDescriptions)];
     }
+    if (!empty($allergyTypeIds)) {
+        $allergyStmt = $pdo->prepare('
+            INSERT INTO enrollment_medical_allergies
+                (medical_information_id, allergy_type_id, description)
+            VALUES (?, ?, ?)
+        ');
+        foreach ($allergyTypeIds as $typeId) {
+            $desc = trim((string)($allergyDescriptions[$typeId] ?? $allergyDescriptions['default'] ?? ''));
+            $allergyStmt->execute([$medicalInfoId, $typeId, $desc !== '' ? $desc : null]);
+        }
+    }
 
-    $hasMedicalCondition = normalizeCheckboxValue($data['has_med_condition'] ?? 0);
-    $conditionTypeIds = parseIdsValue($data['condition_type_id'] ?? []);
-    $conditionDescription = getStringValue($data['condition_description'] ?? null);
+    // ── 8. Medical conditions → enrollment_medical_conditions ─────────────────
+    $conditionTypeIds   = parseIdsValue($data['condition_type_id'] ?? []);
+    $conditionDesc      = getStringValue($data['condition_description'] ?? null);
+    if (!empty($conditionTypeIds)) {
+        $condStmt = $pdo->prepare('
+            INSERT INTO enrollment_medical_conditions
+                (medical_information_id, condition_type_id, description)
+            VALUES (?, ?, ?)
+        ');
+        foreach ($conditionTypeIds as $typeId) {
+            $condStmt->execute([$medicalInfoId, $typeId, $conditionDesc]);
+        }
+    }
 
-    $hasSurgery = normalizeCheckboxValue($data['has_surgery_hospitalization'] ?? 0);
-    $surgeryDate = getStringValue($data['surgery_date'] ?? null);
-    $hospitalName = getStringValue($data['hospital_name'] ?? null);
-    $bodyPart = getStringValue($data['body_part'] ?? null);
+    // ── 9. Surgery → enrollment_medical_surgeries ────────────────────────────
+    $hasSurgery   = normalizeCheckboxValue($data['has_surgery_hospitalization'] ?? 0);
+    $surgeryDate  = getStringValue($data['surgery_date']   ?? null);
+    $hospitalName = getStringValue($data['hospital_name']  ?? null);
+    $bodyPart     = getStringValue($data['body_part']       ?? null);
+    if ($hasSurgery || $surgeryDate || $hospitalName || $bodyPart) {
+        $surgStmt = $pdo->prepare('
+            INSERT INTO enrollment_medical_surgeries
+                (medical_information_id, surgery_date, hospital_name, body_part)
+            VALUES (?, ?, ?, ?)
+        ');
+        $surgStmt->execute([$medicalInfoId, $surgeryDate, $hospitalName, $bodyPart]);
+    }
 
+    // ── 10. Treatments → enrollment_medical_treatments ───────────────────────
     $isTakingTreatment = normalizeCheckboxValue($data['is_taking_treatment'] ?? 0);
     $treatmentMedicine = getStringValue($data['treatment_medicine'] ?? null);
-    $scheduleDosage = getStringValue($data['schedule_dosage'] ?? null);
+    $scheduleDosage    = getStringValue($data['schedule_dosage']    ?? null);
+    if ($isTakingTreatment || $treatmentMedicine || $scheduleDosage) {
+        $treatStmt = $pdo->prepare('
+            INSERT INTO enrollment_medical_treatments
+                (medical_information_id, treatment_medicine, schedule_dosage)
+            VALUES (?, ?, ?)
+        ');
+        $treatStmt->execute([$medicalInfoId, $treatmentMedicine, $scheduleDosage]);
+    }
 
-    $hasFamilyHistory = normalizeCheckboxValue($data['family_medical_history'] ?? 0);
+    // ── 11. Family medical history → enrollment_family_medical_history ────────
     $familyConditionTypeIds = parseIdsValue($data['family_condition_type_id'] ?? []);
-    $familyConditionDescription = getStringValue($data['family_condition_description'] ?? null);
-
-    $exposedToSmoke = normalizeCheckboxValue($data['exposed_to_cigarette_vape_smoke'] ?? 0);
-    $otherPertinentInformation = getStringValue($data['other_pertinent_information'] ?? null);
-
-    $medicalStmt = $pdo->prepare('INSERT INTO medical_information (enrollment_id, exposed_to_cigarette_vape_smoke, other_pertinent_information) VALUES (?, ?, ?)');
-    $medicalStmt->execute([$enrollmentId, $exposedToSmoke, $otherPertinentInformation]);
-    $medicalId = intval($pdo->lastInsertId());
-
-    $medicalAllergiesStmt = $pdo->prepare('INSERT INTO medical_allergies (medical_id, has_allergies) VALUES (?, ?)');
-    $medicalAllergiesStmt->execute([$medicalId, $hasAllergies]);
-    $allergyGroupId = intval($pdo->lastInsertId());
-
-    if (!empty($allergyTypes)) {
-        $studentAllergyStmt = $pdo->prepare('INSERT INTO student_allergies (allergy_group_id, allergy_type_id, description) VALUES (?, ?, ?)');
-        foreach ($allergyTypes as $typeId) {
-            $description = trim((string)($allergyDescriptions[$typeId] ?? $allergyDescriptions['default'] ?? ''));
-            $description = $description === '' ? null : $description;
-            $studentAllergyStmt->execute([$allergyGroupId, $typeId, $description]);
-        }
-    }
-
-    $medicalConditionsStmt = $pdo->prepare('INSERT INTO medical_conditions (medical_id, has_conditions) VALUES (?, ?)');
-    $medicalConditionsStmt->execute([$medicalId, $hasMedicalCondition]);
-    $conditionGroupId = intval($pdo->lastInsertId());
-
-    if (!empty($conditionTypeIds)) {
-        $studentConditionStmt = $pdo->prepare('INSERT INTO student_conditions (condition_group_id, condition_type_id, description) VALUES (?, ?, ?)');
-        foreach ($conditionTypeIds as $typeId) {
-            $studentConditionStmt->execute([$conditionGroupId, $typeId, $conditionDescription]);
-        }
-    }
-
-    $medicalSurgeryStmt = $pdo->prepare('INSERT INTO medical_surgeries (medical_id, has_surgery, surgery_date, hospital_name, body_part) VALUES (?, ?, ?, ?, ?)');
-    $medicalSurgeryStmt->execute([$medicalId, $hasSurgery, $surgeryDate, $hospitalName, $bodyPart]);
-
-    $medicalTreatmentStmt = $pdo->prepare('INSERT INTO medical_treatments (medical_id, is_taking_treatment, treatment_medicine, schedule_dosage) VALUES (?, ?, ?, ?)');
-    $medicalTreatmentStmt->execute([$medicalId, $isTakingTreatment, $treatmentMedicine, $scheduleDosage]);
-
-    $familyHistoryStmt = $pdo->prepare('INSERT INTO family_medical_history (medical_id, has_family_history) VALUES (?, ?)');
-    $familyHistoryStmt->execute([$medicalId, $hasFamilyHistory]);
-    $familyHistoryId = intval($pdo->lastInsertId());
-
+    $familyConditionDesc    = getStringValue($data['family_condition_description'] ?? null);
     if (!empty($familyConditionTypeIds)) {
-        $studentFamilyConditionStmt = $pdo->prepare('INSERT INTO student_family_conditions (family_history_id, family_condition_type_id, description) VALUES (?, ?, ?)');
+        $famStmt = $pdo->prepare('
+            INSERT INTO enrollment_family_medical_history
+                (medical_information_id, family_history_type_id, description)
+            VALUES (?, ?, ?)
+        ');
         foreach ($familyConditionTypeIds as $typeId) {
-            $studentFamilyConditionStmt->execute([$familyHistoryId, $typeId, $familyConditionDescription]);
+            $famStmt->execute([$medicalInfoId, $typeId, $familyConditionDesc]);
         }
     }
 
+    // ── 12. Disabilities → enrollment_disabilities ────────────────────────────
     $disabilityRows = parseDisabilityRows($data);
     if (!empty($disabilityRows)) {
-        $disabilityStmt = $pdo->prepare('INSERT INTO student_disabilities (enrollment_id, disability_type_id, disability_subtype_id) VALUES (?, ?, ?)');
-        foreach ($disabilityRows as $disabilityRow) {
-            $disabilityStmt->execute([
-                $enrollmentId,
-                $disabilityRow['type_id'],
-                $disabilityRow['subtype_id']
-            ]);
+        $disStmt = $pdo->prepare('
+            INSERT INTO enrollment_disabilities
+                (enrollment_id, disability_type_id, disability_subtype_id)
+            VALUES (?, ?, ?)
+        ');
+        foreach ($disabilityRows as $row) {
+            $disStmt->execute([$enrollmentId, $row['type_id'], $row['subtype_id']]);
         }
     }
 
-    insertParent($pdo, $enrollmentId, 'father', $data['father_last_name'] ?? '', $data['father_first_name'] ?? '', $data['father_middle_name'] ?? '', $data['father_contact_number'] ?? '');
-    insertParent($pdo, $enrollmentId, 'mother', $data['mother_last_name'] ?? '', $data['mother_first_name'] ?? '', $data['mother_middle_name'] ?? '', $data['mother_contact_number'] ?? '');
-    insertParent($pdo, $enrollmentId, 'guardian', $data['guardian_last_name'] ?? '', $data['guardian_first_name'] ?? '', $data['guardian_middle_name'] ?? '', $data['guardian_contact_number'] ?? '');
+    // ── 13. Parents/guardians → student_parent_guardians ─────────────────────
+    // parent_guardian_type_id: 1=Father, 2=Mother, 3=Guardian
+    insertParentGuardian($pdo, $studentId, 1,
+        $data['father_last_name']    ?? '', $data['father_first_name']    ?? '',
+        $data['father_middle_name']  ?? '', $data['father_contact_number'] ?? '');
 
+    insertParentGuardian($pdo, $studentId, 2,
+        $data['mother_last_name']    ?? '', $data['mother_first_name']    ?? '',
+        $data['mother_middle_name']  ?? '', $data['mother_contact_number'] ?? '');
+
+    insertParentGuardian($pdo, $studentId, 3,
+        $data['guardian_last_name']   ?? '', $data['guardian_first_name']   ?? '',
+        $data['guardian_middle_name'] ?? '', $data['guardian_contact_number'] ?? '');
+
+    // ── 14. Returning learner → enrollment_returning_learners ─────────────────
     if ($returning === 1) {
-        $returningStmt = $pdo->prepare('INSERT INTO returning_learners (enrollment_id, last_grade_level_completed, last_school_attended, last_school_year_completed, school_id) VALUES (?, ?, ?, ?, ?)');
-        $returningStmt->execute([
+        $retStmt = $pdo->prepare('
+            INSERT INTO enrollment_returning_learners
+                (enrollment_id, last_grade_level_completed, last_school_attended, last_school_year_completed)
+            VALUES (?, ?, ?, ?)
+        ');
+        $retStmt->execute([
             $enrollmentId,
-            trim($data['Returning_Grade_Level'] ?? ''),
-            trim($data['Last_School_Attended'] ?? ''),
-            trim($data['Last_School_Year_Completed'] ?? ''),
-            trim($data['school_ID'] ?? '')
+            trim($data['Returning_Grade_Level']      ?? '') ?: null,
+            trim($data['Last_School_Attended']        ?? '') ?: null,
+            trim($data['Last_School_Year_Completed']  ?? '') ?: null,
         ]);
     }
 
-    $pdo->commit();
-    if (ob_get_length() !== false) {
-        ob_end_clean();
+    // ── 15. student_medical_records (JSON snapshot linked to school record) ───
+    $allergiesJson = null;
+    if (!empty($allergyTypeIds)) {
+        $allergiesJson = json_encode(array_map(fn($id) => [
+            'allergy_type_id' => $id,
+            'description'     => trim((string)($allergyDescriptions[$id] ?? $allergyDescriptions['default'] ?? '')) ?: null,
+        ], $allergyTypeIds));
     }
-    echo json_encode([
-        'success' => true,
-        'student_id' => $studentId,
-        'enrollment_id' => $enrollmentId,
-        'user_id' => $userId,
-        'message' => $userId ? 'Student enrolled successfully with user account created.' : 'Student enrolled but user account creation failed. Please check admin dashboard.'
+    $conditionsJson = null;
+    if (!empty($conditionTypeIds)) {
+        $conditionsJson = json_encode(array_map(fn($id) => [
+            'condition_type_id' => $id,
+            'description'       => $conditionDesc,
+        ], $conditionTypeIds));
+    }
+    $surgeriesJson = ($hasSurgery || $surgeryDate) ? json_encode([[
+        'surgery_date'  => $surgeryDate,
+        'hospital_name' => $hospitalName,
+        'body_part'     => $bodyPart,
+    ]]) : null;
+    $treatmentsJson = ($isTakingTreatment || $treatmentMedicine) ? json_encode([[
+        'treatment_medicine' => $treatmentMedicine,
+        'schedule_dosage'    => $scheduleDosage,
+    ]]) : null;
+    $familyHistoryJson = null;
+    if (!empty($familyConditionTypeIds)) {
+        $familyHistoryJson = json_encode(array_map(fn($id) => [
+            'family_history_type_id' => $id,
+            'description'            => $familyConditionDesc,
+        ], $familyConditionTypeIds));
+    }
+
+    $smrStmt = $pdo->prepare('
+        INSERT INTO student_medical_records
+            (school_record_id, exposed_to_cigarette_vape_smoke, other_pertinent_information,
+             allergies, conditions, surgeries, treatments, family_medical_history)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ');
+    $smrStmt->execute([
+        $schoolRecordId,
+        $exposedToSmoke,
+        $otherPertinentInfo,
+        $allergiesJson,
+        $conditionsJson,
+        $surgeriesJson,
+        $treatmentsJson,
+        $familyHistoryJson,
     ]);
+
+    // ── Commit ────────────────────────────────────────────────────────────────
+    $pdo->commit();
+
+    if (ob_get_length() !== false) ob_end_clean();
+
+    echo json_encode([
+        'success'       => true,
+        'student_id'    => $studentId,
+        'enrollment_id' => $enrollmentId,
+        'user_id'       => $userId,
+        'message'       => 'Student enrolled successfully.',
+    ]);
+
 } catch (Exception $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
-    if (ob_get_length() !== false) {
-        ob_end_clean();
-    }
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    if (ob_get_length() !== false) ob_end_clean();
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }
