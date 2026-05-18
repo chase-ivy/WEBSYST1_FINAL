@@ -704,6 +704,22 @@
         </div><!-- /#panel-5 -->
         
     </form>
+    
+    <!-- CONFIRMATION MODAL -->
+    <div id="confirmationModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:12px; padding:32px; max-width:500px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <h2 style="margin-bottom:12px; font-size:20px; font-weight:700; color:var(--text);">Verify Enrollment Information</h2>
+            <p style="margin-bottom:24px; font-size:14px; color:var(--muted);">Please review the information below before submitting your enrollment.</p>
+            
+            <div id="confirmationSummary" style="background:var(--canvas); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:24px; max-height:300px; overflow-y:auto; font-size:13px;">
+            </div>
+            
+            <div style="display:flex; gap:8px;">
+                <button type="button" onclick="cancelConfirmation()" style="flex:1; padding:10px 16px; background:var(--canvas); color:var(--text); border:1px solid var(--border); border-radius:6px; font-weight:600; cursor:pointer; transition:background var(--transition);" onmouseover="this.style.background='#efefef'" onmouseout="this.style.background='var(--canvas)'">Cancel</button>
+                <button type="button" onclick="confirmSubmission()" style="flex:1; padding:10px 16px; background:var(--brand); color:white; border:none; border-radius:6px; font-weight:600; cursor:pointer; transition:background var(--transition);" onmouseover="this.style.background='var(--brand-dark)'" onmouseout="this.style.background='var(--brand)'">Confirm & Submit</button>
+            </div>
+        </div>
+    </div>
 </div><!-- /.wrap -->
 
     <footer>
@@ -1188,6 +1204,16 @@ function showQ5(){
             return data;
         }
 
+        function escapeHtml(text) {
+            if (text === undefined || text === null) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         function showMessage(type, message) {
             const container = document.getElementById('formMessage');
             container.className = `message ${type}`;
@@ -1212,12 +1238,87 @@ function showQ5(){
 
         document.getElementById('enrollmentForm').addEventListener('submit', async function (event) {
             event.preventDefault();
-            const submitButton = event.target.querySelector('button[type="submit"]');
+            showConfirmation(event.target);
+        });
+
+        function generateConfirmationSummary(form) {
+            const data = serializeForm(form);
+
+            function safe(v) { return (v === undefined || v === null || (typeof v === 'string' && v.trim() === '')) ? null : v; }
+
+            const studentName = [safe(data.Learner_First_Name), safe(data.Learner_Last_Name)].filter(Boolean).join(' ');
+            const dob = safe(data.Birth_Date);
+            const grade = safe(data.Grade_Level) || safe(data.Returning_Grade_Level);
+
+            const addressParts = [];
+            if (safe(data.Current_Street_Name)) addressParts.push(safe(data.Current_Street_Name));
+            if (safe(data.Current_Barangay)) addressParts.push(safe(data.Current_Barangay));
+            if (safe(data.Current_Municipality_City)) addressParts.push(safe(data.Current_Municipality_City));
+            if (safe(data.Current_Province)) addressParts.push(safe(data.Current_Province));
+            if (safe(data.Current_Zip_Code)) addressParts.push(safe(data.Current_Zip_Code));
+            const address = addressParts.length ? addressParts.join(', ') : null;
+
+            const fatherName = [safe(data.father_first_name), safe(data.father_last_name)].filter(Boolean).join(' ');
+            const motherName = [safe(data.mother_first_name), safe(data.mother_last_name)].filter(Boolean).join(' ');
+            const guardianName = [safe(data.guardian_first_name), safe(data.guardian_last_name)].filter(Boolean).join(' ');
+
+            const fatherPhone = safe(data.father_contact_number);
+            const motherPhone = safe(data.mother_contact_number);
+            const guardianPhone = safe(data.guardian_contact_number);
+
+            let summary = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">';
+
+            if (studentName) summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Learner</strong><span style="font-size:13px; color:var(--text);">${escapeHtml(studentName)}</span></div>`;
+            if (dob) summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Date of Birth</strong><span style="font-size:13px; color:var(--text);">${escapeHtml(dob)}</span></div>`;
+            if (grade) summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Grade Level</strong><span style="font-size:13px; color:var(--text);">${escapeHtml(grade)}</span></div>`;
+            if (address) summary += `<div style="grid-column:1 / -1"><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Address</strong><span style="font-size:13px; color:var(--text);">${escapeHtml(address)}</span></div>`;
+
+            if (fatherName || fatherPhone) {
+                let val = fatherName ? escapeHtml(fatherName) : '';
+                if (fatherPhone) val += (val ? ' — ' : '') + escapeHtml(fatherPhone);
+                summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Father</strong><span style="font-size:13px; color:var(--text);">${val}</span></div>`;
+            }
+
+            if (motherName || motherPhone) {
+                let val = motherName ? escapeHtml(motherName) : '';
+                if (motherPhone) val += (val ? ' — ' : '') + escapeHtml(motherPhone);
+                summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Mother</strong><span style="font-size:13px; color:var(--text);">${val}</span></div>`;
+            }
+
+            if (guardianName || guardianPhone) {
+                let val = guardianName ? escapeHtml(guardianName) : '';
+                if (guardianPhone) val += (val ? ' — ' : '') + escapeHtml(guardianPhone);
+                summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Guardian</strong><span style="font-size:13px; color:var(--text);">${val}</span></div>`;
+            }
+
+            summary += '</div>';
+            return summary;
+        }
+
+        function showConfirmation(form) {
+            const modal = document.getElementById('confirmationModal');
+            const summary = document.getElementById('confirmationSummary');
+            summary.innerHTML = generateConfirmationSummary(form);
+            modal.style.display = 'flex';
+            modal.style.background = 'rgba(0,0,0,0.5)';
+        }
+
+        function cancelConfirmation() {
+            const modal = document.getElementById('confirmationModal');
+            modal.style.display = 'none';
+        }
+
+        async function confirmSubmission() {
+            const modal = document.getElementById('confirmationModal');
+            modal.style.display = 'none';
+            
+            const form = document.getElementById('enrollmentForm');
+            const submitButton = form.querySelector('button[type="submit"]');
             submitButton.disabled = true;
             showMessage('', '');
 
             try {
-                const payload = serializeForm(event.target);
+                const payload = serializeForm(form);
                 const response = await API.enroll.create(payload);
                 await generateEnrollmentPdf(response.student_id);
 
@@ -1228,7 +1329,7 @@ function showQ5(){
                     window.location.href = '../../dashboard/teacher_dashboard/teacher_dashboard.php';
                 }, 2000);
                 
-                event.target.reset();
+                form.reset();
                 goTo(1);
                 document.getElementById('ageField').value = '';
                 document.getElementById('permBox').style.opacity = '1';
@@ -1238,7 +1339,7 @@ function showQ5(){
             } finally {
                 submitButton.disabled = false;
             }
-        });
+        }
     </script>
 
 </body>
