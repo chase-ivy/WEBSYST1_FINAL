@@ -10,13 +10,162 @@ require_once __DIR__ . '/../config/config.php';
 // reach the server. Reinstate `require_once __DIR__ . '/../login/auth.php'`
 // and the `is_logged_in()` guard in production if needed.
 
-$action = $_GET['action'] ?? $_POST['action'] ?? '';
+function getValue(array $data, string $key, $default = null) {
+    return array_key_exists($key, $data) ? $data[$key] : $default;
+}
+
+function getBoolValue(array $data, string $key, $default = null) {
+    if (!array_key_exists($key, $data)) {
+        return $default;
+    }
+    $value = $data[$key];
+    return in_array((string)$value, ['1', 'Yes', 'yes', 'true', 'on'], true) ? 1 : 0;
+}
+
+function updateEnrollmentAddress(PDO $pdo, int $enrollment_id, string $type, array $address) {
+    try {
+        $stmt = $pdo->prepare('UPDATE addresses SET house_no = ?, street_name = ?, barangay = ?, municipality_city = ?, province = ?, country = ?, zip_code = ? WHERE enrollment_id = ? AND address_type = ?');
+        $stmt->execute([
+            $address['house_no'] ?? '',
+            $address['street_name'] ?? '',
+            $address['barangay'] ?? '',
+            $address['municipality_city'] ?? '',
+            $address['province'] ?? '',
+            $address['country'] ?? '',
+            $address['zip_code'] ?? '',
+            $enrollment_id,
+            $type,
+        ]);
+        if ($stmt->rowCount() === 0) {
+            $insert = $pdo->prepare('INSERT INTO addresses (enrollment_id, address_type, house_no, street_name, barangay, municipality_city, province, country, zip_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $insert->execute([
+                $enrollment_id,
+                $type,
+                $address['house_no'] ?? '',
+                $address['street_name'] ?? '',
+                $address['barangay'] ?? '',
+                $address['municipality_city'] ?? '',
+                $address['province'] ?? '',
+                $address['country'] ?? '',
+                $address['zip_code'] ?? '',
+            ]);
+        }
+    } catch (Exception $e) {
+        // Fallback for schemas that store student addresses separately
+        try {
+            $stmt = $pdo->prepare('UPDATE student_addresses SET house_no = ?, street_name = ?, barangay = ?, municipality_city = ?, province = ?, country = ?, zip_code = ? WHERE student_id = (SELECT student_id FROM enrollments WHERE enrollment_id = ? LIMIT 1) AND address_type = ?');
+            $stmt->execute([
+                $address['house_no'] ?? '',
+                $address['street_name'] ?? '',
+                $address['barangay'] ?? '',
+                $address['municipality_city'] ?? '',
+                $address['province'] ?? '',
+                $address['country'] ?? '',
+                $address['zip_code'] ?? '',
+                $enrollment_id,
+                $type,
+            ]);
+            if ($stmt->rowCount() === 0) {
+                $insert = $pdo->prepare('INSERT INTO student_addresses (student_id, address_type, house_no, street_name, barangay, municipality_city, province, country, zip_code) VALUES ((SELECT student_id FROM enrollments WHERE enrollment_id = ? LIMIT 1), ?, ?, ?, ?, ?, ?, ?, ?)');
+                $insert->execute([
+                    $enrollment_id,
+                    $type,
+                    $address['house_no'] ?? '',
+                    $address['street_name'] ?? '',
+                    $address['barangay'] ?? '',
+                    $address['municipality_city'] ?? '',
+                    $address['province'] ?? '',
+                    $address['country'] ?? '',
+                    $address['zip_code'] ?? '',
+                ]);
+            }
+        } catch (Exception $inner) {
+            // Ignore fallback if schema differs.
+        }
+    }
+}
+
+function updateEnrollmentMedical(PDO $pdo, int $enrollment_id, array $data) {
+    $stmt = $pdo->prepare('SELECT * FROM enrollment_medical_information WHERE enrollment_id = ? LIMIT 1');
+    $stmt->execute([$enrollment_id]);
+    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing) {
+        $update = $pdo->prepare('UPDATE enrollment_medical_information SET exposed_to_cigarette_vape_smoke = ?, other_pertinent_information = ? WHERE enrollment_id = ?');
+        $update->execute([
+            getBoolValue($data, 'exposed_to_cigarette_vape_smoke', $existing['exposed_to_cigarette_vape_smoke'] ?? 0),
+            getValue($data, 'other_pertinent_information', $existing['other_pertinent_information'] ?? ''),
+            $enrollment_id,
+        ]);
+    } else {
+        $insert = $pdo->prepare('INSERT INTO enrollment_medical_information (enrollment_id, exposed_to_cigarette_vape_smoke, other_pertinent_information) VALUES (?, ?, ?)');
+        $insert->execute([
+            $enrollment_id,
+            getBoolValue($data, 'exposed_to_cigarette_vape_smoke', 0),
+            getValue($data, 'other_pertinent_information', ''),
+        ]);
+    }
+}
+
+function updateOrInsertParent(PDO $pdo, int $enrollment_id, string $relationship, array $parentData) {
+    $stmt = $pdo->prepare('UPDATE parents p JOIN enrollment_parents ep ON p.parent_id = ep.parent_id SET p.last_name = ?, p.first_name = ?, p.middle_name = ?, p.contact_number = ? WHERE ep.enrollment_id = ? AND ep.relationship = ?');
+    $stmt->execute([
+        $parentData['last_name'] ?? '',
+        $parentData['first_name'] ?? '',
+        $parentData['middle_name'] ?? '',
+        $parentData['contact_number'] ?? '',
+        $enrollment_id,
+        $relationship,
+    ]);
+
+    if ($stmt->rowCount() === 0) {
+        $insert = $pdo->prepare('INSERT INTO parents (last_name, first_name, middle_name, contact_number) VALUES (?, ?, ?, ?)');
+        $insert->execute([
+            $parentData['last_name'] ?? '',
+            $parentData['first_name'] ?? '',
+            $parentData['middle_name'] ?? '',
+            $parentData['contact_number'] ?? '',
+        ]);
+        $parentId = $pdo->lastInsertId();
+        $link = $pdo->prepare('INSERT INTO enrollment_parents (enrollment_id, parent_id, relationship) VALUES (?, ?, ?)');
+        $link->execute([$enrollment_id, $parentId, $relationship]);
+    }
+}
+
+function updateReturningLearner(PDO $pdo, int $enrollment_id, bool $isReturning, array $returningData) {
+    if ($isReturning) {
+        $stmt = $pdo->prepare('SELECT enrollment_id FROM enrollment_returning_learners WHERE enrollment_id = ? LIMIT 1');
+        $stmt->execute([$enrollment_id]);
+        if ($stmt->fetch()) {
+            $update = $pdo->prepare('UPDATE enrollment_returning_learners SET last_grade_level_completed = ?, last_school_attended = ?, last_school_year_completed = ? WHERE enrollment_id = ?');
+            $update->execute([
+                $returningData['last_grade_level_completed'] ?? '',
+                $returningData['last_school_attended'] ?? '',
+                $returningData['last_school_year_completed'] ?? '',
+                $enrollment_id,
+            ]);
+        } else {
+            $insert = $pdo->prepare('INSERT INTO enrollment_returning_learners (enrollment_id, last_grade_level_completed, last_school_attended, last_school_year_completed) VALUES (?, ?, ?, ?)');
+            $insert->execute([
+                $enrollment_id,
+                $returningData['last_grade_level_completed'] ?? '',
+                $returningData['last_school_attended'] ?? '',
+                $returningData['last_school_year_completed'] ?? '',
+            ]);
+        }
+    } else {
+        $delete = $pdo->prepare('DELETE FROM enrollment_returning_learners WHERE enrollment_id = ?');
+        $delete->execute([$enrollment_id]);
+    }
+}
+
+$action = $_GET['action'] ?? $_POST['action'] ?? ''; 
 
 try {
     if ($action === 'list') {
         // Use explicit enrollment_status = 'pending' to find current enrollments
         // that need verification. This matches the application's workflow.
-        $stmt = $pdo->prepare("SELECT e.enrollment_id, e.student_id, COALESCE(s.lrn, '') AS lrn, CONCAT(COALESCE(s.last_name,''), ', ', COALESCE(s.first_name,'')) AS student_name, e.school_year, e.enrollment_status FROM enrollments e LEFT JOIN students s ON s.student_id = e.student_id WHERE e.enrollment_status = 'pending' ORDER BY e.enrollment_id DESC");
+        $stmt = $pdo->prepare("SELECT e.enrollment_id, e.student_id, COALESCE(s.lrn, '') AS lrn, CONCAT(COALESCE(s.last_name,''), ', ', COALESCE(s.first_name,'')) AS student_name, COALESCE(ssr.grade_level, '') AS grade_level, e.school_year, e.enrollment_status FROM enrollments e LEFT JOIN students s ON s.student_id = e.student_id LEFT JOIN student_school_records ssr ON ssr.enrollment_id = e.enrollment_id WHERE e.enrollment_status = 'pending' ORDER BY e.enrollment_id DESC");
         $stmt->execute();
         echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
         exit;
@@ -31,9 +180,20 @@ try {
         }
 
         $res = [];
-        $stmt = $pdo->prepare('SELECT e.*, s.lrn, s.first_name, s.last_name, s.middle_name, s.birth_date, s.sex, s.place_of_birth FROM enrollments e LEFT JOIN students s ON s.student_id = e.student_id WHERE e.enrollment_id = ? LIMIT 1');
+        $stmt = $pdo->prepare('SELECT e.*, s.lrn, s.first_name, s.last_name, s.middle_name, s.birth_date, s.sex, s.place_of_birth, ssr.grade_level AS ssr_grade_level, ssr.mother_tongue AS ssr_mother_tongue, ssr.indigenous_group AS ssr_indigenous_group FROM enrollments e LEFT JOIN students s ON s.student_id = e.student_id LEFT JOIN student_school_records ssr ON ssr.enrollment_id = e.enrollment_id WHERE e.enrollment_id = ? LIMIT 1');
         $stmt->execute([$enrollment_id]);
         $res['enrollment'] = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($res['enrollment']) {
+            if (!empty($res['enrollment']['ssr_grade_level'])) {
+                $res['enrollment']['grade_level'] = $res['enrollment']['ssr_grade_level'];
+            }
+            if (!empty($res['enrollment']['ssr_mother_tongue'])) {
+                $res['enrollment']['mother_tongue'] = $res['enrollment']['ssr_mother_tongue'];
+            }
+            if (!empty($res['enrollment']['ssr_indigenous_group'])) {
+                $res['enrollment']['indigenous_group'] = $res['enrollment']['ssr_indigenous_group'];
+            }
+        }
 
         // Addresses: some schemas store addresses by enrollment_id in `addresses`,
         // others use `student_addresses` keyed by student_id. Try `addresses`
@@ -81,6 +241,141 @@ try {
         }
 
         echo json_encode(['success' => true, 'data' => $res]);
+        exit;
+    }
+
+    if ($action === 'update') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $student_id = intval($data['student_id'] ?? 0);
+        $enrollment_id = intval($data['enrollment_id'] ?? 0);
+
+        if ($student_id <= 0 || $enrollment_id <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'student_id and enrollment_id are required']);
+            exit;
+        }
+
+        $pdo->beginTransaction();
+
+        $studentStmt = $pdo->prepare('SELECT * FROM students WHERE student_id = ? LIMIT 1');
+        $studentStmt->execute([$student_id]);
+        $student = $studentStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$student) {
+            $pdo->rollBack();
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Student not found']);
+            exit;
+        }
+
+        $studentUpdate = $pdo->prepare('UPDATE students SET lrn = ?, first_name = ?, last_name = ?, middle_name = ?, extension_name = ?, birth_date = ?, sex = ?, place_of_birth = ? WHERE student_id = ?');
+        $studentUpdate->execute([
+            getValue($data, 'Learner_Reference_No', $student['lrn'] ?? ''),
+            getValue($data, 'Learner_First_Name', $student['first_name'] ?? ''),
+            getValue($data, 'Learner_Last_Name', $student['last_name'] ?? ''),
+            getValue($data, 'Learner_Middle_Name', $student['middle_name'] ?? ''),
+            getValue($data, 'Learner_Extension_Name', $student['extension_name'] ?? ''),
+            getValue($data, 'Birth_Date', $student['birth_date'] ?? ''),
+            getValue($data, 'sex', $student['sex'] ?? ''),
+            getValue($data, 'Place_of_Birth', $student['place_of_birth'] ?? ''),
+            $student_id,
+        ]);
+
+        $schoolYear = null;
+        if (array_key_exists('year_start', $data) || array_key_exists('year_end', $data)) {
+            $schoolYear = trim((string) getValue($data, 'year_start', '') . '-' . (string) getValue($data, 'year_end', ''));
+            if ($schoolYear === '-') {
+                $schoolYear = null;
+            }
+        }
+
+        $enrollmentUpdate = $pdo->prepare('UPDATE enrollments SET school_year = ?, grade_level = ?, with_lrn = ?, psa_bcn = ?, age = ?, mother_tongue = ?, is_indigenous = ?, indigenous_group = ?, is_four_ps_beneficiary = ?, four_ps_household_id = ?, is_learner_with_disability = ?, is_returning_learner = ? WHERE enrollment_id = ?');
+        $enrollmentUpdate->execute([
+            $schoolYear,
+            getValue($data, 'Grade_Level', null),
+            getBoolValue($data, 'with_lrn', null),
+            getValue($data, 'psa_bcn', null),
+            array_key_exists('Age', $data) ? intval($data['Age']) : null,
+            getValue($data, 'Mother_Tongue', null),
+            getBoolValue($data, 'ip', null),
+            getValue($data, 'IP_Specify', null),
+            getBoolValue($data, 'fourps', null),
+            getValue($data, 'FourPs_Specify', null),
+            getBoolValue($data, 'disability', null),
+            getBoolValue($data, 'returning', null),
+            $enrollment_id,
+        ]);
+
+        $ssrUpdate = $pdo->prepare('UPDATE student_school_records SET grade_level = ?, mother_tongue = ?, indigenous_group = ? WHERE enrollment_id = ?');
+        $ssrUpdate->execute([
+            getValue($data, 'Grade_Level', null),
+            getValue($data, 'Mother_Tongue', null),
+            getValue($data, 'IP_Group', null),
+            $enrollment_id,
+        ]);
+
+        $sameAddress = getValue($data, 'same_address', 'No') === 'Yes';
+
+        $currentAddress = [
+            'house_no' => getValue($data, 'Current_House_No', ''),
+            'street_name' => getValue($data, 'Current_Street_Name', ''),
+            'barangay' => getValue($data, 'Current_Barangay', ''),
+            'municipality_city' => getValue($data, 'Current_Municipality_City', ''),
+            'province' => getValue($data, 'Current_Province', ''),
+            'country' => getValue($data, 'Current_Country', ''),
+            'zip_code' => getValue($data, 'Current_Zip_Code', ''),
+        ];
+
+        $permanentAddress = $sameAddress ? $currentAddress : [
+            'house_no' => getValue($data, 'Permanent_House_No', ''),
+            'street_name' => getValue($data, 'Permanent_Street_Name', ''),
+            'barangay' => getValue($data, 'Permanent_Barangay', ''),
+            'municipality_city' => getValue($data, 'Permanent_Municipality_City', ''),
+            'province' => getValue($data, 'Permanent_Province', ''),
+            'country' => getValue($data, 'Permanent_Country', ''),
+            'zip_code' => getValue($data, 'Permanent_Zip_Code', ''),
+        ];
+
+        updateEnrollmentAddress($pdo, $enrollment_id, 'current', $currentAddress);
+        updateEnrollmentAddress($pdo, $enrollment_id, 'permanent', $permanentAddress);
+
+        if (array_key_exists('father_last_name', $data) || array_key_exists('father_first_name', $data) || array_key_exists('father_middle_name', $data) || array_key_exists('father_contact_number', $data)) {
+            updateOrInsertParent($pdo, $enrollment_id, 'father', [
+                'last_name' => getValue($data, 'father_last_name', ''),
+                'first_name' => getValue($data, 'father_first_name', ''),
+                'middle_name' => getValue($data, 'father_middle_name', ''),
+                'contact_number' => getValue($data, 'father_contact_number', ''),
+            ]);
+        }
+        if (array_key_exists('mother_last_name', $data) || array_key_exists('mother_first_name', $data) || array_key_exists('mother_middle_name', $data) || array_key_exists('mother_contact_number', $data)) {
+            updateOrInsertParent($pdo, $enrollment_id, 'mother', [
+                'last_name' => getValue($data, 'mother_last_name', ''),
+                'first_name' => getValue($data, 'mother_first_name', ''),
+                'middle_name' => getValue($data, 'mother_middle_name', ''),
+                'contact_number' => getValue($data, 'mother_contact_number', ''),
+            ]);
+        }
+        if (array_key_exists('guardian_last_name', $data) || array_key_exists('guardian_first_name', $data) || array_key_exists('guardian_middle_name', $data) || array_key_exists('guardian_contact_number', $data)) {
+            updateOrInsertParent($pdo, $enrollment_id, 'guardian', [
+                'last_name' => getValue($data, 'guardian_last_name', ''),
+                'first_name' => getValue($data, 'guardian_first_name', ''),
+                'middle_name' => getValue($data, 'guardian_middle_name', ''),
+                'contact_number' => getValue($data, 'guardian_contact_number', ''),
+            ]);
+        }
+
+        if (array_key_exists('returning', $data)) {
+            updateReturningLearner($pdo, $enrollment_id, getBoolValue($data, 'returning', false), [
+                'last_grade_level_completed' => getValue($data, 'Returning_Grade_Level', ''),
+                'last_school_attended' => getValue($data, 'Last_School_Attended', ''),
+                'last_school_year_completed' => getValue($data, 'Last_School_Year_Completed', ''),
+            ]);
+        }
+
+        updateEnrollmentMedical($pdo, $enrollment_id, $data);
+
+        $pdo->commit();
+
+        echo json_encode(['success' => true]);
         exit;
     }
 

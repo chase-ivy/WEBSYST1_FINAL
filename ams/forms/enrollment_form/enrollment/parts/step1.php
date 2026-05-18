@@ -228,9 +228,9 @@
                     </label>
                     <label class="radio-pill">
                         <input type="radio" name="disability" value="No"  onchange="toggle('disabilityBox', false)"> No
-                        </label>
-                    </div>
+                    </label>
                 </div>
+            </div>
 
             <!-- Disability Types (collapsible) -->
             <!-- IDs match disability_types table (DB):
@@ -262,30 +262,46 @@
                         <input type="checkbox" name="disabilityDetails[5][]" value="5"> Autism Spectrum Disorder
                     </label>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[6][]" value="6"> Emotional/Behavioral Disorder
+                        <input type="checkbox" name="disabilityDetails[6][]" value="6"> Emotional / Behavioral Disorder
                     </label>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[7][]" value="7"> Orthopedic/Physical Handicap
+                        <input type="checkbox" name="disabilityDetails[7][]" value="7"> Orthopedic / Physical Handicap
                     </label>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[8][]" value="8"> Speech/Language Disorder
+                        <input type="checkbox" name="disabilityDetails[8][]" value="8"> Speech / Language Disorder
                     </label>
                     <label class="check-item">
                         <input type="checkbox" name="disabilityDetails[9][]" value="9"> Chronic Illness
                     </label>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[10][]" value="10"> Others
+                        <input type="checkbox" name="disabilityDetails[10][]" value="10"> Others (Multiple Disorder, Cerebral Palsy, etc.)
                     </label>
                 </div>
             </div>
 
-        </div>
+            <div class="sec-divider"><span>User Account (Optional)</span></div>
+
+            <div style="background: var(--brand-light); border: 1px solid #b3cce8; border-radius: var(--radius-md); padding: 14px 16px; font-size: 12px; color: #1560a8; margin-bottom: 16px; line-height: 1.6;">
+                <strong>Account Information:</strong> Leave blank to auto-generate credentials. You can update these later through admin/teacher dashboard. A user account will be created regardless to ensure login access.
+            </div>
+
+            <div class="grid-2">
+                <div class="field">
+                    <label>Email Address (Optional)</label>
+                    <input type="email" name="user_email" placeholder="student@example.com">
+                </div>
+                <div class="field">
+                    <label>Password (Optional)</label>
+                    <input type="password" name="user_password" placeholder="Leave blank for auto-generated">
+                </div>
+            </div>
+
+        </div><!-- /.card-body -->
 
         <div class="card-foot">
-            <button type="button" class="btn btn-ghost" onclick="goTo(2)">← Back</button>
             <span class="step-count">Step 1 of 5</span>
             <button type="button" class="btn btn-primary" onclick="goTo(2)">Next: Address →</button>
         </div>
 
-    </div>
-</div>
+    </div><!-- /.card -->
+</div><!-- /#panel-1 -->
