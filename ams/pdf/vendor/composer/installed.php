@@ -1,19 +1,19 @@
 <?php return array(
     'root' => array(
-        'name' => 'me/pdftk',
-        'pretty_version' => 'dev-master',
-        'version' => 'dev-master',
-        'reference' => 'f1bcada85fe858562261d0d11977cc5316af1a97',
+        'name' => 'acer/pdftk',
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => 'bc38175eef34aded845c576a60bbe6624ab71e10',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
-        'me/pdftk' => array(
-            'pretty_version' => 'dev-master',
-            'version' => 'dev-master',
-            'reference' => 'f1bcada85fe858562261d0d11977cc5316af1a97',
+        'acer/pdftk' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => 'bc38175eef34aded845c576a60bbe6624ab71e10',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

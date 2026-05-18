@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c937787e41da8e6e2f639a38d9b427b2",
+    "content-hash": "0cf9ef32c483916ad4a5f45fac16490f",
     "packages": [
         {
             "name": "mikehaertl/php-pdftk",
