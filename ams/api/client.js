@@ -4,7 +4,8 @@
  */
 
 const API = {
-    BASE: '/login/WEBSYST1_FINAL/ams/api',
+    // BASE: '/login/WEBSYST1_FINAL/ams/api',
+    BASE:window.location.origin + window.location.pathname.split('/').slice(0, 3).join('/') + '/api',
     
     // Helper function for API calls
     call: async function(endpoint, action, data = null, method = 'GET') {
