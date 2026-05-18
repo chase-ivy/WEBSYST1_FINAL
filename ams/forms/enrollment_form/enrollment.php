@@ -5,481 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Enrollment Form · Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-
-        /* ── DESIGN TKENS ───────────────────────────────────────── */
-        :root {
-    --brand: #4e0303;
-    --brand-dark: #ec3f3f;
-    --brand-light: #e8f0f7;
-    --border: #d1d5db;
-    --text: #000000;
-    --muted: #6b7280;
-    --surface: #ffffff;
-    --canvas: #f5f7fa;
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 20px;
-    --transition: 180ms ease;
-}
-
-/* ── RESET ───────────────────────────────────────────────── */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-
-html, body { height: 100%; }
-
-body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--canvas);
-    color: var(--text);
-    display: flex;
-    flex-direction: column;
-}
-
-a { text-decoration: none; color: inherit; }
-
-/* ── TOP NAV ─────────────────────────────────────────────── */
-.topbar {
-    background: #4e0303;
-    padding: 12px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.topbar-logo {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.topbar-logo img {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
-}
-
-.topbar-logo span {
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
-}
-
-.topbar a {
-    font-size: 12px;
-    color: rgba(255,255,255,.65);
-    border: 1px solid rgba(255,255,255,.2);
-    padding: 6px 13px;
-    border-radius: var(--radius-sm);
-    transition: background var(--t), color var(--t);
-}
-
-.topbar a:hover {
-    background: rgba(255,255,255,.1);
-    color: #fff;
-}
-
-/* ── PROGRESS STEPPER ────────────────────────────────────── */
-.stepper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    padding: 28px 20px 0;
-    max-width: 700px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-.step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    position: relative;
-}
-
-.step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 16px;
-    left: calc(50% + 18px);
-    right: calc(-50% + 18px);
-    height: 2px;
-    background: var(--border);
-    transition: background var(--t);
-}
-
-.step.done:not(:last-child)::after { background: var(--brand); }
-
-.step-dot {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    background: var(--surface);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--muted);
-    z-index: 1;
-    transition: all var(--t);
-}
-
-.step.active .step-dot {
-    border-color: var(--brand);
-    background: var(--brand);
-    color: #fff;
-    box-shadow: 0 0 0 4px rgba(21,96,168,.15);
-}
-
-.step.done .step-dot {
-    border-color: var(--brand);
-    background: var(--brand);
-    color: #fff;
-}
-
-.step-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: .3px;
-    white-space: nowrap;
-}
-
-.step.active .step-label,
-.step.done   .step-label { color: var(--brand); }
-
-/* ── MAIN WRAPPER / CARD ─────────────────────────────────── */
-.wrap {
-    max-width: 700px;
-    width: 100%;
-    margin: 24px auto 40px;
-    padding: 0 20px;
-}
-
-.card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
-}
-
-.card-head {
-    padding: 24px 32px 20px;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(160deg, #f0f5ff, #e8f0fb);
-}
-
-.card-head h2 {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--brand);
-    margin-bottom: 2px;
-}
-
-.card-head p { font-size: 13px; color: var(--muted); }
-
-.card-body { padding: 28px 32px; }
-
-/* ── STEP PANELS ─────────────────────────────────────────── */
-.panel         { display: none; }
-.panel.active  { display: block; }
-
-/* ── FORM GRID ───────────────────────────────────────────── */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr;       gap: 16px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr;   gap: 16px; }
-.span-2 { grid-column: span 2; }
-
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.field label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-}
-
-.field input,
-.field select {
-    width: 100%;
-    padding: 10px 13px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    color: var(--text);
-    background: var(--canvas);
-    outline: none;
-    transition: border-color var(--t), box-shadow var(--t), background var(--t);
-}
-
-.field input:focus,
-.field select:focus {
-    border-color: var(--brand);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(21,96,168,.10);
-}
-
-.field input::placeholder      { color: #b0b8c4; }
-.field select option[value=""] { color: var(--muted); }
-
-.allergy-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-    gap: 16px;
-}
-
-@media (max-width: 900px) {
-    .allergy-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.allergy-item {
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 14px;
-    background: var(--canvas);
-    display: grid;
-    gap: 10px;
-}
-
-.checkbox-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.checkbox-label input {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--brand);
-}
-
-.allergy-specify {
-    display: grid;
-    gap: 8px;
-}
-
-.allergy-specify label {
-    font-size: 12px;
-    color: var(--muted);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-}
-
-/* ── RADIO PILLS ─────────────────────────────────────────── */
-.radio-group {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.radio-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 9999px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all var(--t);
-}
-
-.radio-pill input { display: none; }
-
-.radio-pill:has(input:checked) {
-    border-color: var(--brand);
-    background: var(--brand-light);
-    color: var(--brand);
-}
-
-/* ── SECTION DIVIDER ─────────────────────────────────────── */
-.sec-divider {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 24px 0 18px;
-}
-
-.sec-divider::before,
-.sec-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-}
-
-.sec-divider span {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .7px;
-    white-space: nowrap;
-}
-
-/* ── COLLAPSIBLE SECTIONS ────────────────────────────────── */
-.collapse {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height .3s ease;
-}
-
-.collapse.open { max-height: 600px; }
-
-/* ── DISABILITY CHECKBOX GRID ────────────────────────────── */
-.disability-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 8px;
-}
-
-.check-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 13px;
-    color: var(--text);
-    cursor: pointer;
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    transition: background var(--t), border-color var(--t);
-}
-
-.check-item input {
-    width: 14px;
-    height: 14px;
-    accent-color: var(--brand);
-    flex-shrink: 0;
-}
-
-.check-item:has(input:checked) {
-    background: var(--brand-light);
-    border-color: var(--brand);
-    color: var(--brand);
-}
-
-/* ── CARD FOOTER / BUTTONS ───────────────────────────────── */
-.card-foot {
-    padding: 18px 32px;
-    border-top: 1px solid var(--border);
-    background: #f9fafb;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.message {
-    margin: 16px 0 0;
-    padding: 14px 16px;
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    display: none;
-}
-
-.message.success {
-    display: block;
-    background: #ebf9ed;
-    color: #1f4f2c;
-    border: 1px solid #85c27d;
-}
-
-.message.error {
-    display: block;
-    background: #fbeaea;
-    color: #7a1919;
-    border: 1px solid #e0a7a7;
-}
-
-.btn {
-    padding: 10px 22px;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: var(--radius-sm);
-    border: none;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all var(--t);
-}
-
-.btn-ghost {
-    background: var(--surface);
-    color: var(--muted);
-    border: 1.5px solid var(--border);
-}
-
-.btn-ghost:hover {
-    border-color: var(--brand);
-    color: var(--brand);
-}
-
-.btn-primary { background: var(--brand); color: #fff; }
-
-.btn-primary:hover {
-    background: var(--brand-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 5px 16px rgba(21,96,168,.28);
-}
-
-.step-count {
-    font-size: 12px;
-    color: var(--muted);
-    font-weight: 500;
-}
-
-/* ── PAGE FOOTER ─────────────────────────────────────────── */
-footer {
-    background: #4e0303;
-    color: rgba(255,255,255,.5);
-    text-align: center;
-    padding: 18px;
-    font-size: 12px;
-    border-top: 3px solid var(--brand);
-    margin-top: auto;
-}
-
-footer strong { color: rgba(255,255,255,.8); }
-
-/* ── RESPONSIVE ──────────────────────────────────────────── */
-@media (max-width: 580px) {
-    .grid-2, .grid-3     { grid-template-columns: 1fr; }
-    .span-2              { grid-column: span 1; }
-    .card-body,
-    .card-head,
-    .card-foot           { padding: 20px; }
-    .topbar              { padding: 10px 16px; }
-}
-
-    </style>
+    <link href="enrollment.css" rel="stylesheet">
 </head>
 <body>
 
@@ -1178,6 +704,22 @@ footer strong { color: rgba(255,255,255,.8); }
         </div><!-- /#panel-5 -->
         
     </form>
+    
+    <!-- CONFIRMATION MODAL -->
+    <div id="confirmationModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:12px; padding:32px; max-width:500px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <h2 style="margin-bottom:12px; font-size:20px; font-weight:700; color:var(--text);">Verify Enrollment Information</h2>
+            <p style="margin-bottom:24px; font-size:14px; color:var(--muted);">Please review the information below before submitting your enrollment.</p>
+            
+            <div id="confirmationSummary" style="background:var(--canvas); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:24px; max-height:300px; overflow-y:auto; font-size:13px;">
+            </div>
+            
+            <div style="display:flex; gap:8px;">
+                <button type="button" onclick="cancelConfirmation()" style="flex:1; padding:10px 16px; background:var(--canvas); color:var(--text); border:1px solid var(--border); border-radius:6px; font-weight:600; cursor:pointer; transition:background var(--transition);" onmouseover="this.style.background='#efefef'" onmouseout="this.style.background='var(--canvas)'">Cancel</button>
+                <button type="button" onclick="confirmSubmission()" style="flex:1; padding:10px 16px; background:var(--brand); color:white; border:none; border-radius:6px; font-weight:600; cursor:pointer; transition:background var(--transition);" onmouseover="this.style.background='var(--brand-dark)'" onmouseout="this.style.background='var(--brand)'">Confirm & Submit</button>
+            </div>
+        </div>
+    </div>
 </div><!-- /.wrap -->
 
     <footer>
@@ -1526,10 +1068,35 @@ function showQ5(){
             });
         }
 
+        function setAutoSchoolYear() {
+            const startInput = document.querySelector('input[name="year_start"]');
+            const endInput = document.querySelector('input[name="year_end"]');
+            if (!startInput || !endInput) {
+                return;
+            }
+
+            const now = new Date();
+            const month = now.getMonth();
+            const year = now.getFullYear();
+            const startYear = month >= 5 ? year : year - 1;
+            const endYear = startYear + 1;
+
+            if (!startInput.value) {
+                startInput.value = startYear;
+            }
+            if (!endInput.value) {
+                endInput.value = endYear;
+            }
+        }
+
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadEnrollmentLookups);
+            document.addEventListener('DOMContentLoaded', function () {
+                loadEnrollmentLookups();
+                setAutoSchoolYear();
+            });
         } else {
             loadEnrollmentLookups();
+            setAutoSchoolYear();
         }
 
         function sameAddr(yes) {
@@ -1637,6 +1204,16 @@ function showQ5(){
             return data;
         }
 
+        function escapeHtml(text) {
+            if (text === undefined || text === null) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         function showMessage(type, message) {
             const container = document.getElementById('formMessage');
             container.className = `message ${type}`;
@@ -1661,12 +1238,87 @@ function showQ5(){
 
         document.getElementById('enrollmentForm').addEventListener('submit', async function (event) {
             event.preventDefault();
-            const submitButton = event.target.querySelector('button[type="submit"]');
+            showConfirmation(event.target);
+        });
+
+        function generateConfirmationSummary(form) {
+            const data = serializeForm(form);
+
+            function safe(v) { return (v === undefined || v === null || (typeof v === 'string' && v.trim() === '')) ? null : v; }
+
+            const studentName = [safe(data.Learner_First_Name), safe(data.Learner_Last_Name)].filter(Boolean).join(' ');
+            const dob = safe(data.Birth_Date);
+            const grade = safe(data.Grade_Level) || safe(data.Returning_Grade_Level);
+
+            const addressParts = [];
+            if (safe(data.Current_Street_Name)) addressParts.push(safe(data.Current_Street_Name));
+            if (safe(data.Current_Barangay)) addressParts.push(safe(data.Current_Barangay));
+            if (safe(data.Current_Municipality_City)) addressParts.push(safe(data.Current_Municipality_City));
+            if (safe(data.Current_Province)) addressParts.push(safe(data.Current_Province));
+            if (safe(data.Current_Zip_Code)) addressParts.push(safe(data.Current_Zip_Code));
+            const address = addressParts.length ? addressParts.join(', ') : null;
+
+            const fatherName = [safe(data.father_first_name), safe(data.father_last_name)].filter(Boolean).join(' ');
+            const motherName = [safe(data.mother_first_name), safe(data.mother_last_name)].filter(Boolean).join(' ');
+            const guardianName = [safe(data.guardian_first_name), safe(data.guardian_last_name)].filter(Boolean).join(' ');
+
+            const fatherPhone = safe(data.father_contact_number);
+            const motherPhone = safe(data.mother_contact_number);
+            const guardianPhone = safe(data.guardian_contact_number);
+
+            let summary = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">';
+
+            if (studentName) summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Learner</strong><span style="font-size:13px; color:var(--text);">${escapeHtml(studentName)}</span></div>`;
+            if (dob) summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Date of Birth</strong><span style="font-size:13px; color:var(--text);">${escapeHtml(dob)}</span></div>`;
+            if (grade) summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Grade Level</strong><span style="font-size:13px; color:var(--text);">${escapeHtml(grade)}</span></div>`;
+            if (address) summary += `<div style="grid-column:1 / -1"><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Address</strong><span style="font-size:13px; color:var(--text);">${escapeHtml(address)}</span></div>`;
+
+            if (fatherName || fatherPhone) {
+                let val = fatherName ? escapeHtml(fatherName) : '';
+                if (fatherPhone) val += (val ? ' — ' : '') + escapeHtml(fatherPhone);
+                summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Father</strong><span style="font-size:13px; color:var(--text);">${val}</span></div>`;
+            }
+
+            if (motherName || motherPhone) {
+                let val = motherName ? escapeHtml(motherName) : '';
+                if (motherPhone) val += (val ? ' — ' : '') + escapeHtml(motherPhone);
+                summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Mother</strong><span style="font-size:13px; color:var(--text);">${val}</span></div>`;
+            }
+
+            if (guardianName || guardianPhone) {
+                let val = guardianName ? escapeHtml(guardianName) : '';
+                if (guardianPhone) val += (val ? ' — ' : '') + escapeHtml(guardianPhone);
+                summary += `<div><strong style="display:block; font-size:12px; color:var(--muted); margin-bottom:2px;">Guardian</strong><span style="font-size:13px; color:var(--text);">${val}</span></div>`;
+            }
+
+            summary += '</div>';
+            return summary;
+        }
+
+        function showConfirmation(form) {
+            const modal = document.getElementById('confirmationModal');
+            const summary = document.getElementById('confirmationSummary');
+            summary.innerHTML = generateConfirmationSummary(form);
+            modal.style.display = 'flex';
+            modal.style.background = 'rgba(0,0,0,0.5)';
+        }
+
+        function cancelConfirmation() {
+            const modal = document.getElementById('confirmationModal');
+            modal.style.display = 'none';
+        }
+
+        async function confirmSubmission() {
+            const modal = document.getElementById('confirmationModal');
+            modal.style.display = 'none';
+            
+            const form = document.getElementById('enrollmentForm');
+            const submitButton = form.querySelector('button[type="submit"]');
             submitButton.disabled = true;
             showMessage('', '');
 
             try {
-                const payload = serializeForm(event.target);
+                const payload = serializeForm(form);
                 const response = await API.enroll.create(payload);
                 await generateEnrollmentPdf(response.student_id);
 
@@ -1677,7 +1329,7 @@ function showQ5(){
                     window.location.href = '../../dashboard/teacher_dashboard/teacher_dashboard.php';
                 }, 2000);
                 
-                event.target.reset();
+                form.reset();
                 goTo(1);
                 document.getElementById('ageField').value = '';
                 document.getElementById('permBox').style.opacity = '1';
@@ -1687,7 +1339,7 @@ function showQ5(){
             } finally {
                 submitButton.disabled = false;
             }
-        });
+        }
     </script>
 
 </body>

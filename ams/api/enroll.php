@@ -175,6 +175,14 @@ function resolveIndigenousGroupId(PDO $pdo, ?string $name): ?int {
     return intval($pdo->lastInsertId());
 }
 
+function computeDefaultSchoolYear(): string {
+    $now = new DateTime('now');
+    $month = (int)$now->format('n');
+    $year = (int)$now->format('Y');
+    $startYear = $month >= 6 ? $year : $year - 1;
+    return sprintf('%04d-%04d', $startYear, $startYear + 1);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Main transaction
 // ─────────────────────────────────────────────────────────────────────────────
@@ -183,7 +191,9 @@ try {
     $pdo->beginTransaction();
 
     // ── Derived values ────────────────────────────────────────────────────────
-    $schoolYear  = trim(($data['year_start'] ?? '') . '-' . ($data['year_end'] ?? ''));
+    $yearStart   = trim($data['year_start'] ?? '');
+    $yearEnd     = trim($data['year_end'] ?? '');
+    $schoolYear  = ($yearStart !== '' && $yearEnd !== '') ? trim($yearStart . '-' . $yearEnd) : computeDefaultSchoolYear();
     $withLrn     = !empty($data['with_lrn'])  && in_array((string)$data['with_lrn'],  ['1','Yes'], true) ? 1 : 0;
     $returning   = !empty($data['returning']) && in_array((string)$data['returning'], ['1','Yes'], true) ? 1 : 0;
     $isIp        = (isset($data['ip'])     && $data['ip']     === 'Yes') ? 1 : 0;

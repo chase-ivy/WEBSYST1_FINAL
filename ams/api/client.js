@@ -3,9 +3,13 @@
  * Handles AJAX requests to the API endpoints
  */
 
+const clientScript = document.currentScript;
+const computedBase = clientScript && clientScript.src
+    ? new URL('.', clientScript.src).href.replace(/\/$/, '')
+    : window.location.origin + window.location.pathname.split('/').slice(0, 3).join('/') + '/api';
+
 const API = {
-    // BASE: '/login/WEBSYST1_FINAL/ams/api',
-    BASE:window.location.origin + window.location.pathname.split('/').slice(0, 3).join('/') + '/api',
+    BASE: computedBase,
     
     // Helper function for API calls
     call: async function(endpoint, action, data = null, method = 'GET') {
