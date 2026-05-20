@@ -1,4 +1,6 @@
 <?php
+// DEPRECATED: This endpoint implementation is out of sync with the current gems_db schema.
+// It has been moved to ams/api/deprecated/verify_enrollment.php to avoid accidental use.
 if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 

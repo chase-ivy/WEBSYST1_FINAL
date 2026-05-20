@@ -1,4 +1,6 @@
 <?php
+// DEPRECATED: This endpoint implementation is out of sync with the current gems_db schema.
+// It has been moved to ams/api/deprecated/teacher.php to avoid accidental use.
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/config.php';
