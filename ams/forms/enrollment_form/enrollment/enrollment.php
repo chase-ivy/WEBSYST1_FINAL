@@ -12,7 +12,7 @@
     <!-- TOP NAV -->
     <div class="topbar">
         <div class="topbar-logo">
-            <img src="../../style/logo.png" alt="Logo">
+            <img src="../../../style/logo.png" alt="Logo">
             <span>Gibraltar Elementary School</span>
         </div>
     </div>
@@ -74,7 +74,7 @@
         &copy; 2025 <strong>Gibraltar Elementary School — AMES</strong>. All rights reserved.
     </footer>
 
-    <script src="../../api/client.js"></script>
+    <script src="../../../api/client.js"></script>
 <script>
 function showField(){
 	const field = document.getElementById("field").value;
@@ -674,7 +674,7 @@ function showQ5(){
                 
                 // Redirect to teacher dashboard after 2 seconds
                 setTimeout(() => {
-                    window.location.href = '../../dashboard/teacher_dashboard/teacher_dashboard.php';
+                    window.location.href = '../../../dashboard/teacher_dashboard/teacher_dashboard.php';
                 }, 2000);
                 
                 form.reset();

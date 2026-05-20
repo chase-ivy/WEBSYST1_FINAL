@@ -167,9 +167,11 @@
             <div class="grid-2" style="margin-top:16px;">
                 <div class="field">
                     <label>Mother Tongue</label>
-                    <select name="Mother_Tongue" id="Mother_Tongue">
+                    <select name="Mother_Tongue" id="Mother_Tongue" onchange="toggleMotherTongueOther()">
                         <option value="" hidden>Select mother tongue</option>
+                        <option value="Other">Other</option>
                     </select>
+                    <input type="text" id="Mother_Tongue_Other" name="Mother_Tongue_Other" placeholder="Please specify" style="display:none; margin-top:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif;">
                 </div>
             </div>
 
@@ -205,9 +207,11 @@
             <div class="collapse" id="ipBox" style="margin-top:10px;">
                 <div class="field">
                     <label>IP Community / Cultural Group</label>
-                    <select name="IP_Group" id="IP_Group">
+                    <select name="IP_Group" id="IP_Group" onchange="toggleIpOther()">
                         <option value="" hidden>Select IP group</option>
+                        <option value="Other">Other</option>
                     </select>
+                    <input type="text" id="IP_Specify" name="IP_Specify" placeholder="Please specify" style="display:none; margin-top:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif;">
                 </div>
             </div>
 
