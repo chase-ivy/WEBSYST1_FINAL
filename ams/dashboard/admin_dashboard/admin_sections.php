@@ -80,12 +80,9 @@ $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $schoolYears = array_values(array_unique(array_map(fn($s) => $s['school_year'], $sections)));
 rsort($schoolYears);
-$gradeLevels = array_values(array_unique(array_map(fn($s) => $s['grade_level'], $sections)));
-sort($gradeLevels);
 
-if (empty($gradeLevels)) {
-    $gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
-}
+// Always show all grade levels, not just existing ones
+$gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
 
 if (empty($schoolYears)) {
     $cy = (int)date('Y');
