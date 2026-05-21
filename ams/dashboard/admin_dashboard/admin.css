@@ -844,3 +844,105 @@ select:focus-visible {
         grid-column: 1;
     }
 }
+
+/* ── DATA TABLE ─────────────────────────────────────────── */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.data-table thead {
+    background: var(--overlay);
+}
+
+.data-table thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition);
+}
+
+.data-table tbody tr:hover {
+    background: var(--canvas);
+}
+
+.data-table tbody td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.data-table tbody td:first-child {
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* ── SMALL BUTTONS ──────────────────────────────────────── */
+.btn-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition);
+    text-decoration: none;
+}
+
+.btn-small.btn-primary {
+    background: var(--brand);
+    color: white;
+    border: 1px solid var(--brand);
+}
+
+.btn-small.btn-primary:hover {
+    background: var(--brand-dark);
+    border-color: var(--brand-dark);
+}
+
+.btn-small.btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btn-small.btn-secondary:hover {
+    background: var(--overlay);
+    border-color: var(--border-strong);
+}
+
+.btn-small.btn-danger {
+    background: transparent;
+    color: var(--brand);
+    border: 1px solid var(--brand-light);
+}
+
+.btn-small.btn-danger:hover {
+    background: var(--brand-light);
+    border-color: var(--brand);
+}
+
+/* ── BADGE STYLES ──────────────────────────────────────── */
+.badge-success {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-danger {
+    background: var(--brand-light);
+    color: var(--brand);
+    border: 1px solid rgba(78,3,3,.2);
+}

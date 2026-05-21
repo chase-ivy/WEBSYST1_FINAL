@@ -8,6 +8,8 @@ function renderAdminSidebar(string $active = 'dashboard'): void {
         'delete' => ['Delete Staff', 'admin_delete.php', false],
         'students_label' => ['Student Management', '#', true],
         'manage_students' => ['Manage Students', 'admin_manage_students.php', false],
+        'sections_label' => ['Section Management', '#', true],
+        'sections' => ['Manage Sections', 'admin_sections.php', false],
     ];
 
     echo '<aside class="sidebar">';

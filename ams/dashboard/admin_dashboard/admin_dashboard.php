@@ -177,7 +177,7 @@ $staffList = getStaffList($pdo);
     </main>
 </div>
 
-<script src="../../api/client.js"></script>
+<script src="../../api/client.js?v=3"></script>
 <script>
     function getRoleBadgeClass(role) {
         const map = { admin: 'badge-admin', teacher: 'badge-teacher', staff: 'badge-staff' };
@@ -186,8 +186,8 @@ $staffList = getStaffList($pdo);
 
     async function loadAdminStaff() {
         try {
-            const response = await API.users.list();
-            const rows     = response.data || [];
+            const response = await API.crud.list('users');
+            const rows     = (response.data || []).filter(user => (user.role || '').toLowerCase() !== 'admin');
             const tbody    = document.getElementById('staff-tbody');
             const count    = document.getElementById('staff-count');
 

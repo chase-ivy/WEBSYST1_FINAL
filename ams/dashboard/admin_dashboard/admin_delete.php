@@ -114,7 +114,7 @@ $staffList = getStaffList($pdo);
     </main>
 </div>
 
-<script src="../../api/client.js"></script>
+<script src="../../api/client.js?v=3"></script>
 <script>
     const deleteAlert = document.getElementById('delete-alert');
 
@@ -133,7 +133,7 @@ $staffList = getStaffList($pdo);
                 }
                 try {
                     const userId = parseInt(button.dataset.userId, 10);
-                    const response = await API.users.delete(userId);
+                    const response = await API.crud.delete('users', userId);
                     
                     if (response.success) {
                         showDeleteMessage(response.message || 'Staff deleted successfully.');
@@ -150,7 +150,7 @@ $staffList = getStaffList($pdo);
 
     async function loadDeleteUsers() {
         try {
-            const response = await API.users.list();
+            const response = await API.crud.list('users');
             const rows = response.data || [];
             const tbody = document.getElementById('delete-staff-tbody');
             if (!tbody) return;

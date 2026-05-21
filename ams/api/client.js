@@ -15,6 +15,7 @@ const API = {
         const url = new URL(this.BASE + '/' + endpoint + '.php', window.location.origin);
         const options = {
             method: method,
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -40,11 +41,16 @@ const API = {
         try {
             result = text ? JSON.parse(cleaned) : null;
         } catch (parseError) {
-            throw new Error(`Invalid JSON response from API (${response.status})`);
+            const snippet = cleaned.length > 1000 ? cleaned.slice(0, 1000) + '... (truncated)' : cleaned;
+            console.error('Invalid JSON response body from API:', cleaned);
+            throw new Error(`Invalid JSON response from API (${response.status}): ${snippet}`);
         }
 
         if (!response.ok) {
-            const message = result?.error || `API request failed (${response.status})`;
+            let message = result?.error || `API request failed (${response.status})`;
+            if (!message && Array.isArray(result?.errors)) {
+                message = result.errors.join(' ');
+            }
             throw new Error(message);
         }
 

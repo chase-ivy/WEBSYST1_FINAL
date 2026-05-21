@@ -1,6 +1,7 @@
 <?php
+ob_start();
 header('Content-Type: application/json; charset=utf-8');
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../login/auth.php';
 
 if (!is_logged_in()) {
@@ -10,9 +11,16 @@ if (!is_logged_in()) {
 }
 
 function sendJson(array $payload, int $status = 200): void {
+    // Ensure no accidental output (HTML, warnings) is sent before JSON
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
     if (!headers_sent()) {
         http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
     }
+
     echo json_encode($payload);
     exit;
 }

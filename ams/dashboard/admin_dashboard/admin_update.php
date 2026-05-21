@@ -7,6 +7,12 @@ require_special_admin();
 $errors = [];
 $success = '';
 $editStaff = null;
+$sections = getActiveSections($pdo);
+$gradeLevels = array_values(array_unique(array_filter(array_column($sections, 'grade_level'))));
+sort($gradeLevels);
+if (empty($gradeLevels)) {
+    $gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update') {
     $result = updateStaff(
@@ -15,7 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         trim($_POST['username'] ?? ''),
         trim($_POST['email'] ?? ''),
         trim($_POST['role'] ?? ''),
-        trim($_POST['password'] ?? '')
+        trim($_POST['password'] ?? ''),
+        trim($_POST['grade_level'] ?? '') ?: null,
+        intval($_POST['section_id'] ?? 0)
     );
 
     if ($result['success']) {
@@ -120,6 +128,30 @@ $staffList = getStaffList($pdo);
                         </div>
 
                         <div class="form-group">
+                            <label for="grade_level">Grade Level</label>
+                            <div class="select-wrap">
+                                <select id="grade_level" name="grade_level">
+                                    <option value="">Select grade level...</option>
+                                    <?php foreach ($gradeLevels as $gradeLevelOption): ?>
+                                        <option value="<?php echo htmlspecialchars($gradeLevelOption, ENT_QUOTES, 'UTF-8'); ?>" <?php echo (isset($editStaff['grade_level']) && $editStaff['grade_level'] === $gradeLevelOption) ? 'selected' : ''; ?>><?php echo htmlspecialchars($gradeLevelOption, ENT_QUOTES, 'UTF-8'); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="section_id">Section</label>
+                            <div class="select-wrap">
+                                <select id="section_id" name="section_id">
+                                    <option value="">Select section...</option>
+                                    <?php foreach ($sections as $section): ?>
+                                        <option value="<?php echo intval($section['section_id']); ?>" data-grade-level="<?php echo htmlspecialchars($section['grade_level'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo (isset($editStaff['section_id']) && intval($editStaff['section_id']) === intval($section['section_id'])) ? 'selected' : ''; ?>><?php echo htmlspecialchars(trim($section['school_year'] . ' · ' . $section['grade_level'] . ' · ' . $section['name']), ENT_QUOTES, 'UTF-8'); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label for="password">New Password <small>(leave blank to keep current)</small></label>
                             <input id="password" type="password" name="password">
                         </div>
@@ -142,12 +174,25 @@ $staffList = getStaffList($pdo);
                                 </tr>
                             </thead>
                             <tbody id="update-staff-tbody">
-                                <!-- Data handled by client.js -->
+                                <?php if (empty($staffList)): ?>
+                                    <tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>
+                                <?php else: ?>
+                                    <?php foreach ($staffList as $staff): ?>
+                                        <tr>
+                                            <td class="td-primary"><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                            <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                            <td><span class="badge badge-staff"><?php echo htmlspecialchars($staff['role'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8'); ?></span></td>
+                                            <td class="td-actions">
+                                                <a href="admin_update.php?edit_id=<?php echo htmlspecialchars($staff['user_id'], ENT_QUOTES, 'UTF-8'); ?>" class="btn-edit edit-user" data-user-id="<?php echo htmlspecialchars($staff['user_id'], ENT_QUOTES, 'UTF-8'); ?>">Edit</a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Hidden Edit Panel for AJAX Updates -->
+                    <!-- Hidden Edit Form for AJAX Updates -->
                     <div id="update-form-wrapper" class="edit-panel" style="display:none;">
                         <div class="edit-panel-header">
                             <h3>Edit Staff Member</h3>
@@ -172,6 +217,28 @@ $staffList = getStaffList($pdo);
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label>Grade Level</label>
+                                <div class="select-wrap">
+                                    <select id="js-grade_level">
+                                        <option value="">Select grade level...</option>
+                                        <?php foreach ($gradeLevels as $gradeLevelOption): ?>
+                                            <option value="<?php echo htmlspecialchars($gradeLevelOption, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($gradeLevelOption, ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Section</label>
+                                <div class="select-wrap">
+                                    <select id="js-section_id">
+                                        <option value="">Select section...</option>
+                                        <?php foreach ($sections as $section): ?>
+                                            <option value="<?php echo intval($section['section_id']); ?>" data-grade-level="<?php echo htmlspecialchars($section['grade_level'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars(trim($section['school_year'] . ' · ' . $section['grade_level'] . ' · ' . $section['name']), ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label>New Password</label>
                                 <input id="js-password" type="password">
                             </div>
@@ -187,7 +254,7 @@ $staffList = getStaffList($pdo);
     </main>
 </div>
 
-<script src="../../api/client.js"></script>
+<script src="../../api/client.js?v=3"></script>
 <script>
     const alertContainer = document.getElementById('js-alert-container');
 
@@ -195,49 +262,37 @@ $staffList = getStaffList($pdo);
         alertContainer.innerHTML = `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${message}</div>`;
     }
 
-    async function loadStaffForUpdate() {
-        try {
-            const response = await API.users.list();
-            const rows = response.data || [];
-            const tbody = document.getElementById('update-staff-tbody');
-            if (!tbody) return;
-
-            if (rows.length === 0) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = rows.map(staff => `
-                <tr>
-                    <td class="td-primary">${staff.username}</td>
-                    <td>${staff.email}</td>
-                    <td><span class="badge badge-staff">${staff.role}</span></td>
-                    <td class="td-actions">
-                        <button type="button" class="btn-edit edit-user" data-user-id="${staff.user_id}">Edit</button>
-                    </td>
-                </tr>
-            `).join('');
-
-            document.querySelectorAll('.edit-user').forEach(button => {
-                button.addEventListener('click', () => fillUpdateForm(button.dataset.userId));
-            });
-        } catch (error) {
-            console.error('Unable to load staff list', error);
-        }
+    function attachEditListeners() {
+        document.querySelectorAll('.edit-user').forEach(button => {
+            button.onclick = null;
+            button.onclick = event => {
+                event.preventDefault();
+                fillUpdateForm(button.dataset.userId);
+            };
+        });
     }
 
     async function fillUpdateForm(userId) {
         try {
-            const response = await API.users.get(userId);
+            const response = await API.crud.read('users', parseInt(userId));
             const staff = response.data;
             if (!staff) return;
+
+            const jsGradeSelect = document.getElementById('js-grade_level');
+            const jsSectionSelect = document.getElementById('js-section_id');
 
             document.querySelector('.table-wrap').style.display = 'none';
             document.getElementById('user_id').value = staff.user_id;
             document.getElementById('js-username').value = staff.username;
             document.getElementById('js-email').value = staff.email;
             document.getElementById('js-role').value = staff.role;
-            
+            if (jsGradeSelect) {
+                jsGradeSelect.value = staff.grade_level || '';
+            }
+            if (jsSectionSelect) {
+                jsSectionSelect.value = staff.section_id || '';
+            }
+
             document.getElementById('update-form-wrapper').style.display = 'block';
         } catch (error) {
             showUpdateMessage('Failed to load staff data.', true);
@@ -246,6 +301,18 @@ $staffList = getStaffList($pdo);
 
     const updateForm = document.getElementById('update-staff-form');
     if (updateForm) {
+        const jsGradeSelect = document.getElementById('js-grade_level');
+        const jsSectionSelect = document.getElementById('js-section_id');
+
+        if (jsSectionSelect && jsGradeSelect) {
+            jsSectionSelect.addEventListener('change', () => {
+                const selected = jsSectionSelect.selectedOptions[0];
+                if (selected && selected.dataset.gradeLevel) {
+                    jsGradeSelect.value = selected.dataset.gradeLevel;
+                }
+            });
+        }
+
         updateForm.addEventListener('submit', async event => {
             event.preventDefault();
             const data = {
@@ -253,10 +320,12 @@ $staffList = getStaffList($pdo);
                 username: document.getElementById('js-username').value.trim(),
                 email: document.getElementById('js-email').value.trim(),
                 role: document.getElementById('js-role').value,
-                password: document.getElementById('js-password').value.trim()
+                password: document.getElementById('js-password').value.trim(),
+                grade_level: jsGradeSelect ? jsGradeSelect.value || null : null,
+                section_id: jsSectionSelect && jsSectionSelect.value ? Number(jsSectionSelect.value) : null
             };
             try {
-                const response = await API.users.update(data.user_id, data);
+                const response = await API.crud.update('users', data.user_id, data);
                 if (response.success) {
                     showUpdateMessage('Staff updated successfully.');
                     setTimeout(() => location.reload(), 1500);
@@ -269,7 +338,20 @@ $staffList = getStaffList($pdo);
         });
     }
 
-    document.addEventListener('DOMContentLoaded', loadStaffForUpdate);
+    const sectionSelect = document.getElementById('section_id');
+    const gradeLevelSelect = document.getElementById('grade_level');
+    if (sectionSelect && gradeLevelSelect) {
+        sectionSelect.addEventListener('change', () => {
+            const selected = sectionSelect.selectedOptions[0];
+            if (selected && selected.dataset.gradeLevel) {
+                gradeLevelSelect.value = selected.dataset.gradeLevel;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        attachEditListeners();
+    });
 </script>
 </body>
 </html>

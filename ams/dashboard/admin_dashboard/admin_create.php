@@ -6,18 +6,33 @@ require_special_admin();
 
 $errors = [];
 $success = '';
+$old = [];
+$sections = getActiveSections($pdo);
+$gradeLevels = array_values(array_unique(array_filter(array_column($sections, 'grade_level'))));
+sort($gradeLevels);
+if (empty($gradeLevels)) {
+    $gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $result = createStaff(
-        $pdo,
-        trim($_POST['username'] ?? ''),
-        trim($_POST['email'] ?? ''),
-        trim($_POST['password'] ?? ''),
-        'staff'
-    );
+    $old = $_POST;
+    $role = strtolower(trim($_POST['role'] ?? ''));
+
+    if ($role === 'student') {
+        $result = createStudentAccount($pdo, $_POST);
+    } else {
+        $result = createStaff(
+            $pdo,
+            trim($_POST['username'] ?? ''),
+            trim($_POST['email'] ?? ''),
+            trim($_POST['password'] ?? ''),
+            'staff'
+        );
+    }
 
     if ($result['success']) {
         $success = $result['message'];
+        $old = [];
     } else {
         $errors = $result['errors'];
     }
@@ -44,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         line-height: 1.5;
         }
     </style>
-    <title>Create Staff | Admin Dashboard</title>
+    <title>Create Account | Admin Dashboard</title>
 </head>
 <body>
 
@@ -57,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <main class="main">
         <div class="page-header">
-            <h1>Staff Registration</h1>
-            <p>Add a new staff account to the system</p>
+            <h1>Create Account</h1>
+            <p>Add a new staff or student account to the system</p>
         </div>
 
         <section class="section">
@@ -83,28 +98,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 <?php endif; ?>
 
-                <form id="create-staff-form" method="post" class="form-grid">
+                <form id="create-account-form" method="post" class="form-grid">
                     <div class="form-group">
                         <label for="username">Username</label>
-                        <input id="username" type="text" name="username" placeholder="e.g. jdoe" required>
+                        <input id="username" type="text" name="username" placeholder="e.g. jdoe" value="<?php echo htmlspecialchars($old['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
                     </div>
 
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input id="email" type="email" name="email" placeholder="email@example.com" required>
+                        <input id="email" type="email" name="email" placeholder="email@example.com" value="<?php echo htmlspecialchars($old['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
                     </div>
 
-                    <div class="form-group">
+                            <div class="form-group">
                         <label for="role">Assigned Role</label>
                         <div class="select-wrap">
                             <select id="role" name="role" required>
                                 <option value="" disabled selected>Select a role...</option>
-                                <option value="staff">Staff</option>
-                                <option value="student">Student</option>
+                                <option value="staff" <?php echo (isset($old['role']) && $old['role'] === 'staff') ? 'selected' : ''; ?>>Staff</option>
+                                <option value="student" <?php echo (isset($old['role']) && $old['role'] === 'student') ? 'selected' : ''; ?>>Student</option>
                             </select>
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="grade_level">Grade Level</label>
+                        <div class="select-wrap">
+                            <select id="grade_level" name="grade_level" required>
+                                <option value="" disabled selected>Select grade level...</option>
+                                <?php foreach ($gradeLevels as $gradeLevelOption): ?>
+                                    <option value="<?php echo htmlspecialchars($gradeLevelOption, ENT_QUOTES, 'UTF-8'); ?>" <?php echo (isset($old['grade_level']) && $old['grade_level'] === $gradeLevelOption) ? 'selected' : ''; ?>><?php echo htmlspecialchars($gradeLevelOption, ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="section_id">Section</label>
+                        <div class="select-wrap">
+                            <select id="section_id" name="section_id" required>
+                                <option value="" disabled selected>Select section...</option>
+                                <?php foreach ($sections as $section): ?>
+                                    <option value="<?php echo intval($section['section_id']); ?>" data-grade-level="<?php echo htmlspecialchars($section['grade_level'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo (isset($old['section_id']) && intval($old['section_id']) === intval($section['section_id'])) ? 'selected' : ''; ?>><?php echo htmlspecialchars(trim($section['school_year'] . ' · ' . $section['grade_level'] . ' · ' . $section['name']), ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input id="password" type="password" name="password" placeholder="Min. 6 characters" required>
@@ -120,23 +158,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </main>
 </div>
 
-<script src="../../api/client.js"></script>
+<script src="../../api/client.js?v=3"></script>
 <script>
-    const createForm = document.getElementById('create-staff-form');
+    const createForm = document.getElementById('create-account-form');
     const createAlert = document.getElementById('create-alert');
+    const roleSelect = document.getElementById('role');
+    const sectionSelect = document.getElementById('section_id');
+    const gradeLevelSelect = document.getElementById('grade_level');
 
     function showCreateMessage(message, isError = false) {
         createAlert.innerHTML = `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${message}</div>`;
     }
 
+    // Grade level and section are always required for all roles
+
+    sectionSelect.addEventListener('change', () => {
+        const selected = sectionSelect.selectedOptions[0];
+        if (selected && selected.dataset.gradeLevel) {
+            gradeLevelSelect.value = selected.dataset.gradeLevel;
+        }
+    });
+
     createForm.addEventListener('submit', async event => {
         event.preventDefault();
-        createAlert.innerHTML = ''; // Clear previous messages
+        createAlert.innerHTML = '';
 
         const data = {
             username: document.getElementById('username').value.trim(),
             email: document.getElementById('email').value.trim(),
-            role: document.getElementById('role').value.trim(),
+            role: roleSelect.value.trim(),
             password: document.getElementById('password').value.trim()
         };
 
@@ -145,14 +195,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             return;
         }
 
+        // Add grade level and section for all roles
+        data.grade_level = gradeLevelSelect.value;
+        data.section_id = sectionSelect.value ? Number(sectionSelect.value) : null;
+
+        if (!data.section_id) {
+            showCreateMessage('Please select a section.', true);
+            return;
+        }
+
         try {
-            // Using the client.js API helper
-            const response = await API.users.create(data);
+            const response = await API.crud.create('users', data);
             if (response.success) {
-                showCreateMessage(response.message || 'Staff member successfully created.');
+                showCreateMessage(response.message || 'Account successfully created.');
                 createForm.reset();
-                // Optional: redirect to update page to see the new entry
-                // setTimeout(() => window.location.href = 'admin_update.php', 2000);
             } else {
                 const errorText = Array.isArray(response.errors) ? response.errors.join('<br>') : 'Registration failed.';
                 showCreateMessage(errorText, true);
