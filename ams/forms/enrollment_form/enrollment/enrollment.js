@@ -470,6 +470,33 @@ function serializeForm(form) {
         data.Permanent_Zip_Code          = data.Current_Zip_Code;
     }
 
+    // Normalize Address Status values to match DB enum (`ownership_type`)
+    const ownershipMap = {
+        'Rental': 'rented',
+        'Rented': 'rented',
+        'rental': 'rented',
+        'rented': 'rented',
+        'Owned': 'owned',
+        'owned': 'owned',
+        'Living with Relatives': 'living_with_relatives',
+        'living with relatives': 'living_with_relatives',
+        'living_with_relatives': 'living_with_relatives',
+        'Inherited': 'inherited',
+        'inherited': 'inherited'
+    };
+
+    if (data.Current_Address_Status !== undefined) {
+        const raw = data.Current_Address_Status;
+        data.Current_Address_Status = ownershipMap[raw] ?? (typeof raw === 'string' ? raw.toLowerCase().replace(/\s+/g, '_') : raw);
+    }
+
+    if (data.same_address === 'Yes') {
+        data.Permanent_Address_Status = data.Current_Address_Status;
+    } else if (data.Permanent_Address_Status !== undefined) {
+        const rawP = data.Permanent_Address_Status;
+        data.Permanent_Address_Status = ownershipMap[rawP] ?? (typeof rawP === 'string' ? rawP.toLowerCase().replace(/\s+/g, '_') : rawP);
+    }
+
     return data;
 }
 

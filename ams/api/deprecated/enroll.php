@@ -319,6 +319,27 @@ try {
     $permCountry  = trim($data['Permanent_Country']           ?? '');
     $permZip      = trim($data['Permanent_Zip_Code']          ?? '');
 
+    // Map address status from form values to DB enum values for `ownership_type`
+    $mapOwnership = function ($val) {
+        if ($val === null) return null;
+        $v = trim((string)$val);
+        $map = [
+            'Rental' => 'rented',
+            'Rented' => 'rented',
+            'rental' => 'rented',
+            'rented' => 'rented',
+            'Owned'  => 'owned',
+            'owned'  => 'owned',
+            'Living with Relatives' => 'living_with_relatives',
+            'living with relatives' => 'living_with_relatives',
+            'living_with_relatives' => 'living_with_relatives',
+            'Inherited' => 'inherited',
+            'inherited' => 'inherited'
+        ];
+        if (array_key_exists($v, $map)) return $map[$v];
+        return strtolower(str_replace(' ', '_', $v));
+    };
+
     if (isset($data['same_address']) && $data['same_address'] === 'Yes') {
         $permHouse    = trim($data['Current_House_No']          ?? '');
         $permStreet   = trim($data['Current_Street_Name']       ?? '');
@@ -329,11 +350,18 @@ try {
         $permZip      = trim($data['Current_Zip_Code']          ?? '');
     }
 
+    $currentOwnership = $mapOwnership($data['Current_Address_Status'] ?? null);
+    if (isset($data['same_address']) && $data['same_address'] === 'Yes') {
+        $permOwnership = $currentOwnership;
+    } else {
+        $permOwnership = $mapOwnership($data['Permanent_Address_Status'] ?? null);
+    }
+
     $addrStmt = $pdo->prepare('
         INSERT INTO student_addresses
             (student_id, address_type, house_no, street_name, barangay,
-             municipality_city, province, country, zip_code)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             municipality_city, province, country, zip_code, ownership_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
     $addrStmt->execute([
         $studentId, 'current',
@@ -344,6 +372,7 @@ try {
         trim($data['Current_Province']          ?? ''),
         trim($data['Current_Country']           ?? '') ?: 'Philippines',
         trim($data['Current_Zip_Code']          ?? ''),
+        $currentOwnership,
     ]);
     $addrStmt->execute([
         $studentId, 'permanent',
@@ -351,6 +380,7 @@ try {
         $permCity, $permProvince,
         $permCountry ?: 'Philippines',
         $permZip,
+        $permOwnership,
     ]);
 
     // ── 6. Medical information → enrollment_medical_information ──────────────
