@@ -308,19 +308,38 @@ async function loadEnrollmentLookups() {
     const motherTongueSelect = document.getElementById('Mother_Tongue');
     const ipGroupSelect = document.getElementById('IP_Group');
 
-    if (!motherTongueSelect || !ipGroupSelect || !API?.lookups) {
+    if (!motherTongueSelect || !ipGroupSelect) {
         return;
     }
 
     try {
-        const response = await API.lookups.listAll();
-        const motherTongues = response.data?.motherTongues || [];
-        const indigenousGroups = response.data?.indigenousGroups || [];
+        // Load mother tongues from API
+        let motherTongues = [];
+        if (API?.mother_tongues) {
+            const mtResponse = await API.mother_tongues.list();
+            if (mtResponse.success && Array.isArray(mtResponse.data)) {
+                motherTongues = mtResponse.data.map(mt => mt.mother_tongue_name || mt.name);
+            } else if (Array.isArray(mtResponse)) {
+                motherTongues = mtResponse.map(mt => mt.mother_tongue_name || mt.name);
+            }
+        }
+        
+        // Load indigenous groups from API
+        let indigenousGroups = [];
+        if (API?.indigenous_groups) {
+            const igResponse = await API.indigenous_groups.list();
+            if (igResponse.success && Array.isArray(igResponse.data)) {
+                indigenousGroups = igResponse.data.map(ig => ig.indigenous_group_name || ig.name);
+            } else if (Array.isArray(igResponse)) {
+                indigenousGroups = igResponse.map(ig => ig.indigenous_group_name || ig.name);
+            }
+        }
 
-        populateLookupSelect(motherTongueSelect, motherTongues);
-        populateLookupSelect(ipGroupSelect, indigenousGroups);
+        if (motherTongues.length > 0) populateLookupSelect(motherTongueSelect, motherTongues);
+        if (indigenousGroups.length > 0) populateLookupSelect(ipGroupSelect, indigenousGroups);
     } catch (error) {
         console.error('Failed to load lookup values:', error);
+        // Silently fail - form will work with hardcoded defaults if lookups unavailable
     }
 }
 

@@ -634,15 +634,16 @@ async function confirmSubmission() {
     try {
         const payload = serializeForm(form);
         
-        // DEBUG: Log disability data
-        console.log('=== ENROLLMENT FORM DEBUG ===');
-        console.log('disabilityDetails:', payload.disabilityDetails);
-        console.log('disability_sub:', payload.disability_sub);
-        console.log('disability (yes/no):', payload.disability);
-        console.log('Full payload:', payload);
+        // Validate required fields
+        if (!payload.Learner_First_Name || !payload.Learner_Last_Name || !payload.Birth_Date) {
+            throw new Error('Please fill in required learner information (First Name, Last Name, Date of Birth).');
+        }
 
+        // Create or update student record
         let studentId = payload.student_id ? parseInt(payload.student_id, 10) : null;
         if (!studentId) {
+            showMessage('', 'Creating student record...');
+            
             const studentPayload = {
                 lrn: payload.Learner_Reference_No || '',
                 first_name: payload.Learner_First_Name || '',
@@ -657,21 +658,46 @@ async function confirmSubmission() {
             };
 
             const studentResp = await API.students.create(studentPayload);
-            studentId = studentResp.id || studentResp.student_id || (studentResp.data && studentResp.data.id) || null;
-            if (!studentId && studentResp.success && studentResp.id) studentId = studentResp.id;
-            if (!studentId) throw new Error('Failed to create student record');
+            
+            // Handle different API response formats
+            if (studentResp.success && studentResp.data) {
+                studentId = studentResp.data.id || studentResp.data.student_id;
+            } else if (studentResp.id) {
+                studentId = studentResp.id;
+            } else if (studentResp.student_id) {
+                studentId = studentResp.student_id;
+            }
+            
+            if (!studentId) {
+                throw new Error('Failed to create student record. Please try again or contact support.');
+            }
         }
 
         payload.student_id = studentId;
+        showMessage('', 'Submitting enrollment...');
 
-        const response = await API.enroll.create(payload);
-        const enrollmentId = response.enrollment_id || response.id || null;
+        // Submit enrollment
+        const response = await API.enrollments.create(payload);
+        
+        // Handle different API response formats
+        let enrollmentId = null;
+        if (response.success && response.data) {
+            enrollmentId = response.data.enrollment_id || response.data.id;
+        } else if (response.enrollment_id) {
+            enrollmentId = response.enrollment_id;
+        } else if (response.id) {
+            enrollmentId = response.id;
+        }
 
-        showMessage('success', 'Enrollment submitted successfully. Student ID: ' + studentId + (enrollmentId ? ', Enrollment ID: ' + enrollmentId : '') + '. Redirecting to teacher dashboard...');
+        if (!response.success && !enrollmentId) {
+            throw new Error(response.error || response.message || 'Enrollment submission failed.');
+        }
+
+        showMessage('success', 'Enrollment submitted successfully!' + (enrollmentId ? ' Enrollment ID: ' + enrollmentId : '') + '. Redirecting...');
 
         setTimeout(() => {
             window.location.href = '../../../dashboard/teacher_dashboard/teacher_dashboard.php';
-        }, 2000);
+        }, 2500);
 
         form.reset();
         goTo(1);
@@ -679,7 +705,8 @@ async function confirmSubmission() {
         document.getElementById('permBox').style.opacity = '1';
         document.getElementById('permBox').style.pointerEvents = 'auto';
     } catch (error) {
-        showMessage('error', error.message || 'Enrollment submission failed.');
+        showMessage('error', error.message || 'Enrollment submission failed. Please review the form and try again.');
+        console.error('Enrollment submission error:', error);
     } finally {
         submitButton.disabled = false;
     }

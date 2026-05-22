@@ -1,4 +1,4 @@
-const apiBase = '../../../api/verify_enrollment.php';
+
 let currentEnrollmentData = null;
 
 function escapeHtml(text) {
@@ -344,7 +344,7 @@ function applyEnrollmentToForm(data) {
     buildReviewSummary();
 }
 
-function saveEnrollmentUpdates() {
+async function saveEnrollmentUpdates() {
     const enrollmentId = document.getElementById('enrollmentSelect')?.value;
     const studentId = document.getElementById('studentIdInput')?.value;
     if (!enrollmentId || !studentId) {
@@ -356,30 +356,29 @@ function saveEnrollmentUpdates() {
     if (button) button.disabled = true;
     setMessage('', 'Saving changes…');
 
-    const form = document.getElementById('enrollmentForm');
-    const payload = serializeForm(form);
-    payload.student_id = parseInt(studentId, 10);
-    payload.enrollment_id = parseInt(enrollmentId, 10);
+    try {
+        const form = document.getElementById('enrollmentForm');
+        const payload = serializeForm(form);
+        payload.student_id = parseInt(studentId, 10);
+        payload.enrollment_id = parseInt(enrollmentId, 10);
 
-    fetch(`${apiBase}?action=update`, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-    })
-        .then(response => response.json())
-        .then(json => {
-            if (!json.success) {
-                throw new Error(json.error || 'Unable to save enrollment updates');
-            }
-            setMessage('success', 'Enrollment updates saved successfully.');
-            currentEnrollmentData = null;
-            loadEnrollmentDetails(enrollmentId);
-        })
-        .catch(error => setMessage('error', error.message))
-        .finally(() => {
-            if (button) button.disabled = false;
-        });
+        // Use API client to update enrollment
+        const response = await API.enrollments.update(
+            parseInt(enrollmentId, 10),
+            payload
+        );
+
+        if (!response.success) {
+            throw new Error(response.error || 'Unable to save enrollment updates');
+        }
+        setMessage('success', 'Enrollment updates saved successfully.');
+        currentEnrollmentData = null;
+        loadEnrollmentDetails(enrollmentId);
+    } catch (error) {
+        setMessage('error', error.message || 'Failed to save enrollment updates.');
+    } finally {
+        if (button) button.disabled = false;
+    }
 }
 
 function resetVerifyForm() {
@@ -394,28 +393,48 @@ async function fetchPendingEnrollments() {
     const select = document.getElementById('enrollmentSelect');
     select.innerHTML = '<option value="">Loading…</option>';
     try {
-        const response = await fetch(`${apiBase}?action=list`, { credentials: 'same-origin' });
-        const json = await response.json();
-        if (!json.success) {
-            throw new Error(json.error || 'Could not load pending enrollments');
+        // Use the API client to fetch all enrollments
+        const response = await API.enrollments.list();
+        
+        // Handle different response formats from the API
+        let enrollments = [];
+        if (Array.isArray(response.data)) {
+            enrollments = response.data;
+        } else if (Array.isArray(response)) {
+            enrollments = response;
+        } else if (response.enrollments && Array.isArray(response.enrollments)) {
+            enrollments = response.enrollments;
+        } else if (!response.success) {
+            throw new Error(response.error || 'Could not load pending enrollments');
         }
-        if (!Array.isArray(json.data) || json.data.length === 0) {
+        
+        // Filter for pending enrollments
+        const pending = enrollments.filter(e => 
+            e.enrollment_status === 'pending' || 
+            e.status === 'pending'
+        );
+        
+        if (pending.length === 0) {
             select.innerHTML = '<option value="">-- no pending enrollments --</option>';
-            setMessage('', 'No pending enrollments to verify.');
+            setMessage('info', 'No pending enrollments to verify.');
             return;
         }
+        
         select.innerHTML = '<option value="">-- select enrollment --</option>';
-        json.data.forEach(item => {
+        pending.forEach(item => {
             const option = document.createElement('option');
             option.value = item.enrollment_id;
-            const label = item.student_name?.trim() || `Enrollment #${item.enrollment_id}`;
-            option.textContent = `${label} — ${item.school_year || ''} ${item.grade_level || ''}`.trim();
+            const studentName = item.student_name || item.first_name || `Enrollment #${item.enrollment_id}`;
+            const schoolYear = item.school_year || '';
+            const gradeLevel = item.grade_level || '';
+            option.textContent = `${studentName} — ${schoolYear} ${gradeLevel}`.trim();
             select.appendChild(option);
         });
         setMessage('', '');
     } catch (error) {
         select.innerHTML = '<option value="">Failed to load</option>';
-        setMessage('error', error.message);
+        setMessage('error', error.message || 'Failed to load pending enrollments');
+        console.error('fetchPendingEnrollments error:', error);
     }
 }
 
@@ -423,16 +442,29 @@ async function loadEnrollmentDetails(enrollmentId) {
     if (!enrollmentId) return;
     setMessage('', 'Loading enrollment details…');
     try {
-        const response = await fetch(`${apiBase}?action=details&enrollment_id=${encodeURIComponent(enrollmentId)}`, { credentials: 'same-origin' });
-        const json = await response.json();
-        if (!json.success) {
-            throw new Error(json.error || 'Unable to load enrollment details');
+        // Use the API client to fetch enrollment details
+        const response = await API.enrollments.read(parseInt(enrollmentId, 10));
+        
+        // Handle different response formats
+        let enrollmentData = null;
+        if (response.success && response.data) {
+            enrollmentData = response.data;
+        } else if (response.enrollment) {
+            enrollmentData = response;
+        } else if (!response.success) {
+            throw new Error(response.error || 'Unable to load enrollment details');
         }
-        applyEnrollmentToForm(json.data);
+        
+        if (!enrollmentData) {
+            throw new Error('No enrollment data returned from API');
+        }
+        
+        applyEnrollmentToForm(enrollmentData);
         setMessage('success', 'Enrollment loaded. Review the values and click Verify & Archive.');
         goTo(1);
     } catch (error) {
-        setMessage('error', error.message);
+        setMessage('error', error.message || 'Failed to load enrollment details.');
+        console.error('loadEnrollmentDetails error:', error);
     }
 }
 
@@ -449,24 +481,28 @@ async function verifyEnrollment() {
     button.disabled = true;
     setMessage('', 'Processing verification…');
     try {
-        const response = await fetch('../../../api/crud/enrollments/c_enrollments.php?action=verify', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                enrollment_id: parseInt(enrollmentId, 10),
-                verified_by: window.CURRENT_USER_ID 
-            }),
-        });
-        const json = await response.json();
-        if (!json.success) {
-            throw new Error(json.error || json.message || 'Verification failed');
+        // Update enrollment with verified status
+        const payload = {
+            enrollment_id: parseInt(enrollmentId, 10),
+            enrollment_status: 'verified',
+            verified_by: window.CURRENT_USER_ID || 0,
+            verified_at: new Date().toISOString().split('T')[0]
+        };
+        
+        const response = await API.enrollments.update(
+            parseInt(enrollmentId, 10),
+            payload
+        );
+        
+        if (!response.success) {
+            throw new Error(response.error || response.message || 'Verification failed');
         }
-        setMessage('success', `Enrollment verified and archived. School record ID: ${json.school_record_id || 'N/A'}`);
+        
+        setMessage('success', 'Enrollment verified and archived successfully.');
         await fetchPendingEnrollments();
         resetVerifyForm();
     } catch (error) {
-        setMessage('error', error.message);
+        setMessage('error', error.message || 'Verification failed. Please try again.');
     } finally {
         button.disabled = false;
     }
