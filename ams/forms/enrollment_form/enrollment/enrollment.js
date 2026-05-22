@@ -634,12 +634,6 @@ async function confirmSubmission() {
     try {
         const payload = serializeForm(form);
 
-        const parsePositiveInt = value => {
-            const parsed = Number.parseInt(value, 10);
-            return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-        };
-
-        // Ensure a students record exists first. If form didn't provide student_id, create a student.
         let studentId = payload.student_id ? parseInt(payload.student_id, 10) : null;
         if (!studentId) {
             const studentPayload = {
@@ -656,36 +650,15 @@ async function confirmSubmission() {
             };
 
             const studentResp = await API.students.create(studentPayload);
-            // generic CRUD create returns { success:true, id: <insertId> }
             studentId = studentResp.id || studentResp.student_id || (studentResp.data && studentResp.data.id) || null;
             if (!studentId && studentResp.success && studentResp.id) studentId = studentResp.id;
             if (!studentId) throw new Error('Failed to create student record');
         }
 
-        const motherTongueId = parsePositiveInt(payload.Mother_Tongue);
-        const indigenousGroupId = parsePositiveInt(payload.IP_Group);
+        payload.student_id = studentId;
 
-        const enrollmentData = {
-            school_year: payload.year_start && payload.year_end ? payload.year_start + '-' + payload.year_end : null,
-            mother_tongue_id: motherTongueId,
-            is_indigenous: payload.ip === 'Yes' ? 1 : 0,
-            indigenous_group_id: indigenousGroupId,
-            is_four_ps_beneficiary: payload.fourps === 'Yes' ? 1 : 0,
-            four_ps_household_id: payload.FourPs_Specify || null,
-            is_learner_with_disability: (payload.visual_impairment || payload.special_health) ? 1 : 0,
-            is_returning_learner: payload.Returning_Grade_Level ? 1 : 0,
-            student_id: studentId
-        };
-
-        // Remove optional null/empty values (keep required ones)
-        Object.keys(enrollmentData).forEach(key => {
-            if (key !== 'student_id' && key !== 'school_year' && (enrollmentData[key] === null || enrollmentData[key] === '')) {
-                delete enrollmentData[key];
-            }
-        });
-
-        const response = await API.enroll.create(enrollmentData);
-        const enrollmentId = response.id || response.enrollment_id || null;
+        const response = await API.enroll.create(payload);
+        const enrollmentId = response.enrollment_id || response.id || null;
 
         showMessage('success', 'Enrollment submitted successfully. Student ID: ' + studentId + (enrollmentId ? ', Enrollment ID: ' + enrollmentId : '') + '. Redirecting to teacher dashboard...');
 
