@@ -685,10 +685,9 @@ async function confirmSubmission() {
         });
 
         const response = await API.enroll.create(enrollmentData);
-        await generateEnrollmentPdf(studentId);
         const enrollmentId = response.id || response.enrollment_id || null;
 
-        showMessage('success', 'Enrollment submitted successfully. Student ID: ' + studentId + (enrollmentId ? ', Enrollment ID: ' + enrollmentId : '') + '. Form PDF generated. Redirecting to teacher dashboard...');
+        showMessage('success', 'Enrollment submitted successfully. Student ID: ' + studentId + (enrollmentId ? ', Enrollment ID: ' + enrollmentId : '') + '. Redirecting to teacher dashboard...');
 
         setTimeout(() => {
             window.location.href = '../../dashboard/teacher_dashboard/teacher_dashboard.php';

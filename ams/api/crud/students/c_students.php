@@ -34,18 +34,22 @@ function createStudentUser(PDO $pdo, array $data): int {
         sendJson(['success' => false, 'error' => 'Invalid student email address'], 400);
     }
 
-    if ($password === '') {
-        $password = bin2hex(random_bytes(5));
-    }
-
     $candidate = $lrn ?: ($firstName && $lastName ? $firstName[0] . $lastName : 'student');
     $username = generateStudentUsername($pdo, $candidate);
+
+    if ($email === '') {
+        $email = $username . '@student.local';
+    }
+    if ($password === '') {
+        $password = $lrn !== '' ? $lrn : bin2hex(random_bytes(5));
+    }
+
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
     $stmt = $pdo->prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)');
     $stmt->execute([
         $username,
-        $email === '' ? null : $email,
+        $email,
         $passwordHash,
         'student'
     ]);
