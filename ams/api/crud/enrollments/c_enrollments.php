@@ -292,8 +292,8 @@ function handleEnrollmentCreate(PDO $pdo): void {
         }
 
         $disabilityRows = [];
-        if (!empty($data['disabilityDetails']) && is_array($data['disabilityDetails'])) {
-            foreach ($data['disabilityDetails'] as $typeId => $values) {
+        if (!empty($data['disability_sub']) && is_array($data['disability_sub'])) {
+            foreach ($data['disability_sub'] as $typeId => $values) {
                 $typeId = intval($typeId);
                 if ($typeId === 0 || !is_array($values)) {
                     continue;
