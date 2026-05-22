@@ -308,19 +308,38 @@ async function loadEnrollmentLookups() {
     const motherTongueSelect = document.getElementById('Mother_Tongue');
     const ipGroupSelect = document.getElementById('IP_Group');
 
-    if (!motherTongueSelect || !ipGroupSelect || !API?.lookups) {
+    if (!motherTongueSelect || !ipGroupSelect) {
         return;
     }
 
     try {
-        const response = await API.lookups.listAll();
-        const motherTongues = response.data?.motherTongues || [];
-        const indigenousGroups = response.data?.indigenousGroups || [];
+        // Load mother tongues from API
+        let motherTongues = [];
+        if (API?.mother_tongues) {
+            const mtResponse = await API.mother_tongues.list();
+            if (mtResponse.success && Array.isArray(mtResponse.data)) {
+                motherTongues = mtResponse.data.map(mt => mt.mother_tongue_name || mt.name);
+            } else if (Array.isArray(mtResponse)) {
+                motherTongues = mtResponse.map(mt => mt.mother_tongue_name || mt.name);
+            }
+        }
+        
+        // Load indigenous groups from API
+        let indigenousGroups = [];
+        if (API?.indigenous_groups) {
+            const igResponse = await API.indigenous_groups.list();
+            if (igResponse.success && Array.isArray(igResponse.data)) {
+                indigenousGroups = igResponse.data.map(ig => ig.indigenous_group_name || ig.name);
+            } else if (Array.isArray(igResponse)) {
+                indigenousGroups = igResponse.map(ig => ig.indigenous_group_name || ig.name);
+            }
+        }
 
-        populateLookupSelect(motherTongueSelect, motherTongues);
-        populateLookupSelect(ipGroupSelect, indigenousGroups);
+        if (motherTongues.length > 0) populateLookupSelect(motherTongueSelect, motherTongues);
+        if (indigenousGroups.length > 0) populateLookupSelect(ipGroupSelect, indigenousGroups);
     } catch (error) {
         console.error('Failed to load lookup values:', error);
+        // Silently fail - form will work with hardcoded defaults if lookups unavailable
     }
 }
 
@@ -371,7 +390,7 @@ function sameAddr(yes) {
 
 function addNestedValue(target, name, value) {
     const parts = name.split('[').map(part => part.replace(/\]$/, ''));
-    let current = target;
+    let currentNode = target;
 
     parts.forEach((part, index) => {
         const isLast = index === parts.length - 1;
@@ -380,37 +399,37 @@ function addNestedValue(target, name, value) {
 
         if (part === '') {
             if (isLast) {
-                current.push(value);
+                currentNode.push(value);
             } else {
-                if (!Array.isArray(current)) {
-                    current = [];
+                if (!Array.isArray(currentNode)) {
+                    currentNode = [];
                 }
-                if (current.length === 0) {
-                    current.push(nextPartIsNumeric ? {} : []);
+                if (currentNode.length === 0) {
+                    currentNode.push(nextPartIsNumeric ? {} : []);
                 }
-                current = current[current.length - 1];
+                currentNode = currentNode[currentNode.length - 1];
             }
         } else {
             if (isLast) {
                 const isNumericKey = /^\d+$/.test(part);
                 if (isNumericKey) {
-                    if (typeof current[part] !== 'object' || current[part] === null) {
-                        current[part] = value;
+                    if (typeof currentNode[part] !== 'object' || currentNode[part] === null) {
+                        currentNode[part] = value;
                     }
                 } else {
-                    if (current[part] === undefined) {
-                        current[part] = [];
+                    if (currentNode[part] === undefined) {
+                        currentNode[part] = [];
                     }
-                    if (!Array.isArray(current[part])) {
-                        current[part] = [current[part]];
+                    if (!Array.isArray(currentNode[part])) {
+                        currentNode[part] = [currentNode[part]];
                     }
-                    current[part].push(value);
+                    currentNode[part].push(value);
                 }
             } else {
-                if (current[part] === undefined) {
-                    current[part] = nextPartIsNumeric ? {} : [];
+                if (currentNode[part] === undefined) {
+                    currentNode[part] = nextPartIsNumeric ? {} : [];
                 }
-                current = current[part];
+                currentNode = currentNode[part];
             }
         }
     });

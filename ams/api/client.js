@@ -95,4 +95,30 @@ const API = {
     }
 };
 
+// convenience aliases for CRUD tables to support legacy code calling `API.<table>`
+// (list generated from server-side CRUD folders)
+(() => {
+    const tables = [
+        'disability_subtypes', 'disability_types', 'enrollments', 'enrollment_disabilities',
+        'enrollment_family_medical_history', 'enrollment_medical_allergies', 'enrollment_medical_conditions',
+        'enrollment_medical_information', 'enrollment_medical_surgeries', 'enrollment_medical_treatments',
+        'enrollment_returning_learners', 'family_medical_history_types', 'indigenous_groups',
+        'medical_allergy_types', 'medical_condition_types', 'mother_tongues', 'parent_guardian_types',
+        'students', 'student_addresses', 'student_medical_records', 'student_parent_guardians',
+        'student_school_records', 'users'
+    ];
+
+    tables.forEach(t => {
+        API[t] = API.crud.table(t);
+        // also provide a simple singular alias when the plural ends with 's'
+        if (t.endsWith('s')) {
+            const singular = t.slice(0, -1);
+            if (!API[singular]) API[singular] = API.crud.table(t);
+        }
+    });
+
+    // explicit historical aliases
+    if (!API.enroll) API.enroll = API.crud.table('enrollments');
+})();
+
 window.API = API;

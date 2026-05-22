@@ -1,3 +1,8 @@
+<?php
+require_once __DIR__ . '/../../../login/auth.php';
+require_role(['staff']);
+$currentUserId = $_SESSION['user_id'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +11,9 @@
     <title>Verify Enrollments · Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="../enrollment.css" rel="stylesheet">
+    <script>
+        window.CURRENT_USER_ID = <?php echo intval($currentUserId); ?>;
+    </script>
 </head>
 <body>
 

@@ -243,13 +243,23 @@ function showQ5(){
 }
 
 
-document.getElementById('visual_impairment').addEventListener('change', function() {
-    document.getElementById('visualOptionsBox').style.display = this.checked ? 'block' : 'none';
-});
+const _visualImpairmentEl = document.getElementById('visual_impairment');
+if (_visualImpairmentEl) {
+    const _visualOptionsBox = document.getElementById('visualOptionsBox');
+    _visualImpairmentEl.addEventListener('change', function() {
+        if (_visualOptionsBox) _visualOptionsBox.style.display = this.checked ? 'block' : 'none';
+    });
+    if (_visualOptionsBox) _visualOptionsBox.style.display = _visualImpairmentEl.checked ? 'block' : 'none';
+}
 
-document.getElementById('special_health').addEventListener('change', function() {
-    document.getElementById('healthOptionsBox').style.display = this.checked ? 'block' : 'none';
-});
+const _specialHealthEl = document.getElementById('special_health');
+if (_specialHealthEl) {
+    const _healthOptionsBox = document.getElementById('healthOptionsBox');
+    _specialHealthEl.addEventListener('change', function() {
+        if (_healthOptionsBox) _healthOptionsBox.style.display = this.checked ? 'block' : 'none';
+    });
+    if (_healthOptionsBox) _healthOptionsBox.style.display = _specialHealthEl.checked ? 'block' : 'none';
+}
 
 let current = 1;
 
@@ -302,23 +312,27 @@ async function loadEnrollmentLookups() {
     const motherTongueSelect = document.getElementById('Mother_Tongue');
     const ipGroupSelect = document.getElementById('IP_Group');
 
-    if (!motherTongueSelect || !ipGroupSelect || !API?.lookups) {
+    if (!motherTongueSelect || !ipGroupSelect || !API?.mother_tongues || !API?.indigenous_groups) {
         return;
     }
 
     try {
-        const response = await API.lookups.listAll();
-        const motherTongues = response.data?.motherTongues || [];
-        const indigenousGroups = response.data?.indigenousGroups || [];
+        const [motherTonguesResponse, indigenousGroupsResponse] = await Promise.all([
+            API.mother_tongues.list(),
+            API.indigenous_groups.list()
+        ]);
 
-        populateLookupSelect(motherTongueSelect, motherTongues);
-        populateLookupSelect(ipGroupSelect, indigenousGroups);
+        const motherTongues = Array.isArray(motherTonguesResponse.data) ? motherTonguesResponse.data : [];
+        const indigenousGroups = Array.isArray(indigenousGroupsResponse.data) ? indigenousGroupsResponse.data : [];
+
+        populateLookupSelect(motherTongueSelect, motherTongues, 'mother_tongue_id', 'name');
+        populateLookupSelect(ipGroupSelect, indigenousGroups, 'indigenous_group_id', 'name');
     } catch (error) {
         console.error('Failed to load lookup values:', error);
     }
 }
 
-function populateLookupSelect(select, values) {
+function populateLookupSelect(select, values, valueField = 'id', labelField = 'name') {
     const otherOption = Array.from(select.options).find(option => option.value === 'Other');
     select.querySelectorAll('option').forEach(option => {
         if (option.value !== '' && option.value !== 'Other') {
@@ -326,11 +340,15 @@ function populateLookupSelect(select, values) {
         }
     });
 
-    values.forEach(value => {
-        if (!value) return;
+    values.forEach(item => {
+        if (!item) return;
+        const value = item[valueField] ?? item.id ?? item;
+        const label = item[labelField] ?? item.name ?? String(item);
+        if (value === undefined || value === null) return;
+
         const option = document.createElement('option');
-        option.value = value;
-        option.textContent = value;
+        option.value = String(value);
+        option.textContent = label;
         select.insertBefore(option, otherOption || null);
     });
 }
@@ -391,7 +409,7 @@ if (birthDateEl) {
 
 function addNestedValue(target, name, value) {
     const parts = name.split('[').map(part => part.replace(/\]$/, ''));
-    let current = target;
+    let currentNode = target;
 
     parts.forEach((part, index) => {
         const isLast = index === parts.length - 1;
@@ -400,37 +418,37 @@ function addNestedValue(target, name, value) {
 
         if (part === '') {
             if (isLast) {
-                current.push(value);
+                currentNode.push(value);
             } else {
-                if (!Array.isArray(current)) {
-                    current = [];
+                if (!Array.isArray(currentNode)) {
+                    currentNode = [];
                 }
-                if (current.length === 0) {
-                    current.push(nextPartIsNumeric ? {} : []);
+                if (currentNode.length === 0) {
+                    currentNode.push(nextPartIsNumeric ? {} : []);
                 }
-                current = current[current.length - 1];
+                currentNode = currentNode[currentNode.length - 1];
             }
         } else {
             if (isLast) {
                 const isNumericKey = /^\d+$/.test(part);
                 if (isNumericKey) {
-                    if (typeof current[part] !== 'object' || current[part] === null) {
-                        current[part] = value;
+                    if (typeof currentNode[part] !== 'object' || currentNode[part] === null) {
+                        currentNode[part] = value;
                     }
                 } else {
-                    if (current[part] === undefined) {
-                        current[part] = [];
+                    if (currentNode[part] === undefined) {
+                        currentNode[part] = [];
                     }
-                    if (!Array.isArray(current[part])) {
-                        current[part] = [current[part]];
+                    if (!Array.isArray(currentNode[part])) {
+                        currentNode[part] = [currentNode[part]];
                     }
-                    current[part].push(value);
+                    currentNode[part].push(value);
                 }
             } else {
-                if (current[part] === undefined) {
-                    current[part] = nextPartIsNumeric ? {} : [];
+                if (currentNode[part] === undefined) {
+                    currentNode[part] = nextPartIsNumeric ? {} : [];
                 }
-                current = current[part];
+                currentNode = currentNode[part];
             }
         }
     });
@@ -517,7 +535,7 @@ function showMessage(type, message) {
 }
 
 async function generateEnrollmentPdf(studentId) {
-    const url = new URL('pdf.php', window.location.href);
+    const url = new URL('../pdf.php', window.location.href);
     url.searchParams.set('student_id', studentId);
     url.searchParams.set('type', 'combined');
 
@@ -615,22 +633,80 @@ async function confirmSubmission() {
 
     try {
         const payload = serializeForm(form);
-        const response = await API.enroll.create(payload);
-        await generateEnrollmentPdf(response.student_id);
+        
+        // Validate required fields
+        if (!payload.Learner_First_Name || !payload.Learner_Last_Name || !payload.Birth_Date) {
+            throw new Error('Please fill in required learner information (First Name, Last Name, Date of Birth).');
+        }
 
-        showMessage('success', 'Enrollment submitted successfully. Student ID: ' + response.student_id + (response.enrollment_id ? ', Enrollment ID: ' + response.enrollment_id : '') + '. Form PDF generated. Redirecting to teacher dashboard...');
+        // Create or update student record
+        let studentId = payload.student_id ? parseInt(payload.student_id, 10) : null;
+        if (!studentId) {
+            showMessage('', 'Creating student record...');
+            
+            const studentPayload = {
+                lrn: payload.Learner_Reference_No || '',
+                first_name: payload.Learner_First_Name || '',
+                last_name: payload.Learner_Last_Name || '',
+                middle_name: payload.Learner_Middle_Name || '',
+                extension_name: payload.Learner_Extension_Name || '',
+                birth_date: payload.Birth_Date || '',
+                sex: payload.sex || '',
+                place_of_birth: payload.Place_of_Birth || '',
+                user_email: payload.user_email || '',
+                user_password: payload.user_password || ''
+            };
+
+            const studentResp = await API.students.create(studentPayload);
+            
+            // Handle different API response formats
+            if (studentResp.success && studentResp.data) {
+                studentId = studentResp.data.id || studentResp.data.student_id;
+            } else if (studentResp.id) {
+                studentId = studentResp.id;
+            } else if (studentResp.student_id) {
+                studentId = studentResp.student_id;
+            }
+            
+            if (!studentId) {
+                throw new Error('Failed to create student record. Please try again or contact support.');
+            }
+        }
+
+        payload.student_id = studentId;
+        showMessage('', 'Submitting enrollment...');
+
+        // Submit enrollment
+        const response = await API.enrollments.create(payload);
         
+        // Handle different API response formats
+        let enrollmentId = null;
+        if (response.success && response.data) {
+            enrollmentId = response.data.enrollment_id || response.data.id;
+        } else if (response.enrollment_id) {
+            enrollmentId = response.enrollment_id;
+        } else if (response.id) {
+            enrollmentId = response.id;
+        }
+
+        if (!response.success && !enrollmentId) {
+            throw new Error(response.error || response.message || 'Enrollment submission failed.');
+        }
+
+        showMessage('success', 'Enrollment submitted successfully!' + (enrollmentId ? ' Enrollment ID: ' + enrollmentId : '') + '. Redirecting...');
+
         setTimeout(() => {
-            window.location.href = '../../dashboard/teacher_dashboard/teacher_dashboard.php';
-        }, 2000);
-        
+            window.location.href = '../../../dashboard/teacher_dashboard/teacher_dashboard.php';
+        }, 2500);
+
         form.reset();
         goTo(1);
         document.getElementById('ageField').value = '';
         document.getElementById('permBox').style.opacity = '1';
         document.getElementById('permBox').style.pointerEvents = 'auto';
     } catch (error) {
-        showMessage('error', error.message || 'Enrollment submission failed.');
+        showMessage('error', error.message || 'Enrollment submission failed. Please review the form and try again.');
+        console.error('Enrollment submission error:', error);
     } finally {
         submitButton.disabled = false;
     }

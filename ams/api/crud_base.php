@@ -115,8 +115,12 @@ function handleCreate(PDO $pdo, string $table): void {
         sendJson(['success' => false, 'error' => 'No valid fields provided for insertion'], 400);
     }
 
-    $stmt = $pdo->prepare(buildInsertQuery($table, array_keys($payload)));
-    $stmt->execute(array_values($payload));
+    try {
+        $stmt = $pdo->prepare(buildInsertQuery($table, array_keys($payload)));
+        $stmt->execute(array_values($payload));
+    } catch (PDOException $e) {
+        sendJson(['success' => false, 'error' => 'Database error: ' . $e->getMessage()], 500);
+    }
 
     sendJson(['success' => true, 'id' => intval($pdo->lastInsertId())]);
 }
