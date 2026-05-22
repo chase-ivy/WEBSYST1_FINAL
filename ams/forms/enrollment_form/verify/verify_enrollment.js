@@ -449,11 +449,14 @@ async function verifyEnrollment() {
     button.disabled = true;
     setMessage('', 'Processing verification…');
     try {
-        const response = await fetch(`${apiBase}?action=verify`, {
+        const response = await fetch('../../../api/crud/enrollments/c_enrollments.php?action=verify', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enrollment_id: enrollmentId }),
+            body: JSON.stringify({ 
+                enrollment_id: parseInt(enrollmentId, 10),
+                verified_by: window.CURRENT_USER_ID 
+            }),
         });
         const json = await response.json();
         if (!json.success) {

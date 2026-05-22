@@ -633,6 +633,13 @@ async function confirmSubmission() {
 
     try {
         const payload = serializeForm(form);
+        
+        // DEBUG: Log disability data
+        console.log('=== ENROLLMENT FORM DEBUG ===');
+        console.log('disabilityDetails:', payload.disabilityDetails);
+        console.log('disability_sub:', payload.disability_sub);
+        console.log('disability (yes/no):', payload.disability);
+        console.log('Full payload:', payload);
 
         let studentId = payload.student_id ? parseInt(payload.student_id, 10) : null;
         if (!studentId) {

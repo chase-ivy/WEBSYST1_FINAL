@@ -53,22 +53,25 @@ function resolveIndigenousGroupId(PDO $pdo, ?string $name): ?int {
     return resolveLookupId($pdo, 'indigenous_groups', 'indigenous_group_id', 'name', $name);
 }
 
-function insertParentGuardian(PDO $pdo, int $studentId, int $typeId, string $lastName, string $firstName, string $middleName, string $contactNumber): void {
+function insertParentGuardian(PDO $pdo, int $studentId, int $typeId, string $lastName, string $firstName, string $middleName, string $contactNumber, ?string $occupation = null, ?string $relationshipStatus = null, ?string $facebookMessenger = null, int $isEmergencyContact = 0): void {
     $lastName = trim($lastName);
     $firstName = trim($firstName);
     $middleName = trim($middleName);
     $contactNumber = trim($contactNumber);
+    $occupation = trim((string)($occupation ?? '')) ?: null;
+    $relationshipStatus = trim((string)($relationshipStatus ?? '')) ?: null;
+    $facebookMessenger = trim((string)($facebookMessenger ?? '')) ?: null;
 
-    if ($lastName === '' && $firstName === '' && $middleName === '' && $contactNumber === '') {
+    if ($lastName === '' && $firstName === '' && $middleName === '' && $contactNumber === '' && $occupation === null && $relationshipStatus === null && $facebookMessenger === null && $isEmergencyContact === 0) {
         return;
     }
 
     $stmt = $pdo->prepare('
         INSERT INTO student_parent_guardians
-            (student_id, parent_guardian_type_id, last_name, first_name, middle_name, contact_number)
-        VALUES (?, ?, ?, ?, ?, ?)
+            (student_id, parent_guardian_type_id, last_name, first_name, middle_name, contact_number, occupation, relationship_status, face_book_messenger, is_emergency_contact)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
-    $stmt->execute([$studentId, $typeId, $lastName, $firstName, $middleName, $contactNumber]);
+    $stmt->execute([$studentId, $typeId, $lastName, $firstName, $middleName, $contactNumber, $occupation, $relationshipStatus, $facebookMessenger, $isEmergencyContact]);
 }
 
 function getOwnershipType($value): ?string {
@@ -292,20 +295,40 @@ function handleEnrollmentCreate(PDO $pdo): void {
         }
 
         $disabilityRows = [];
+        
+        // First, collect all disability types that have subtypes (from disability_sub)
+        $processedTypes = [];
         if (!empty($data['disability_sub']) && is_array($data['disability_sub'])) {
             foreach ($data['disability_sub'] as $typeId => $values) {
                 $typeId = intval($typeId);
                 if ($typeId === 0 || !is_array($values)) {
                     continue;
                 }
+                $processedTypes[$typeId] = true;
                 $subtypeIds = array_map('intval', array_filter($values, fn($v) => $v !== ''));
                 if (empty($subtypeIds)) {
+                    // Type selected but no subtype chosen
                     $disabilityRows[] = ['type_id' => $typeId, 'subtype_id' => null];
                 } else {
+                    // Type selected with specific subtypes
                     foreach (array_unique($subtypeIds) as $subtypeId) {
                         $disabilityRows[] = ['type_id' => $typeId, 'subtype_id' => $subtypeId];
                     }
                 }
+            }
+        }
+        
+        // Then, collect disability types without subtypes (from disabilityDetails)
+        // These are types that were checked but don't have subtype options
+        if (!empty($data['disabilityDetails']) && is_array($data['disabilityDetails'])) {
+            foreach ($data['disabilityDetails'] as $typeId => $values) {
+                $typeId = intval($typeId);
+                // Skip if we already processed this type (it had subtypes)
+                if ($typeId === 0 || !is_array($values) || isset($processedTypes[$typeId])) {
+                    continue;
+                }
+                // Add this type without a subtype
+                $disabilityRows[] = ['type_id' => $typeId, 'subtype_id' => null];
             }
         }
         if (!empty($disabilityRows)) {
@@ -315,9 +338,47 @@ function handleEnrollmentCreate(PDO $pdo): void {
             }
         }
 
-        insertParentGuardian($pdo, $studentId, 1, $data['father_last_name'] ?? '', $data['father_first_name'] ?? '', $data['father_middle_name'] ?? '', $data['father_contact_number'] ?? '');
-        insertParentGuardian($pdo, $studentId, 2, $data['mother_last_name'] ?? '', $data['mother_first_name'] ?? '', $data['mother_middle_name'] ?? '', $data['mother_contact_number'] ?? '');
-        insertParentGuardian($pdo, $studentId, 3, $data['guardian_last_name'] ?? '', $data['guardian_first_name'] ?? '', $data['guardian_middle_name'] ?? '', $data['guardian_contact_number'] ?? '');
+        insertParentGuardian(
+            $pdo,
+            $studentId,
+            1,
+            $data['father_last_name'] ?? '',
+            $data['father_first_name'] ?? '',
+            $data['father_middle_name'] ?? '',
+            $data['father_contact_number'] ?? '',
+            $data['father_occupation'] ?? null,
+            $data['father_relationship_status'] ?? null,
+            $data['father_face_book_messenger'] ?? null,
+            normalizeCheckboxValue($data['father_is_emergency_contact'] ?? 0)
+        );
+
+        insertParentGuardian(
+            $pdo,
+            $studentId,
+            2,
+            $data['mother_last_name'] ?? '',
+            $data['mother_first_name'] ?? '',
+            $data['mother_middle_name'] ?? '',
+            $data['mother_contact_number'] ?? '',
+            $data['mother_occupation'] ?? null,
+            $data['mother_relationship_status'] ?? null,
+            $data['mother_face_book_messenger'] ?? null,
+            normalizeCheckboxValue($data['mother_is_emergency_contact'] ?? 0)
+        );
+
+        insertParentGuardian(
+            $pdo,
+            $studentId,
+            3,
+            $data['guardian_last_name'] ?? '',
+            $data['guardian_first_name'] ?? '',
+            $data['guardian_middle_name'] ?? '',
+            $data['guardian_contact_number'] ?? '',
+            $data['guardian_occupation'] ?? null,
+            $data['guardian_relationship_status'] ?? null,
+            $data['guardian_face_book_messenger'] ?? null,
+            normalizeCheckboxValue($data['guardian_is_emergency_contact'] ?? 0)
+        );
 
         if ($isReturning) {
             $returningInsert = $pdo->prepare('INSERT INTO enrollment_returning_learners (enrollment_id, last_grade_level_completed, last_school_attended, last_school_year_completed) VALUES (?, ?, ?, ?)');
@@ -381,5 +442,256 @@ function handleEnrollmentCreate(PDO $pdo): void {
     }
 }
 
-handleEnrollmentCreate($pdo);
+function handleEnrollmentVerify(PDO $pdo): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        sendJson(['success' => false, 'error' => 'Method not allowed. Use POST.'], 405);
+    }
+
+    $data = getJsonInput();
+    $enrollmentId = intval($data['enrollment_id'] ?? 0);
+    $verifiedBy = intval($data['verified_by'] ?? 0);
+    
+    if ($enrollmentId <= 0) {
+        sendJson(['success' => false, 'error' => 'enrollment_id is required'], 400);
+    }
+    if ($verifiedBy <= 0) {
+        sendJson(['success' => false, 'error' => 'verified_by (user_id) is required'], 400);
+    }
+
+    try {
+        // Fetch enrollment and student data
+        $enrollmentStmt = $pdo->prepare('
+            SELECT e.*, s.lrn, s.psa_bcn, s.last_name, s.first_name, s.middle_name, 
+                   s.extension_name, s.birth_date, s.sex, s.place_of_birth
+            FROM enrollments e
+            JOIN students s ON e.student_id = s.student_id
+            WHERE e.enrollment_id = ? LIMIT 1
+        ');
+        $enrollmentStmt->execute([$enrollmentId]);
+        $enrollment = $enrollmentStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$enrollment) {
+            sendJson(['success' => false, 'error' => 'Enrollment not found'], 404);
+            return;
+        }
+
+        // Verify enrollment is in pending state
+        if ($enrollment['enrollment_status'] !== 'pending') {
+            sendJson(['success' => false, 'error' => 'Only pending enrollments can be verified'], 400);
+            return;
+        }
+
+        $pdo->beginTransaction();
+
+        // Step 1: Update enrollment status to verified (without verified_by/verified_at yet)
+        $updateEnrollmentStatus = $pdo->prepare('UPDATE enrollments SET enrollment_status = ? WHERE enrollment_id = ?');
+        $updateEnrollmentStatus->execute(['verified', $enrollmentId]);
+
+        // Step 2: Fetch and resolve disability data
+        $disabilityStmt = $pdo->prepare('
+            SELECT ed.disability_type_id, ed.disability_subtype_id,
+                   dt.name as type_name, ds.name as subtype_name
+            FROM enrollment_disabilities ed
+            LEFT JOIN disability_types dt ON ed.disability_type_id = dt.disability_type_id
+            LEFT JOIN disability_subtypes ds ON ed.disability_subtype_id = ds.disability_subtype_id
+            WHERE ed.enrollment_id = ?
+        ');
+        $disabilityStmt->execute([$enrollmentId]);
+        $disabilityRecords = $disabilityStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $disabilityJson = null;
+        if (!empty($disabilityRecords)) {
+            $disabilityArray = array_map(function($record) {
+                return [
+                    'type' => $record['type_name'],
+                    'subtype' => $record['subtype_name'],
+                ];
+            }, $disabilityRecords);
+            $disabilityJson = json_encode($disabilityArray);
+        }
+
+        // Step 3: Fetch and flatten medical data
+        $medicalInfoStmt = $pdo->prepare('
+            SELECT medical_information_id, exposed_to_cigarette_vape_smoke, other_pertinent_information
+            FROM enrollment_medical_information
+            WHERE enrollment_id = ?
+            LIMIT 1
+        ');
+        $medicalInfoStmt->execute([$enrollmentId]);
+        $medicalInfo = $medicalInfoStmt->fetch(PDO::FETCH_ASSOC);
+
+        $allergiesJson = null;
+        $conditionsJson = null;
+        $surgeriesJson = null;
+        $treatmentsJson = null;
+        $familyHistoryJson = null;
+
+        if ($medicalInfo) {
+            $medicalInfoId = intval($medicalInfo['medical_information_id']);
+
+            // Fetch allergy details
+            $allergyDetailsStmt = $pdo->prepare("
+                SELECT ema.allergy_type_id, mat.name as allergy_name, ema.description
+                FROM enrollment_medical_allergies ema
+                JOIN medical_allergy_types mat ON ema.allergy_type_id = mat.allergy_type_id
+                WHERE ema.medical_information_id = ?
+            ");
+            $allergyDetailsStmt->execute([$medicalInfoId]);
+            $allergyDetails = $allergyDetailsStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($allergyDetails)) {
+                $allergiesJson = json_encode($allergyDetails);
+            }
+
+            // Fetch condition details
+            $conditionDetailsStmt = $pdo->prepare("
+                SELECT emc.condition_type_id, mct.name as condition_name, emc.description
+                FROM enrollment_medical_conditions emc
+                JOIN medical_condition_types mct ON emc.condition_type_id = mct.condition_type_id
+                WHERE emc.medical_information_id = ?
+            ");
+            $conditionDetailsStmt->execute([$medicalInfoId]);
+            $conditionDetails = $conditionDetailsStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($conditionDetails)) {
+                $conditionsJson = json_encode($conditionDetails);
+            }
+
+            // Fetch surgery details
+            $surgeryDetailsStmt = $pdo->prepare("
+                SELECT surgery_date, hospital_name, body_part
+                FROM enrollment_medical_surgeries
+                WHERE medical_information_id = ?
+            ");
+            $surgeryDetailsStmt->execute([$medicalInfoId]);
+            $surgeryDetails = $surgeryDetailsStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($surgeryDetails)) {
+                $surgeriesJson = json_encode($surgeryDetails);
+            }
+
+            // Fetch treatment details
+            $treatmentDetailsStmt = $pdo->prepare("
+                SELECT treatment_medicine, schedule_dosage
+                FROM enrollment_medical_treatments
+                WHERE medical_information_id = ?
+            ");
+            $treatmentDetailsStmt->execute([$medicalInfoId]);
+            $treatmentDetails = $treatmentDetailsStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($treatmentDetails)) {
+                $treatmentsJson = json_encode($treatmentDetails);
+            }
+
+            // Fetch family history details
+            $familyHistoryDetailsStmt = $pdo->prepare("
+                SELECT emfh.family_history_type_id, fht.name as family_history_name, emfh.description
+                FROM enrollment_family_medical_history emfh
+                JOIN family_medical_history_types fht ON emfh.family_history_type_id = fht.family_history_type_id
+                WHERE emfh.medical_information_id = ?
+            ");
+            $familyHistoryDetailsStmt->execute([$medicalInfoId]);
+            $familyHistoryDetails = $familyHistoryDetailsStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($familyHistoryDetails)) {
+                $familyHistoryJson = json_encode($familyHistoryDetails);
+            }
+        }
+
+        // Step 4: Update student_school_records with verified data
+        // First, fetch the school_record_id from the initial enrollment
+        $schoolRecordStmt = $pdo->prepare('SELECT school_record_id FROM student_school_records WHERE enrollment_id = ? LIMIT 1');
+        $schoolRecordStmt->execute([$enrollmentId]);
+        $schoolRecord = $schoolRecordStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$schoolRecord) {
+            throw new Exception('Student school record not found for this enrollment');
+        }
+        
+        $schoolRecordId = intval($schoolRecord['school_record_id']);
+
+        // Resolve mother_tongue_id and indigenous_group_id to names
+        $motherTongueName = null;
+        if ($enrollment['mother_tongue_id']) {
+            $mtStmt = $pdo->prepare('SELECT name FROM mother_tongues WHERE mother_tongue_id = ? LIMIT 1');
+            $mtStmt->execute([$enrollment['mother_tongue_id']]);
+            $mtRow = $mtStmt->fetch(PDO::FETCH_ASSOC);
+            $motherTongueName = $mtRow['name'] ?? null;
+        }
+
+        $indigenousGroupName = null;
+        if ($enrollment['indigenous_group_id']) {
+            $igStmt = $pdo->prepare('SELECT name FROM indigenous_groups WHERE indigenous_group_id = ? LIMIT 1');
+            $igStmt->execute([$enrollment['indigenous_group_id']]);
+            $igRow = $igStmt->fetch(PDO::FETCH_ASSOC);
+            $indigenousGroupName = $igRow['name'] ?? null;
+        }
+
+        $updateSchoolRecord = $pdo->prepare('
+            UPDATE student_school_records
+            SET mother_tongue = ?, indigenous_group = ?, disabilities = ?,
+                verified_by = ?, verified_at = NOW(), academic_status = ?
+            WHERE school_record_id = ?
+        ');
+        $updateSchoolRecord->execute([
+            $motherTongueName,
+            $indigenousGroupName,
+            $disabilityJson,
+            $verifiedBy,
+            'active',
+            $schoolRecordId,
+        ]);
+
+        // Step 5: Insert into student_medical_records
+        $insertMedicalRecord = $pdo->prepare('
+            INSERT INTO student_medical_records 
+            (school_record_id, exposed_to_cigarette_vape_smoke, other_pertinent_information, 
+             allergies, conditions, surgeries, treatments, family_medical_history)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                exposed_to_cigarette_vape_smoke = VALUES(exposed_to_cigarette_vape_smoke),
+                other_pertinent_information = VALUES(other_pertinent_information),
+                allergies = VALUES(allergies),
+                conditions = VALUES(conditions),
+                surgeries = VALUES(surgeries),
+                treatments = VALUES(treatments),
+                family_medical_history = VALUES(family_medical_history)
+        ');
+        $insertMedicalRecord->execute([
+            $schoolRecordId,
+            $medicalInfo['exposed_to_cigarette_vape_smoke'] ?? 0,
+            $medicalInfo['other_pertinent_information'] ?? null,
+            $allergiesJson,
+            $conditionsJson,
+            $surgeriesJson,
+            $treatmentsJson,
+            $familyHistoryJson,
+        ]);
+
+        // Step 6: Update enrollment with verified_by and verified_at
+        $finalUpdateEnrollment = $pdo->prepare('
+            UPDATE enrollments 
+            SET verified_by = ?, verified_at = NOW()
+            WHERE enrollment_id = ?
+        ');
+        $finalUpdateEnrollment->execute([$verifiedBy, $enrollmentId]);
+
+        $pdo->commit();
+
+        sendJson([
+            'success' => true,
+            'enrollment_id' => $enrollmentId,
+            'school_record_id' => $schoolRecordId,
+            'message' => 'Enrollment verified and permanent records created',
+        ]);
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        sendJson(['success' => false, 'error' => $e->getMessage()], 500);
+    }
+}
+
+// Route the request based on action parameter
+$action = $_GET['action'] ?? $_POST['action'] ?? 'create';
+if ($action === 'verify') {
+    handleEnrollmentVerify($pdo);
+} else {
+    handleEnrollmentCreate($pdo);
+}
 
