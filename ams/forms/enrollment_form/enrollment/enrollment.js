@@ -690,7 +690,7 @@ async function confirmSubmission() {
         showMessage('success', 'Enrollment submitted successfully. Student ID: ' + studentId + (enrollmentId ? ', Enrollment ID: ' + enrollmentId : '') + '. Redirecting to teacher dashboard...');
 
         setTimeout(() => {
-            window.location.href = '../../dashboard/teacher_dashboard/teacher_dashboard.php';
+            window.location.href = '../../../dashboard/teacher_dashboard/teacher_dashboard.php';
         }, 2000);
 
         form.reset();
