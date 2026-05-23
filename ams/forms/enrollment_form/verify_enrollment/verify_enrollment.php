@@ -133,7 +133,7 @@ try {
     </footer>
 
     <script src='../../../api/client.js'></script>
-    <script src="../enrollment.js"></script>
+    <script src="../enrollment/enrollment.js"></script>
     <script src="verify_enrollment.js"></script>
 </body>
 </html>
