@@ -240,6 +240,25 @@ function buildReviewSummary() {
     summary.innerHTML = lines.length ? lines.join('') : '<em>No review information available.</em>';
 }
 
+function filterSectionsByGradeLevel(gradeLevel) {
+    const selectElement = document.getElementById('assignSectionSelect');
+    if (!selectElement || !window.SECTIONS) return;
+    
+    // Clear current options (keep placeholder)
+    while (selectElement.options.length > 1) {
+        selectElement.remove(1);
+    }
+    
+    // Filter and populate matching sections
+    const matching = window.SECTIONS.filter(s => s.grade_level === gradeLevel);
+    matching.forEach(sec => {
+        const opt = document.createElement('option');
+        opt.value = sec.section_id;
+        opt.textContent = `${sec.school_year} · ${sec.grade_level} · ${sec.name}`;
+        selectElement.appendChild(opt);
+    });
+}
+
 function applyEnrollmentToForm(data) {
     currentEnrollmentData = data;
     if (!data || !data.enrollment) return;
@@ -341,6 +360,11 @@ function applyEnrollmentToForm(data) {
     if (typeof showQ4 === 'function') showQ4();
     if (typeof showQ5 === 'function') showQ5();
 
+    // Filter section dropdown to only show sections matching this enrollment's grade level
+    if (enrollment.grade_level) {
+        filterSectionsByGradeLevel(enrollment.grade_level);
+    }
+
     buildReviewSummary();
 }
 
@@ -381,45 +405,80 @@ async function saveEnrollmentUpdates() {
     }
 }
 
-function resetVerifyForm() {
+function resetVerifyForm(preserveAssign = false) {
     document.getElementById('enrollmentForm')?.reset();
     currentEnrollmentData = null;
     document.getElementById('reviewSummary').innerHTML = '<em>Select an enrollment to populate the form.</em>';
     setMessage('', '');
-    goTo(1);
+
+    if (!preserveAssign) {
+        const assignSelect = document.getElementById('assignSectionSelect');
+        const assignBtn = document.getElementById('assignSectionBtn');
+        const rejectInput = document.getElementById('rejectReason');
+        if (assignSelect) {
+            assignSelect.disabled = true;
+            assignSelect.value = '';
+        }
+        if (assignBtn) {
+            assignBtn.disabled = true;
+            delete assignBtn.dataset.schoolRecordId;
+        }
+        if (rejectInput) {
+            rejectInput.value = '';
+        }
+        goTo(1);
+    } else {
+        // clear enrollment dropdown selection but keep user on review/step 5
+        const enrollmentSelect = document.getElementById('enrollmentSelect');
+        if (enrollmentSelect) enrollmentSelect.value = '';
+    }
 }
 
 async function fetchPendingEnrollments() {
     const select = document.getElementById('enrollmentSelect');
+    const yearFilter = document.getElementById('schoolYearFilter');
+    const selectedYear = yearFilter?.value || null;
     select.innerHTML = '<option value="">Loading…</option>';
     try {
-        // Use the API client to fetch all enrollments
-        const response = await API.enrollments.list();
-        
-        // Handle different response formats from the API
+        const response = selectedYear
+            ? await API.enrollment.queue(selectedYear, 'pending')
+            : await API.enrollment.queue(null, 'pending');
+
         let enrollments = [];
         if (Array.isArray(response.data)) {
             enrollments = response.data;
         } else if (Array.isArray(response)) {
             enrollments = response;
-        } else if (response.enrollments && Array.isArray(response.enrollments)) {
+        } else if (Array.isArray(response.enrollments)) {
             enrollments = response.enrollments;
         } else if (!response.success) {
             throw new Error(response.error || 'Could not load pending enrollments');
         }
-        
-        // Filter for pending enrollments
+
         const pending = enrollments.filter(e => 
             e.enrollment_status === 'pending' || 
             e.status === 'pending'
         );
-        
+
+        const years = Array.from(new Set(enrollments.map(e => e.school_year).filter(Boolean))).sort((a, b) => b.localeCompare(a));
+        if (yearFilter) {
+            const currentValue = yearFilter.value;
+            yearFilter.innerHTML = '<option value="">All school years</option>';
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === currentValue) option.selected = true;
+                yearFilter.appendChild(option);
+            });
+        }
+
         if (pending.length === 0) {
             select.innerHTML = '<option value="">-- no pending enrollments --</option>';
             setMessage('info', 'No pending enrollments to verify.');
             return;
         }
-        
+
         select.innerHTML = '<option value="">-- select enrollment --</option>';
         pending.forEach(item => {
             const option = document.createElement('option');
@@ -481,30 +540,90 @@ async function verifyEnrollment() {
     button.disabled = true;
     setMessage('', 'Processing verification…');
     try {
-        // Update enrollment with verified status
-        const payload = {
-            enrollment_id: parseInt(enrollmentId, 10),
-            enrollment_status: 'verified',
-            verified_by: window.CURRENT_USER_ID || 0,
-            verified_at: new Date().toISOString().split('T')[0]
-        };
-        
-        const response = await API.enrollments.update(
-            parseInt(enrollmentId, 10),
-            payload
-        );
-        
-        if (!response.success) {
-            throw new Error(response.error || response.message || 'Verification failed');
+        // Call the canonical verify endpoint which creates the school record
+        const response = await API.enrollment.verify(parseInt(enrollmentId, 10));
+        if (!response || !response.success) {
+            throw new Error(response?.error || response?.message || 'Verification failed');
         }
-        
+
         setMessage('success', 'Enrollment verified and archived successfully.');
+
+        // If we have a school_record_id, enable immediate section assignment
+        const schoolRecordId = response.school_record_id || (response.data && response.data.school_record_id) || null;
+        if (schoolRecordId) {
+            const assignSelect = document.getElementById('assignSectionSelect');
+            const assignBtn = document.getElementById('assignSectionBtn');
+            if (assignSelect && assignBtn) {
+                assignSelect.disabled = false;
+                assignBtn.disabled = false;
+                assignBtn.dataset.schoolRecordId = schoolRecordId;
+            }
+        }
+
         await fetchPendingEnrollments();
-        resetVerifyForm();
+        // Keep the section-assignment UI visible as a post-verify step
+        resetVerifyForm(true);
     } catch (error) {
         setMessage('error', error.message || 'Verification failed. Please try again.');
     } finally {
         button.disabled = false;
+    }
+}
+
+async function rejectEnrollment() {
+    const enrollmentId = document.getElementById('enrollmentSelect')?.value;
+    if (!enrollmentId) {
+        setMessage('error', 'Please select a pending enrollment first.');
+        return;
+    }
+    const reason = document.getElementById('rejectReason')?.value.trim() || null;
+    if (!confirm('Reject this enrollment? This will mark it as rejected and notify the student.')) {
+        return;
+    }
+    const button = document.getElementById('rejectSubmitBtn');
+    button.disabled = true;
+    setMessage('', 'Processing rejection…');
+    try {
+        const response = await API.enrollment.reject(parseInt(enrollmentId, 10), reason);
+        if (!response || !response.success) {
+            throw new Error(response?.error || response?.message || 'Rejection failed');
+        }
+
+        setMessage('success', 'Enrollment rejected successfully.');
+        document.getElementById('rejectReason').value = '';
+        await fetchPendingEnrollments();
+        resetVerifyForm();
+    } catch (error) {
+        setMessage('error', error.message || 'Rejection failed. Please try again.');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+async function assignSection() {
+    const assignBtn = document.getElementById('assignSectionBtn');
+    const assignSelect = document.getElementById('assignSectionSelect');
+    if (!assignBtn || !assignSelect) return;
+    const schoolRecordId = parseInt(assignBtn.dataset.schoolRecordId || 0, 10);
+    const sectionId = parseInt(assignSelect.value || 0, 10);
+    if (!schoolRecordId || !sectionId) {
+        setMessage('error', 'Select a section before assigning.');
+        return;
+    }
+    assignBtn.disabled = true;
+    setMessage('', 'Assigning to section…');
+    try {
+        const res = await API.sections.assignStudent(schoolRecordId, sectionId);
+        if (!res || !res.success) throw new Error(res?.error || 'Assignment failed');
+        setMessage('success', 'Student assigned to section successfully.');
+        // refresh pending list and form
+        await fetchPendingEnrollments();
+        resetVerifyForm();
+    } catch (err) {
+        console.error(err);
+        setMessage('error', err.message || 'Assignment failed.');
+    } finally {
+        assignBtn.disabled = false;
     }
 }
 
@@ -530,8 +649,20 @@ function initializeVerifyPage() {
             resetVerifyForm();
         });
     }
+    const yearFilter = document.getElementById('schoolYearFilter');
+    if (yearFilter) {
+        yearFilter.addEventListener('change', () => fetchPendingEnrollments());
+    }
     if (verifyBtn) {
         verifyBtn.addEventListener('click', verifyEnrollment);
+    }
+    const assignBtn = document.getElementById('assignSectionBtn');
+    if (assignBtn) {
+        assignBtn.addEventListener('click', assignSection);
+    }
+    const rejectBtn = document.getElementById('rejectSubmitBtn');
+    if (rejectBtn) {
+        rejectBtn.addEventListener('click', rejectEnrollment);
     }
     const saveBtn = document.getElementById('saveChangesBtn');
     if (saveBtn) {

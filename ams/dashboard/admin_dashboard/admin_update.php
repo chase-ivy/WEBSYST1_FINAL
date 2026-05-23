@@ -23,7 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         trim($_POST['role'] ?? ''),
         trim($_POST['password'] ?? ''),
         trim($_POST['grade_level'] ?? '') ?: null,
-        intval($_POST['section_id'] ?? 0)
+        intval($_POST['section_id'] ?? 0),
+        isset($_POST['is_active']) ? intval($_POST['is_active']) : null
     );
 
     if ($result['success']) {
@@ -121,7 +122,6 @@ $staffList = getStaffList($pdo);
                             <label for="role">User Role</label>
                             <div class="select-wrap">
                                 <select id="role" name="role" required>
-                                    <option value="teacher" <?php echo $editStaff['role'] === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
                                     <option value="staff" <?php echo $editStaff['role'] === 'staff' ? 'selected' : ''; ?>>Staff</option>
                                 </select>
                             </div>
@@ -152,6 +152,16 @@ $staffList = getStaffList($pdo);
                         </div>
 
                         <div class="form-group">
+                            <label for="is_active">Account Status</label>
+                            <div class="select-wrap">
+                                <select id="is_active" name="is_active">
+                                    <option value="1" <?php echo isset($editStaff['is_active']) && $editStaff['is_active'] ? 'selected' : ''; ?>>Active</option>
+                                    <option value="0" <?php echo isset($editStaff['is_active']) && !$editStaff['is_active'] ? 'selected' : ''; ?>>Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label for="password">New Password <small>(leave blank to keep current)</small></label>
                             <input id="password" type="password" name="password">
                         </div>
@@ -170,18 +180,20 @@ $staffList = getStaffList($pdo);
                                     <th>Username</th>
                                     <th>Email</th>
                                     <th>Role</th>
+                                    <th>Status</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="update-staff-tbody">
                                 <?php if (empty($staffList)): ?>
-                                    <tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>
+                                    <tr class="empty-row"><td colspan="5">No staff accounts found.</td></tr>
                                 <?php else: ?>
                                     <?php foreach ($staffList as $staff): ?>
                                         <tr>
                                             <td class="td-primary"><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></td>
                                             <td><?php echo htmlspecialchars($staff['email'], ENT_QUOTES, 'UTF-8'); ?></td>
                                             <td><span class="badge badge-staff"><?php echo htmlspecialchars($staff['role'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8'); ?></span></td>
+                                            <td><?php echo isset($staff['is_active']) && $staff['is_active'] ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'; ?></td>
                                             <td class="td-actions">
                                                 <a href="admin_update.php?edit_id=<?php echo htmlspecialchars($staff['user_id'], ENT_QUOTES, 'UTF-8'); ?>" class="btn-edit edit-user" data-user-id="<?php echo htmlspecialchars($staff['user_id'], ENT_QUOTES, 'UTF-8'); ?>">Edit</a>
                                             </td>
@@ -239,6 +251,15 @@ $staffList = getStaffList($pdo);
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label>Status</label>
+                                <div class="select-wrap">
+                                    <select id="js-is_active">
+                                        <option value="1">Active</option>
+                                        <option value="0">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label>New Password</label>
                                 <input id="js-password" type="password">
                             </div>
@@ -292,6 +313,10 @@ $staffList = getStaffList($pdo);
             if (jsSectionSelect) {
                 jsSectionSelect.value = staff.section_id || '';
             }
+            const jsIsActive = document.getElementById('js-is_active');
+            if (jsIsActive) {
+                jsIsActive.value = staff.is_active ? '1' : '0';
+            }
 
             document.getElementById('update-form-wrapper').style.display = 'block';
         } catch (error) {
@@ -322,7 +347,8 @@ $staffList = getStaffList($pdo);
                 role: document.getElementById('js-role').value,
                 password: document.getElementById('js-password').value.trim(),
                 grade_level: jsGradeSelect ? jsGradeSelect.value || null : null,
-                section_id: jsSectionSelect && jsSectionSelect.value ? Number(jsSectionSelect.value) : null
+                section_id: jsSectionSelect && jsSectionSelect.value ? Number(jsSectionSelect.value) : null,
+                is_active: document.getElementById('js-is_active') ? parseInt(document.getElementById('js-is_active').value, 10) : 1
             };
             try {
                 const response = await API.crud.update('users', data.user_id, data);

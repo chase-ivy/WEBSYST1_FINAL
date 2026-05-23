@@ -25,6 +25,6 @@ function renderStudentSidebar(string $active = 'dashboard'): void {
     }
     echo '</nav>';
 
-    echo '<a href="../../login/logout.php">Logout</a>';
+    // Logout link already included in the `$items` list above.
     echo '</aside>';
 }

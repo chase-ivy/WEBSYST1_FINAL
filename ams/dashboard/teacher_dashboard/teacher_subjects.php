@@ -29,6 +29,7 @@ require_role(['staff']);
             <h1>Subjects</h1>
             <p>Manage subjects and assign them to your classes.</p>
         </div>
+        <div id="pageMessage" class="message" style="display:block; margin-top:12px;"></div>
 
         <section class="section">
             <div class="section-header">
@@ -131,6 +132,43 @@ require_role(['staff']);
 
 <script src="../../api/client.js"></script>
 <script>
+// Lightweight inline message and confirm utilities
+function showMessage(type, message) {
+    const container = document.getElementById('pageMessage');
+    if (!container) return;
+    container.className = 'message';
+    if (type === 'success') container.classList.add('success');
+    if (type === 'error') container.classList.add('error');
+    container.textContent = message;
+}
+
+function showConfirm(message) {
+    return new Promise(resolve => {
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.left = '0';
+        modal.style.top = '0';
+        modal.style.right = '0';
+        modal.style.bottom = '0';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.background = 'rgba(0,0,0,0.4)';
+        modal.innerHTML = `
+            <div style="background:#fff; padding:18px; border-radius:8px; max-width:420px; width:100%;">
+                <div style="margin-bottom:12px;">${message}</div>
+                <div style="text-align:right; display:flex; gap:8px; justify-content:flex-end;">
+                    <button id="_confirmCancel" class="btn btn-ghost">Cancel</button>
+                    <button id="_confirmOk" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('#_confirmCancel').addEventListener('click', () => { document.body.removeChild(modal); resolve(false); });
+        modal.querySelector('#_confirmOk').addEventListener('click', () => { document.body.removeChild(modal); resolve(true); });
+    });
+}
+
 let currentClassId = null;
 
 async function loadClasses() {
@@ -242,7 +280,7 @@ async function createSubject() {
     const name = document.getElementById('newSubject').value.trim();
 
     if (!name) {
-        alert('Please enter a subject name');
+        showMessage('error', 'Please enter a subject name');
         return;
     }
 
@@ -250,26 +288,27 @@ async function createSubject() {
         const response = await API.subjects.create({ name });
         if (response.success) {
             document.getElementById('newSubject').value = '';
+            showMessage('success', 'Subject created successfully.');
             loadSubjects();
         } else {
-            alert('Failed to create subject');
+            showMessage('error', response.error || 'Failed to create subject');
         }
     } catch (error) {
         console.error('Failed to create subject:', error);
-        alert('Failed to create subject');
+        showMessage('error', 'Failed to create subject');
     }
 }
 
 async function assignSubjectToClass() {
     if (!currentClassId) {
-        alert('Please select a class first');
+        showMessage('error', 'Please select a class first');
         return;
     }
 
     const subjectId = document.getElementById('subjectSelect').value;
 
     if (!subjectId) {
-        alert('Please select a subject to assign');
+        showMessage('error', 'Please select a subject to assign');
         return;
     }
 
@@ -280,30 +319,32 @@ async function assignSubjectToClass() {
         });
 
         if (response.success) {
-            alert(response.message || 'Subject assigned successfully');
+            showMessage('success', response.message || 'Subject assigned successfully');
             loadAssignedSubjects();
         } else {
-            alert(response.error || 'Failed to assign subject');
+            showMessage('error', response.error || 'Failed to assign subject');
         }
     } catch (error) {
         console.error('Failed to assign subject:', error);
-        alert('Failed to assign subject');
+        showMessage('error', 'Failed to assign subject');
     }
 }
 
 async function unassignSubject(classSubjectId) {
-    if (!confirm('Unassign this subject from the class?')) return;
+    const ok = await showConfirm('Unassign this subject from the class?');
+    if (!ok) return;
 
     try {
         const response = await API.classes.unassignSubject(classSubjectId);
         if (response.success) {
+            showMessage('success', 'Subject unassigned successfully');
             loadAssignedSubjects();
         } else {
-            alert('Failed to unassign subject');
+            showMessage('error', response.error || 'Failed to unassign subject');
         }
     } catch (error) {
         console.error('Failed to unassign subject:', error);
-        alert('Failed to unassign subject');
+        showMessage('error', 'Failed to unassign subject');
     }
 }
 
@@ -373,19 +414,21 @@ async function submitSubjectForm() {
 }
 
 async function deleteSubject(id) {
-    if (!confirm('Delete this subject? This will unassign it from all classes.')) return;
+    const ok = await showConfirm('Delete this subject? This will unassign it from all classes.');
+    if (!ok) return;
 
     try {
         const response = await API.subjects.delete(id);
         if (response.success) {
+            showMessage('success', 'Subject deleted');
             loadSubjects();
             loadAssignedSubjects();
         } else {
-            alert('Failed to delete subject');
+            showMessage('error', response.error || 'Failed to delete subject');
         }
     } catch (error) {
         console.error('Failed to delete subject:', error);
-        alert('Failed to delete subject');
+        showMessage('error', 'Failed to delete subject');
     }
 }
 

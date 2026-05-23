@@ -136,13 +136,20 @@ $staff = $stmt->fetch();
 <script>
     async function loadDashboard() {
         try {
-            const response = await API.call('teacher', 'dashboard');
-            if (response.success) {
-                const data = response.data;
-                document.getElementById('student-count').textContent = data.total_students || 0;
-                document.getElementById('class-count').textContent = (data.classes || []).length;
-                document.getElementById('subject-count').textContent = (data.subjects || []).length;
-                loadClasses(data.classes || []);
+            const response = await API.teacher.classes();
+            if (response && response.success) {
+                const classes = response.data || [];
+
+                // total students: sum student_count
+                const totalStudents = classes.reduce((acc, c) => acc + (c.student_count || 0), 0);
+                document.getElementById('student-count').textContent = totalStudents;
+                document.getElementById('class-count').textContent = classes.length;
+
+                // unique subjects
+                const subjects = Array.from(new Set(classes.map(c => c.subject_name)));
+                document.getElementById('subject-count').textContent = subjects.length;
+
+                loadClasses(classes);
             }
         } catch (error) {
             console.error('Failed to load dashboard:', error);

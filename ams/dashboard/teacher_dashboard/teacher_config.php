@@ -48,16 +48,16 @@ function getStudentsWithEnrollments($pdo) {
 function getTeacherClasses($pdo, $teacher_id) {
     $stmt = $pdo->prepare("
         SELECT 
-            c.class_id,
-            s.name AS subject_name,
-            c.grade_level,
-            c.section,
-            c.school_year
-        FROM class_subjects cs
-        JOIN classes c ON cs.class_id = c.class_id
-        JOIN subjects s ON cs.subject_id = s.subject_id
-        WHERE cs.teacher_id = ?
-        ORDER BY s.name ASC, c.section ASC
+            se.section_id AS class_id,
+            sub.name AS subject_name,
+            se.grade_level,
+            se.name AS section,
+            se.school_year
+        FROM section_subjects ss
+        JOIN sections se ON ss.section_id = se.section_id
+        JOIN subjects sub ON ss.subject_id = sub.subject_id
+        WHERE ss.teacher_id = ?
+        ORDER BY sub.name ASC, se.name ASC
     ");
     $stmt->execute([$teacher_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -69,15 +69,15 @@ function getTeacherStudentEnrollments($pdo, $teacher_id) {
             s.student_id,
             s.first_name,
             s.last_name,
-            c.section,
+            se.name AS section,
             sub.name AS subject_name
-        FROM class_students cs
-        JOIN enrollments e ON cs.enrollment_id = e.enrollment_id
-        JOIN students s ON e.student_id = s.student_id
-        JOIN classes c ON cs.class_id = c.class_id
-        JOIN class_subjects cs2 ON c.class_id = cs2.class_id
-        JOIN subjects sub ON cs2.subject_id = sub.subject_id
-        WHERE cs2.teacher_id = ?
+        FROM section_subjects ss2
+        JOIN subjects sub ON ss2.subject_id = sub.subject_id
+        JOIN sections se ON ss2.section_id = se.section_id
+        JOIN student_sections st ON st.section_id = ss2.section_id
+        JOIN student_school_records ssr ON st.school_record_id = ssr.school_record_id
+        JOIN students s ON ssr.student_id = s.student_id
+        WHERE ss2.teacher_id = ?
         ORDER BY s.last_name ASC
     ");
 
@@ -88,15 +88,15 @@ function getTeacherStudentEnrollments($pdo, $teacher_id) {
 function getAllClasses($pdo) {
     $stmt = $pdo->query("
         SELECT 
-            c.class_id,
-            s.name AS subject_name,
-            c.grade_level,
-            c.section,
-            c.school_year
-        FROM class_subjects cs
-        JOIN classes c ON cs.class_id = c.class_id
-        JOIN subjects s ON cs.subject_id = s.subject_id
-        ORDER BY s.name ASC
+            se.section_id AS class_id,
+            sub.name AS subject_name,
+            se.grade_level,
+            se.name AS section,
+            se.school_year
+        FROM section_subjects ss
+        JOIN sections se ON ss.section_id = se.section_id
+        JOIN subjects sub ON ss.subject_id = sub.subject_id
+        ORDER BY sub.name ASC
     ");
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -218,7 +218,7 @@ function addOrUpdateAttendance($pdo, $class_student_id, $date, $status) {
 ========================= */
 function assignSubjectToClass($pdo, $class_id, $subject_id, $teacher_id) {
     $stmt = $pdo->prepare("
-        INSERT INTO class_subjects (class_id, subject_id, teacher_id)
+        INSERT INTO section_subjects (section_id, subject_id, teacher_id)
         VALUES (?, ?, ?)
     ");
     return $stmt->execute([$class_id, $subject_id, $teacher_id]);

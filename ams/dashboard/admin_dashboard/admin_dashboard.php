@@ -77,9 +77,18 @@ $staffList = getStaffList($pdo);
                 </div>
             </div>
             <?php 
-                $studentStmt = $pdo->query("SELECT COUNT(*) as total FROM students");
-                $studentCount = $studentStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+                $pendingStmt = $pdo->query("SELECT COUNT(*) as total FROM enrollments WHERE enrollment_status = 'pending'");
+                $pendingCount = $pendingStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
             ?>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24"><path d="M3 7h18M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/></svg>
+                </div>
+                <div>
+                    <div class="stat-value" id="pending-count"><?php echo $pendingCount; ?></div>
+                    <div class="stat-label">Pending Enrollments</div>
+                </div>
+            </div>
         </div>
 
         <!-- Action Cards -->
@@ -116,6 +125,42 @@ $staffList = getStaffList($pdo);
                 <p>Remove staff accounts that should no longer have access.</p>
                 <a class="btn-action" href="admin_delete.php">
                     Go to Delete
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="action-grid">
+            <div class="action-card">
+                <div class="action-card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M3 7h18M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/></svg>
+                </div>
+                <h3>Enrollment Queue</h3>
+                <p>View pending enrollment submissions and take action.</p>
+                <a class="btn-action" href="admin_enrollment_queue.php">
+                    Open Queue
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+            <div class="action-card">
+                <div class="action-card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                </div>
+                <h3>Lookup Tables</h3>
+                <p>Edit lookup data used by enrollment and student records.</p>
+                <a class="btn-action" href="admin_lookups.php">
+                    Manage Lookups
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+            <div class="action-card">
+                <div class="action-card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </div>
+                <h3>Subject Master List</h3>
+                <p>Maintain canonical subjects available for class assignment.</p>
+                <a class="btn-action" href="admin_subjects.php">
+                    Manage Subjects
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
             </div>
@@ -187,30 +232,40 @@ $staffList = getStaffList($pdo);
     async function loadAdminStaff() {
         try {
             const response = await API.crud.list('users');
+            if (!response || !response.success) {
+                throw new Error(response?.error || 'Unable to load staff list.');
+            }
+
             const rows     = (response.data || []).filter(user => (user.role || '').toLowerCase() !== 'admin');
             const tbody    = document.getElementById('staff-tbody');
             const count    = document.getElementById('staff-count');
 
-            count.textContent = rows.length;
+            if (tbody && count) {
+                count.textContent = rows.length;
 
-            if (rows.length === 0) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>';
-                return;
+                if (rows.length === 0) {
+                    // Preserve existing server-side rows if the API returns empty due to a transient issue.
+                    if (tbody.querySelector('tr:not(.empty-row)')) {
+                        return;
+                    }
+
+                    tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(staff => {
+                    const role       = staff.role || 'Unassigned';
+                    const badgeClass = getRoleBadgeClass(role);
+                    return `
+                        <tr>
+                            <td class="td-primary">${staff.username}</td>
+                            <td>${staff.email}</td>
+                            <td><span class="badge ${badgeClass}">${role}</span></td>
+                            <td>${staff.created_at}</td>
+                        </tr>
+                    `;
+                }).join('');
             }
-
-            tbody.innerHTML = rows.map(staff => {
-                const role       = staff.role || 'Unassigned';
-                const badgeClass = getRoleBadgeClass(role);
-                return `
-                    <tr>
-                        <td class="td-primary">${staff.username}</td>
-                        <td>${staff.email}</td>
-                        <td><span class="badge ${badgeClass}">${role}</span></td>
-                        <td>${staff.created_at}</td>
-                    </tr>
-                `;
-            }).join('');
-
         } catch (error) {
             const container = document.getElementById('staff-error');
             const msg       = document.getElementById('staff-error-msg');

@@ -101,6 +101,13 @@ function formatDate(value) {
     return date.toLocaleDateString();
 }
 
+function formatStatus(value) {
+    if (!value) return '-';
+    return String(value)
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
 async function loadStudentDashboard() {
     const errorBox = document.getElementById('error');
     const overview = document.getElementById('student-overview');
@@ -173,8 +180,16 @@ async function loadStudentDashboard() {
                     <input type="text" value="${student.sex || '-'}" readonly>
                 </div>
                 <div class="form-group">
+                    <label>Enrollment Status</label>
+                    <input type="text" value="${formatStatus(student.enrollment_status)}" readonly>
+                </div>
+                <div class="form-group">
                     <label>Birth Date</label>
                     <input type="text" value="${formatDate(student.birth_date)}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Rejection Reason</label>
+                    <input type="text" value="${escapeHtml(student.enrollment_rejection_reason || '-') }" readonly>
                 </div>
             </div>
         `;

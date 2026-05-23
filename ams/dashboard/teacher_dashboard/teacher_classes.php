@@ -60,8 +60,8 @@ require_role(['staff']);
 <script>
     async function loadClasses() {
         try {
-            const response = await API.call('teacher', 'classes');
-            if (response.success) {
+            const response = await API.teacher.classes();
+            if (response && response.success) {
                 const classes = response.data || [];
                 renderClasses(classes);
             }

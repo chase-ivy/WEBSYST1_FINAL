@@ -2,7 +2,23 @@
 require_once __DIR__ . '/../../../login/auth.php';
 require_role(['staff']);
 $currentUserId = $_SESSION['user_id'];
+require_once __DIR__ . '/../../../config/config.php';
+
+// Load active sections for assignment dropdown
+$sections = [];
+try {
+    $stmt = $pdo->prepare('SELECT section_id, school_year, grade_level, name FROM sections WHERE is_active = 1 ORDER BY school_year DESC, grade_level, name');
+    $stmt->execute();
+    $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // fallback to empty list
+    $sections = [];
+}
 ?>
+<!-- Inject sections array for client-side filtering -->
+<script>
+    window.SECTIONS = <?php echo json_encode($sections); ?>;
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,10 +48,16 @@ $currentUserId = $_SESSION['user_id'];
                 <p>Choose a pending enrollment to review and archive into student records.</p>
             </div>
             <div class="card-body">
-                <div class="grid-2" style="align-items:center;">
+                <div class="grid-2" style="align-items:flex-end; gap:16px;">
                     <div class="field span-2">
                         <label>Select pending enrollment</label>
                         <select id="enrollmentSelect"><option value="">Loading…</option></select>
+                    </div>
+                    <div class="field">
+                        <label>Filter by year</label>
+                        <select id="schoolYearFilter">
+                            <option value="">All school years</option>
+                        </select>
                     </div>
                     <div style="display:flex; gap:8px;">
                         <button id="clearBtn" class="btn btn-ghost" style="align-self:flex-end;">Clear</button>

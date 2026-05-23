@@ -2,6 +2,7 @@
 require_once __DIR__ . '/admin_config.php';
 require_once __DIR__ . '/admin_nav.php';
 require_once __DIR__ . '/../../login/auth.php';
+require_once __DIR__ . '/../../api/endpoints/sections/sections_helper.php';
 require_special_admin();
 
 $errors = [];
@@ -22,9 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($name === '') $errors[] = 'Section name is required.';
 
         if (empty($errors)) {
-            $stmt = $pdo->prepare('INSERT INTO sections (school_year, grade_level, name, is_active) VALUES (?, ?, ?, ?)');
-            $stmt->execute([$school_year, $grade_level, $name, $is_active]);
-            $success = 'Section created successfully.';
+            $result = createSection($pdo, $school_year, $grade_level, $name, $is_active);
+            if ($result['success']) {
+                $success = 'Section created successfully.';
+            } else {
+                $errors[] = $result['error'];
+            }
         }
     }
 
@@ -41,9 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($name === '') $errors[] = 'Section name is required.';
 
         if (empty($errors)) {
-            $stmt = $pdo->prepare('UPDATE sections SET school_year = ?, grade_level = ?, name = ?, is_active = ? WHERE section_id = ?');
-            $stmt->execute([$school_year, $grade_level, $name, $is_active, $id]);
-            $success = 'Section updated successfully.';
+            try {
+                $stmt = $pdo->prepare('UPDATE sections SET school_year = ?, grade_level = ?, name = ?, is_active = ? WHERE section_id = ?');
+                $stmt->execute([$school_year, $grade_level, $name, $is_active, $id]);
+                $success = 'Section updated successfully.';
+            } catch (PDOException $e) {
+                $errors[] = 'Failed to update section: ' . $e->getMessage();
+            }
         }
     }
 
@@ -52,12 +60,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($id <= 0) {
             $errors[] = 'Valid section ID is required.';
         } else {
-            $stmt = $pdo->prepare('DELETE FROM sections WHERE section_id = ?');
-            $stmt->execute([$id]);
-            if ($stmt->rowCount() > 0) {
-                $success = 'Section deleted successfully.';
-            } else {
-                $errors[] = 'Section not found.';
+            try {
+                // Check for orphaned records in section_subjects or student_sections
+                $check = $pdo->prepare('SELECT COUNT(*) as count FROM student_sections WHERE section_id = ?');
+                $check->execute([$id]);
+                $hasStudents = $check->fetch(PDO::FETCH_ASSOC)['count'] > 0;
+                
+                if ($hasStudents) {
+                    $errors[] = 'Cannot delete section with enrolled students. Remove students first.';
+                } else {
+                    $stmt = $pdo->prepare('DELETE FROM sections WHERE section_id = ?');
+                    $stmt->execute([$id]);
+                    if ($stmt->rowCount() > 0) {
+                        $success = 'Section deleted successfully.';
+                    } else {
+                        $errors[] = 'Section not found.';
+                    }
+                }
+            } catch (PDOException $e) {
+                $errors[] = 'Failed to delete section: ' . $e->getMessage();
             }
         }
     }

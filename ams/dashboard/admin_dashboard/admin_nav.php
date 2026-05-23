@@ -2,7 +2,7 @@
 function renderAdminSidebar(string $active = 'dashboard'): void {
     $items = [
         'dashboard' => ['Dashboard', 'admin_dashboard.php', false],
-        'staff_label' => ['Staff Management', '#', true],
+        'staff_label' => ['User Management', '#', true],
         'create' => ['Create Staff', 'admin_create.php', false],
         'update' => ['Update Staff', 'admin_update.php', false],
         'delete' => ['Delete Staff', 'admin_delete.php', false],
@@ -10,6 +10,10 @@ function renderAdminSidebar(string $active = 'dashboard'): void {
         'manage_students' => ['Manage Students', 'admin_manage_students.php', false],
         'sections_label' => ['Section Management', '#', true],
         'sections' => ['Manage Sections', 'admin_sections.php', false],
+        'enrollment_label' => ['Enrollment Management', '#', true],
+        'enrollment_queue' => ['Enrollment Queue', 'admin_enrollment_queue.php', false],
+        'lookups' => ['Lookup Tables', 'admin_lookups.php', false],
+        'subjects' => ['Subject Master List', 'admin_subjects.php', false],
     ];
 
     echo '<aside class="sidebar">';

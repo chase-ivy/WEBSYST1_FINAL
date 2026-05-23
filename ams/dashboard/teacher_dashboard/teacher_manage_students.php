@@ -40,9 +40,13 @@ require_role(['staff']);
 <div class="section-header">
     <h2>Enrolled Students</h2>
     <p>View all students who have completed enrollment</p>
+    <div style="margin-top:10px;">
+        <button class="btn-primary" type="button" onclick="openDirectAdmitModal()">Direct Admit</button>
+    </div>
 </div>
 
 <div class="section-body">
+    <div id="studentFilterBar"></div>
     <div id="studentsTable">
         <div class="empty-row">Loading students...</div>
     </div>
@@ -58,6 +62,91 @@ require_role(['staff']);
 
 <script>
 let teacherClassesCache = null;
+let teacherStudentsCache = [];
+
+function getUniqueValues(items, field) {
+    return [...new Set(items.filter(item => item && item[field]).map(item => item[field]))].sort((a, b) => a.localeCompare(b));
+}
+
+function buildFilterOptions(values, defaultLabel, selectedValue = '') {
+    return [`<option value="">${escapeHtml(defaultLabel)}</option>`,
+        ...values.map(value => `<option value="${escapeHtml(value)}"${value === selectedValue ? ' selected' : ''}>${escapeHtml(value)}</option>`)
+    ].join('');
+}
+
+function renderStudentFilterBar() {
+    const filterBar = document.getElementById('studentFilterBar');
+    if (!filterBar) return;
+
+    const currentYear = document.getElementById('filterSchoolYear')?.value || '';
+    const currentGrade = document.getElementById('filterGradeLevel')?.value || '';
+    const currentSection = document.getElementById('filterSection')?.value || '';
+
+    const yearOptions = getUniqueValues(teacherStudentsCache, 'school_year');
+    const gradeOptions = getUniqueValues(
+        teacherStudentsCache.filter(student => !currentYear || student.school_year === currentYear),
+        'grade_level'
+    );
+    const sectionOptions = getUniqueValues(
+        teacherStudentsCache.filter(student =>
+            (!currentYear || student.school_year === currentYear) &&
+            (!currentGrade || student.grade_level === currentGrade)
+        ),
+        'section'
+    );
+
+    const selectedYear = yearOptions.includes(currentYear) ? currentYear : '';
+    const selectedGrade = gradeOptions.includes(currentGrade) ? currentGrade : '';
+    const selectedSection = sectionOptions.includes(currentSection) ? currentSection : '';
+
+    filterBar.innerHTML = `
+        <div class="filter-row" style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom:16px; align-items:flex-end;">
+            <div class="form-group" style="min-width:180px;">
+                <label for="filterSchoolYear">School Year</label>
+                <select id="filterSchoolYear">${buildFilterOptions(yearOptions, 'All school years', selectedYear)}</select>
+            </div>
+            <div class="form-group" style="min-width:180px;">
+                <label for="filterGradeLevel">Grade Level</label>
+                <select id="filterGradeLevel">${buildFilterOptions(gradeOptions, 'All grades', selectedGrade)}</select>
+            </div>
+            <div class="form-group" style="min-width:180px;">
+                <label for="filterSection">Section</label>
+                <select id="filterSection">${buildFilterOptions(sectionOptions, 'All sections', selectedSection)}</select>
+            </div>
+        </div>
+    `;
+
+    ['filterSchoolYear', 'filterGradeLevel', 'filterSection'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', applyStudentFilters);
+        }
+    });
+}
+
+function applyStudentFilters() {
+    renderStudentFilterBar();
+
+    const year = document.getElementById('filterSchoolYear')?.value || '';
+    const grade = document.getElementById('filterGradeLevel')?.value || '';
+    const section = document.getElementById('filterSection')?.value || '';
+
+    const filtered = teacherStudentsCache.filter(student => {
+        return (!year || student.school_year === year)
+            && (!grade || student.grade_level === grade)
+            && (!section || student.section === section);
+    });
+
+    renderStudents(filtered);
+}
+
+function buildClassOptions(classes, gradeLevel) {
+    const list = gradeLevel ? classes.filter(c => c.grade_level === gradeLevel) : classes;
+    if (!list || list.length === 0) return '<option value="">No sections available for selected grade</option>';
+    return list.map(cls => `
+        <option value="${cls.class_id}">${escapeHtml(cls.school_year || '')} • ${escapeHtml(cls.grade_level || '')} • ${escapeHtml(cls.section || '')}</option>
+    `).join('');
+}
 
 async function loadStudents() {
     try {
@@ -68,7 +157,9 @@ async function loadStudents() {
         }
 
         const students = res.data.sort((a, b) => a.last_name.localeCompare(b.last_name));
+        teacherStudentsCache = students;
 
+        renderStudentFilterBar();
         renderStudents(students);
 
     } catch (error) {
@@ -121,9 +212,7 @@ function renderStudents(students) {
                 <td class="td-actions">
                     <button class="btn-secondary btn-sm" type="button" onclick="openEnrollmentModal(${student.student_id})">Update Enrollment</button>
                     <button class="btn-secondary btn-sm" type="button" onclick="openAssignClassModal(${student.student_id})">Assign Class</button>
-                    <button class="btn-secondary btn-sm" type="button" onclick="openAccountModal(${student.student_id})">Update Account</button>
                     <button class="btn-secondary btn-sm" type="button" onclick="downloadEnrollmentForm(${student.student_id})">Download Enrollment Form</button>
-                    <button class="btn-danger btn-sm" type="button" onclick="confirmDeleteStudent(${student.student_id})">Delete</button>
                 </td>
             </tr>
         `;
@@ -164,29 +253,75 @@ function closeModal() {
     document.getElementById('modalContainer').innerHTML = '';
 }
 
+function convertRecordToEnrollment(record) {
+    const converted = Object.assign({}, record);
+    const schoolYear = String(record.school_year || '');
+    const match = schoolYear.match(/^(\d{4})-(\d{4})$/);
+    if (match) {
+        converted.year_start = match[1];
+        converted.year_end = match[2];
+    } else {
+        converted.year_start = '';
+        converted.year_end = '';
+    }
+
+    converted.with_lrn = record.lrn ? '1' : '0';
+    converted.is_returning_learner = record.is_returning_learner || 0;
+    converted.is_learner_with_disability = record.is_learner_with_disability || 0;
+    converted.student_record_verified = 1;
+    converted.medical_record_verified = 1;
+    converted.enrollment_id = record.enrollment_id || 0;
+    return converted;
+}
+
 async function openEnrollmentModal(studentId) {
     try {
-        const res = await API.students.get(studentId);
-        if (!res || !res.success) {
-            throw new Error(res?.error || 'Failed to load student details');
+        const studentRes = await API.students.get(studentId);
+        if (!studentRes || !studentRes.success) {
+            throw new Error(studentRes?.error || 'Failed to load student details');
         }
 
-        const data = res.data;
+        let record = null;
+        try {
+            const recordRes = await API.records.getByStudent(studentId);
+            if (recordRes && recordRes.success && Array.isArray(recordRes.data) && recordRes.data.length > 0) {
+                record = recordRes.data[0];
+            }
+        } catch (err) {
+            console.warn('Record lookup failed, falling back to enrollment data', err);
+        }
+
+        const data = studentRes.data;
         const student = data.student || {};
-        const enrollment = data.latest_enrollment || {};
+        let enrollment = data.latest_enrollment || {};
         const currentAddress = data.current_address || {};
         const permanentAddress = data.permanent_address || {};
         const parents = data.parents || {};
         const returning = data.returning || {};
         const disabilities = data.disabilities || [];
-        const medical = data.medical || {};
+        let medical = data.medical || {};
+        let schoolRecordId = null;
+        let sourceLabel = 'latest enrollment';
+
+        if (record) {
+            schoolRecordId = record.school_record_id;
+            sourceLabel = 'latest verified school record';
+            enrollment = convertRecordToEnrollment(record);
+            medical = record.medical_record || {};
+        }
 
         let medicalAllergyItems = [];
         let medicalConditionItems = [];
         let medicalSurgery = {};
         let medicalTreatment = {};
         let medicalFamilyHistory = {};
-        if (enrollment.enrollment_id) {
+        if (record && medical && typeof medical === 'object') {
+            medicalAllergyItems = Array.isArray(medical.allergies) ? medical.allergies : [];
+            medicalConditionItems = Array.isArray(medical.conditions) ? medical.conditions : [];
+            medicalSurgery = Array.isArray(medical.surgeries) ? medical.surgeries[0] || {} : {};
+            medicalTreatment = Array.isArray(medical.treatments) ? medical.treatments[0] || {} : {};
+            medicalFamilyHistory = medical.family_history || {};
+        } else if (!record && enrollment.enrollment_id) {
             try {
                 const medicalRes = await API.medical.getByEnrollment(enrollment.enrollment_id);
                 if (medicalRes && medicalRes.success && medicalRes.data) {
@@ -227,11 +362,12 @@ async function openEnrollmentModal(studentId) {
         const isTakingTreatment = medicalTreatment.treatment_medicine || medicalTreatment.schedule_dosage ? 1 : 0;
         const hasFamilyHistory = selectedFamilyConditionIds.length > 0 ? 1 : 0;
 
-        const header = `<h3>Update Enrollment</h3>`;
+        const header = `<h3>Update Enrollment</h3><p style="margin:4px 0 0; font-size:0.95rem; color:#555;">Using ${sourceLabel} for this student.</p>`;
         const body = `
-            <form id="enrollmentForm" data-student-id="${studentId}" data-enrollment-id="${enrollment.enrollment_id || ''}">
+            <form id="enrollmentForm" data-student-id="${studentId}" data-enrollment-id="${enrollment.enrollment_id || ''}" data-school-record-id="${schoolRecordId || ''}">
                 <input type="hidden" name="student_id" value="${studentId}" />
                 <input type="hidden" name="enrollment_id" value="${enrollment.enrollment_id || ''}" />
+                <input type="hidden" name="school_record_id" value="${schoolRecordId || ''}" />
                 
                 <!-- School Year & Grade -->
                 <div class="form-section">
@@ -969,9 +1105,19 @@ async function openAssignClassModal(studentId) {
             teacherClassesCache = res.data;
         }
 
-        const options = teacherClassesCache.map(cls => `
-            <option value="${cls.class_id}">${escapeHtml(cls.school_year || '')} • Grade ${escapeHtml(cls.grade_level || '')} • Section ${escapeHtml(cls.section || '')}</option>
-        `).join('');
+        // Load the student's current grade level to filter available classes
+        let gradeLevel = null;
+        try {
+            const studentRes = await API.students.get(studentId);
+            if (studentRes && studentRes.success) {
+                const latest = studentRes.data.latest_enrollment || {};
+                gradeLevel = latest.grade_level || (studentRes.data.student || {}).grade_level || null;
+            }
+        } catch (err) {
+            console.warn('Failed to load student grade level', err);
+        }
+
+        const options = buildClassOptions(teacherClassesCache, gradeLevel);
 
         if (teacherClassesCache.length === 0) {
             const header = `<h3>Assign Student to Class</h3>`;
@@ -1033,85 +1179,133 @@ async function saveAssignClass(event) {
     }
 }
 
-async function openAccountModal(studentId) {
+// ------------------ Direct Admit (create_student_full) ------------------
+async function openDirectAdmitModal() {
     try {
-        const res = await API.teacher.getStudentAccount(studentId);
-        if (!res || !res.success) {
-            throw new Error(res?.error || 'Failed to load student account');
+        if (!teacherClassesCache) {
+            const res = await API.classes.getTeacherClasses();
+            if (!res || !res.success) throw new Error(res?.error || 'Failed to load classes');
+            teacherClassesCache = res.data;
         }
 
-        const account = res.data || {};
-        const header = `<h3>Update Student Account</h3>`;
+        const options = buildClassOptions(teacherClassesCache);
+
+        const header = `<h3>Direct Admit Student</h3>`;
         const body = `
-            <form id="accountForm" data-student-id="${studentId}">
-                <input type="hidden" name="student_id" value="${studentId}" />
-                <input type="hidden" name="user_id" value="${escapeHtml(account.user_id || '')}" />
+            <form id="directAdmitForm">
                 <div class="form-grid">
-                    <div class="form-group full">
-                        <label for="username">Username</label>
-                        <input id="username" name="username" required value="${escapeHtml(account.username || '')}" />
+                    <div class="form-group">
+                        <label for="da_username">Username</label>
+                        <input id="da_username" name="username" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="da_password">Password</label>
+                        <input id="da_password" name="password" type="password" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="da_email">Email (optional)</label>
+                        <input id="da_email" name="email" type="email" />
+                    </div>
+                    <div class="form-group">
+                        <label for="da_last_name">Last Name</label>
+                        <input id="da_last_name" name="last_name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="da_first_name">First Name</label>
+                        <input id="da_first_name" name="first_name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="da_birth_date">Birth Date</label>
+                        <input id="da_birth_date" name="birth_date" type="date" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="da_sex">Sex</label>
+                        <select id="da_sex" name="sex" required>
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
                     </div>
                     <div class="form-group full">
-                        <label for="email">Email</label>
-                        <input id="email" name="email" type="email" required value="${escapeHtml(account.email || '')}" />
-                    </div>
-                    <div class="form-group full">
-                        <label for="password">Password</label>
-                        <input id="password" name="password" type="password" placeholder="Leave blank to keep current password" />
+                        <label for="da_grade_level">Grade Level</label>
+                        <select id="da_grade_level" name="grade_level" required>
+                            <option value="">Choose grade level</option>
+                            <option value="Kinder">Kinder</option>
+                            <option value="Grade 1">Grade 1</option>
+                            <option value="Grade 2">Grade 2</option>
+                            <option value="Grade 3">Grade 3</option>
+                            <option value="Grade 4">Grade 4</option>
+                            <option value="Grade 5">Grade 5</option>
+                            <option value="Grade 6">Grade 6</option>
+                        </select>
+                        <label for="da_section" style="margin-top:8px; display:block;">Section</label>
+                        <select id="da_section" name="section_id" required disabled>
+                            <option value="">Choose section</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-actions">
                     <button class="btn-secondary" type="button" onclick="closeModal()">Cancel</button>
-                    <button class="btn-primary" type="submit">Save Account</button>
+                    <button class="btn-primary" type="submit">Create Student</button>
                 </div>
             </form>
         `;
 
         showModal({ header, body });
-        document.getElementById('accountForm').addEventListener('submit', saveAccountUpdate);
+        // Wire grade filter for sections in Direct Admit
+        const daGrade = document.getElementById('da_grade_level');
+        const daSection = document.getElementById('da_section');
+        if (daGrade && daSection) {
+            daSection.disabled = true;
+            daGrade.addEventListener('change', function() {
+                const opts = buildClassOptions(teacherClassesCache, this.value).trim();
+                if (!this.value) {
+                    daSection.innerHTML = '<option value="">Choose section</option>';
+                    daSection.disabled = true;
+                } else if (!opts) {
+                    // No sections available for selected grade — show explanatory placeholder and keep disabled
+                    daSection.innerHTML = '<option value="">No sections available for selected grade</option>';
+                    daSection.disabled = true;
+                } else {
+                    daSection.innerHTML = '<option value="">Choose section</option>' + opts;
+                    daSection.disabled = false;
+                }
+            });
+        }
+        document.getElementById('directAdmitForm').addEventListener('submit', saveDirectAdmit);
     } catch (error) {
         console.error(error);
-        showAlert('error', `Unable to open account editor: ${error.message}`);
+        showAlert('error', `Unable to open Direct Admit dialog: ${error.message}`);
     }
 }
 
-async function saveAccountUpdate(event) {
+async function saveDirectAdmit(event) {
     event.preventDefault();
     const form = event.currentTarget;
-    const studentId = parseInt(form.dataset.studentId, 10);
-    const data = Object.fromEntries(new FormData(form).entries());
-    data.student_id = studentId;
+    const data = {
+        username: form.username.value.trim(),
+        password: form.password.value.trim(),
+        email: form.email.value.trim() || null,
+        last_name: form.last_name.value.trim(),
+        first_name: form.first_name.value.trim(),
+        birth_date: form.birth_date.value,
+        sex: form.sex.value,
+        section_id: parseInt(form.section_id.value, 10)
+    };
 
     try {
-        const res = await API.teacher.updateStudentAccount(data);
-        if (!res || !res.success) {
-            throw new Error(res?.error || 'Failed to update student account');
-        }
+        const res = await API.students.createFull(data);
+        if (!res || !res.success) throw new Error(res?.error || 'Creation failed');
         closeModal();
-        showAlert('success', res.message || 'Student account updated successfully.');
-    } catch (error) {
-        console.error(error);
-        showAlert('error', error.message || 'Error updating student account.');
-    }
-}
-
-async function confirmDeleteStudent(studentId) {
-    if (!confirm('Delete this student and all related enrollment records?')) {
-        return;
-    }
-
-    try {
-        const res = await API.students.delete(studentId);
-        if (!res || !res.success) {
-            throw new Error(res?.error || 'Failed to delete student');
-        }
-        showAlert('success', res.message || 'Student deleted successfully.');
+        showAlert('success', res.message || 'Student admitted.');
         await loadStudents();
     } catch (error) {
         console.error(error);
-        showAlert('error', error.message || 'Error deleting student.');
+        showAlert('error', error.message || 'Direct admit failed.');
     }
 }
+
+
 
 function showAlert(type, message) {
     const existing = document.querySelector('.alert');

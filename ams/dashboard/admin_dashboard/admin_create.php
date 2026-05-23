@@ -7,19 +7,15 @@ require_special_admin();
 $errors = [];
 $success = '';
 $old = [];
-$sections = getActiveSections($pdo);
-$gradeLevels = array_values(array_unique(array_filter(array_column($sections, 'grade_level'))));
-sort($gradeLevels);
-if (empty($gradeLevels)) {
-    $gradeLevels = ['Kinder', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old = $_POST;
     $role = strtolower(trim($_POST['role'] ?? ''));
 
     if ($role === 'student') {
-        $result = createStudentAccount($pdo, $_POST);
+        // JS-driven path should call the admin API endpoint to create full student records.
+        // Prevent fallback server-side incomplete creation to avoid orphaned user accounts.
+        $result = ['success' => false, 'errors' => ['Please use the admin UI with JavaScript enabled to create students.']];
     } else {
         $result = createStaff(
             $pdo,
@@ -108,41 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="email">Email Address</label>
                         <input id="email" type="email" name="email" placeholder="email@example.com" value="<?php echo htmlspecialchars($old['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
                     </div>
+                    
+                    <input type="hidden" name="role" value="staff">
 
-                            <div class="form-group">
-                        <label for="role">Assigned Role</label>
-                        <div class="select-wrap">
-                            <select id="role" name="role" required>
-                                <option value="" disabled selected>Select a role...</option>
-                                <option value="staff" <?php echo (isset($old['role']) && $old['role'] === 'staff') ? 'selected' : ''; ?>>Staff</option>
-                                <option value="student" <?php echo (isset($old['role']) && $old['role'] === 'student') ? 'selected' : ''; ?>>Student</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="grade_level">Grade Level</label>
-                        <div class="select-wrap">
-                            <select id="grade_level" name="grade_level" required>
-                                <option value="" disabled selected>Select grade level...</option>
-                                <?php foreach ($gradeLevels as $gradeLevelOption): ?>
-                                    <option value="<?php echo htmlspecialchars($gradeLevelOption, ENT_QUOTES, 'UTF-8'); ?>" <?php echo (isset($old['grade_level']) && $old['grade_level'] === $gradeLevelOption) ? 'selected' : ''; ?>><?php echo htmlspecialchars($gradeLevelOption, ENT_QUOTES, 'UTF-8'); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="section_id">Section</label>
-                        <div class="select-wrap">
-                            <select id="section_id" name="section_id" required>
-                                <option value="" disabled selected>Select section...</option>
-                                <?php foreach ($sections as $section): ?>
-                                    <option value="<?php echo intval($section['section_id']); ?>" data-grade-level="<?php echo htmlspecialchars($section['grade_level'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo (isset($old['section_id']) && intval($old['section_id']) === intval($section['section_id'])) ? 'selected' : ''; ?>><?php echo htmlspecialchars(trim($section['school_year'] . ' · ' . $section['grade_level'] . ' · ' . $section['name']), ENT_QUOTES, 'UTF-8'); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
+                    <!-- Grade level and section removed — admin creates pre-registered accounts only -->
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input id="password" type="password" name="password" placeholder="Min. 6 characters" required>
@@ -162,23 +127,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script>
     const createForm = document.getElementById('create-account-form');
     const createAlert = document.getElementById('create-alert');
-    const roleSelect = document.getElementById('role');
-    const sectionSelect = document.getElementById('section_id');
-    const gradeLevelSelect = document.getElementById('grade_level');
+    // role is fixed to 'staff' for admin-created accounts
 
     function showCreateMessage(message, isError = false) {
         createAlert.innerHTML = `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${message}</div>`;
     }
 
-    // Grade level and section are always required for all roles
-
-    sectionSelect.addEventListener('change', () => {
-        const selected = sectionSelect.selectedOptions[0];
-        if (selected && selected.dataset.gradeLevel) {
-            gradeLevelSelect.value = selected.dataset.gradeLevel;
-        }
-    });
-
+    // Admin creates pre-registered accounts only; use staff UI for enrollments.
     createForm.addEventListener('submit', async event => {
         event.preventDefault();
         createAlert.innerHTML = '';
@@ -186,23 +141,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const data = {
             username: document.getElementById('username').value.trim(),
             email: document.getElementById('email').value.trim(),
-            role: roleSelect.value.trim(),
+            role: 'staff',
             password: document.getElementById('password').value.trim()
         };
-
-        if (!data.role) {
-            showCreateMessage('Please select a valid role.', true);
-            return;
-        }
-
-        // Add grade level and section for all roles
-        data.grade_level = gradeLevelSelect.value;
-        data.section_id = sectionSelect.value ? Number(sectionSelect.value) : null;
-
-        if (!data.section_id) {
-            showCreateMessage('Please select a section.', true);
-            return;
-        }
 
         try {
             const response = await API.crud.create('users', data);

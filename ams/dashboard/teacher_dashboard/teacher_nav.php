@@ -7,7 +7,6 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
         'students'   => ['Students', 'teacher_manage_students.php'],
         'enroll'     => ['Enroll', '../../forms/enrollment_form/enrollment/enrollment.php'],
         'activities' => ['Activities', 'teacher_activities.php'],
-        'subjects'   => ['Subjects', 'teacher_subjects.php'],
         'scores'     => ['Scores', 'teacher_scores.php'],
         'grades'     => ['Grades', 'teacher_grades.php'],
         'attendance' => ['Attendance', 'teacher_attendance.php'],

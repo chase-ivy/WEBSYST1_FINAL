@@ -29,6 +29,7 @@ require_role(['staff']);
             <h1>Scores</h1>
             <p>Enter and update scores for your students.</p>
         </div>
+        <div id="pageMessage" class="message" style="display:block; margin-top:12px;"></div>
 
         <section class="section">
             <div class="section-header">
@@ -113,6 +114,15 @@ require_role(['staff']);
 
 <script src="../../api/client.js"></script>
 <script>
+function showMessage(type, message) {
+    const container = document.getElementById('pageMessage');
+    if (!container) return;
+    container.className = 'message';
+    if (type === 'success') container.classList.add('success');
+    if (type === 'error') container.classList.add('error');
+    container.textContent = message;
+}
+
 let currentActivity = null;
 let maxScore = 0;
 let currentClassId = null;
@@ -306,10 +316,10 @@ document.getElementById('scoresForm').addEventListener('submit', async (e) => {
 
     try {
         await API.activities.saveScore(data);
-        alert('Scores saved successfully!');
+        showMessage('success', 'Scores saved successfully!');
         loadActivityScores();
     } catch (error) {
-        alert('Failed to save scores: ' + (error.message || 'Please try again'));
+        showMessage('error', 'Failed to save scores: ' + (error.message || 'Please try again'));
     }
 });
 

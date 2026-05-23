@@ -151,7 +151,9 @@ $staffList = getStaffList($pdo);
     async function loadDeleteUsers() {
         try {
             const response = await API.crud.list('users');
-            const rows = response.data || [];
+            const allRows = response.data || [];
+            // Filter to show only staff role
+            const rows = allRows.filter(user => user.role === 'staff');
             const tbody = document.getElementById('delete-staff-tbody');
             if (!tbody) return;
 

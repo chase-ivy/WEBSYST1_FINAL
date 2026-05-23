@@ -25,11 +25,27 @@
                 <em>Select a pending enrollment to populate the form and show the review summary.</em>
             </div>
 
+            <div class="form-group" style="margin-top:16px;">
+                <label for="rejectReason">Rejection reason <small>(optional)</small></label>
+                <textarea id="rejectReason" rows="3" placeholder="Explain why this enrollment is being rejected" style="width:100%; min-height:72px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-sm);"></textarea>
+            </div>
+
         </div><!-- /.card-body -->
 
         <div class="card-foot" style="gap:8px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:18px;">
             <button type="button" class="btn btn-ghost"  onclick="goTo(4)">← Back</button>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label for="assignSectionSelect" style="margin-right:8px;">Assign to section</label>
+                <select id="assignSectionSelect" name="assignSectionSelect" disabled>
+                    <option value="">Choose a section…</option>
+                    <?php foreach ($sections as $sec): ?>
+                        <option value="<?php echo intval($sec['section_id']); ?>"><?php echo htmlspecialchars(trim($sec['school_year'] . ' · ' . $sec['grade_level'] . ' · ' . $sec['name']), ENT_QUOTES, 'UTF-8'); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" class="btn btn-secondary" id="assignSectionBtn" disabled style="margin-left:8px;">Assign</button>
+            </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
+                <button type="button" class="btn btn-danger" id="rejectSubmitBtn">Reject Enrollment</button>
                 <button type="button" class="btn btn-ghost" id="saveChangesBtn">Save Changes</button>
                 <button type="button" class="btn btn-primary" id="verifySubmitBtn">Verify & Archive</button>
             </div>

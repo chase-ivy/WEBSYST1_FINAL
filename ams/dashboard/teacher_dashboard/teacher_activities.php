@@ -29,6 +29,7 @@ require_role(['staff']);
             <h1>Activities</h1>
             <p>Manage activities for your assigned classes.</p>
         </div>
+        <div id="pageMessage" class="message" style="display:block; margin-top:12px;"></div>
 
         <section class="section">
             <div class="section-header">
@@ -97,6 +98,15 @@ require_role(['staff']);
 
 <script src="../../api/client.js"></script>
 <script>
+function showMessage(type, message) {
+    const container = document.getElementById('pageMessage');
+    if (!container) return;
+    container.className = 'message';
+    if (type === 'success') container.classList.add('success');
+    if (type === 'error') container.classList.add('error');
+    container.textContent = message;
+}
+
 let currentClassId = null;
 let currentClassSubjectId = null;
 
@@ -209,7 +219,7 @@ async function loadActivities() {
 async function createActivity() {
     const selectedSubject = document.getElementById('subjectSelect').value;
     if (!currentClassId || !selectedSubject) {
-        alert("Select a class and subject first");
+        showMessage('error', 'Select a class and subject first');
         return;
     }
 
@@ -218,7 +228,7 @@ async function createActivity() {
     const maxScore = parseInt(document.getElementById('max_score').value);
 
     if (!title || !maxScore || maxScore < 1) {
-        alert("Please enter valid activity title and max score");
+        showMessage('error', 'Please enter valid activity title and max score');
         return;
     }
 
@@ -230,15 +240,15 @@ async function createActivity() {
         });
 
         if (response.success) {
-            alert('Activity created successfully!');
+            showMessage('success', 'Activity created successfully!');
             document.getElementById('activity_title').value = '';
             document.getElementById('max_score').value = '';
             loadActivities();
         } else {
-            alert('Failed to create activity');
+            showMessage('error', response.error || 'Failed to create activity');
         }
     } catch (error) {
-        alert('Error creating activity: ' + error.message);
+        showMessage('error', 'Error creating activity: ' + error.message);
     }
 }
 
