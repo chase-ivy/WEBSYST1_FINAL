@@ -8,7 +8,7 @@
 // GET ?school_year=<year>&grade_level=<level>&is_active=<0|1>
 // ============================================================
 
-require_once __DIR__ . '/../endpoint_base.php';
+require_once __DIR__ . '/../../endpoint_base.php';
 
 require_role(['staff', 'admin']);
 requireMethod('GET');

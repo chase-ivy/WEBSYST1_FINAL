@@ -14,10 +14,27 @@ try {
     // fallback to empty list
     $sections = [];
 }
+
+// Load lookup tables for mother tongue and IP groups
+$motherTongues = [];
+$indigenousGroups = [];
+try {
+    $stmt = $pdo->prepare('SELECT mother_tongue_id AS id, name FROM mother_tongues ORDER BY name');
+    $stmt->execute();
+    $motherTongues = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $stmt = $pdo->prepare('SELECT indigenous_group_id AS id, name FROM indigenous_groups ORDER BY name');
+    $stmt->execute();
+    $indigenousGroups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // fallback to empty lists
+}
 ?>
 <!-- Inject sections array for client-side filtering -->
 <script>
     window.SECTIONS = <?php echo json_encode($sections); ?>;
+    window.MOTHER_TONGUES = <?php echo json_encode($motherTongues); ?>;
+    window.INDIGENOUS_GROUPS = <?php echo json_encode($indigenousGroups); ?>;
 </script>
 <!DOCTYPE html>
 <html lang="en">

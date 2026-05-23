@@ -18,7 +18,7 @@
 // Accessible by: admin, staff (for manual), public (for guest)
 // ============================================================
 
-require_once __DIR__ . '/../endpoint_base.php';
+require_once __DIR__ . '/../../endpoint_base.php';
 
 // Allow unauthenticated access for public guest registration
 // If logged in as admin/staff, can create any role
@@ -32,8 +32,40 @@ $password  = trim($data['password']  ?? '');
 $email     = trim($data['email']     ?? '') ?: null;
 $role      = trim($data['role']      ?? 'student');
 
-if ($username === '') sendJson(['success' => false, 'error' => 'username is required'], 400);
-if ($password === '') sendJson(['success' => false, 'error' => 'password is required'], 400);
+// Allow missing username/password from public enrollment form — auto-generate when absent
+// Username will be derived from email or name if possible; password will be randomly generated.
+if ($username === '') {
+    // Try to derive from email prefix or name
+    if ($email) {
+        $base = strtolower(preg_replace('/[^a-z0-9]+/', '', strstr($email, '@', true)));
+    } else {
+        $base = strtolower(preg_replace('/[^a-z0-9]+/', '', ($data['first_name'] ?? '') . ($data['last_name'] ?? '')));
+    }
+    if ($base === '') {
+        $base = 'user';
+    }
+    // Ensure unique username
+    $attempt = 0;
+    do {
+        $candidate = $base . ($attempt ? str_pad((string)rand(1, 9999), 3, '0', STR_PAD_LEFT) : '');
+        $check = $pdo->prepare('SELECT user_id FROM users WHERE username = ? LIMIT 1');
+        $check->execute([$candidate]);
+        $exists = (bool)$check->fetch();
+        $attempt++;
+    } while ($exists && $attempt < 10);
+    $username = $candidate;
+}
+
+if ($password === '') {
+    // generate a random password for the user (returned in response)
+    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+    $pw = '';
+    for ($i = 0; $i < 10; $i++) { $pw .= $chars[random_int(0, strlen($chars) - 1)]; }
+    $password = $pw;
+    $generatedPassword = $password;
+} else {
+    $generatedPassword = null;
+}
 
 // Public requests can only create student accounts
 if ($isPublic && $role !== 'student') {
@@ -98,12 +130,29 @@ try {
 
     $pdo->commit();
 
-    sendJson([
+    // If this was a public registration, create a session for the newly created user
+    if ($isPublic) {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $userId;
+        $_SESSION['username'] = $username;
+        $_SESSION['role'] = $role;
+        $_SESSION['logged_in'] = true;
+        $_SESSION['special_admin_access'] = false;
+    }
+
+    $resp = [
         'success'    => true,
         'user_id'    => $userId,
         'student_id' => $studentId,
+        'username'   => $username,
         'is_active'  => $isActive,
-    ]);
+    ];
+    if (!empty($generatedPassword)) {
+        $resp['generated_password'] = $generatedPassword;
+    }
+
+    sendJson($resp);
 
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();

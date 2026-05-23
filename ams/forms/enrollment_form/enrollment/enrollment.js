@@ -641,24 +641,38 @@ async function confirmSubmission() {
 
         // Create or update student record
         let studentId = payload.student_id ? parseInt(payload.student_id, 10) : null;
+        let generatedPassword = '';
+        let registeredUsername = '';
+        let registrationEmail = '';
+        let registrationPassword = '';
+
         if (!studentId) {
             showMessage('', 'Creating student record...');
             
+            // Map enrollment form fields to the public student register endpoint
             const studentPayload = {
+                // allow server to auto-generate username if not provided
+                username: payload.user_email ? (payload.user_email.split('@')[0]) : '',
+                password: payload.user_password || '',
+                email: payload.user_email || '',
                 lrn: payload.Learner_Reference_No || '',
-                first_name: payload.Learner_First_Name || '',
                 last_name: payload.Learner_Last_Name || '',
+                first_name: payload.Learner_First_Name || '',
                 middle_name: payload.Learner_Middle_Name || '',
                 extension_name: payload.Learner_Extension_Name || '',
                 birth_date: payload.Birth_Date || '',
                 sex: payload.sex || '',
-                place_of_birth: payload.Place_of_Birth || '',
-                user_email: payload.user_email || '',
-                user_password: payload.user_password || ''
+                place_of_birth: payload.Place_of_Birth || ''
             };
 
-            const studentResp = await API.students.create(studentPayload);
+            // Use the public register endpoint for open enrollment (creates account + student)
+            const studentResp = await API.students.register(studentPayload);
             
+            generatedPassword = studentResp.generated_password || studentResp.data?.generated_password || '';
+            registeredUsername = studentResp.username || studentResp.data?.username || studentPayload.username || '';
+            registrationEmail = studentPayload.email || '';
+            registrationPassword = studentPayload.password || '';
+
             // Handle different API response formats
             if (studentResp.success && studentResp.data) {
                 studentId = studentResp.data.id || studentResp.data.student_id;
@@ -671,9 +685,10 @@ async function confirmSubmission() {
             if (!studentId) {
                 throw new Error('Failed to create student record. Please try again or contact support.');
             }
+
+            payload.student_id = studentId;
         }
 
-        payload.student_id = studentId;
         showMessage('', 'Submitting enrollment...');
 
         // Submit enrollment
@@ -693,11 +708,28 @@ async function confirmSubmission() {
             throw new Error(response.error || response.message || 'Enrollment submission failed.');
         }
 
-        showMessage('success', 'Enrollment submitted successfully!' + (enrollmentId ? ' Enrollment ID: ' + enrollmentId : '') + '. Redirecting...');
+        let credentialMessage = '';
+        if (registrationEmail) {
+            credentialMessage += `Email: ${registrationEmail}`;
+        }
+        if (generatedPassword) {
+            credentialMessage += (credentialMessage ? ' | ' : '') + `Password: ${generatedPassword}`;
+        } else if (registrationPassword) {
+            credentialMessage += (credentialMessage ? ' | ' : '') + 'Password: (the one you entered)';
+        }
+        if (!registrationEmail && registeredUsername) {
+            credentialMessage = `Username: ${registeredUsername}` + (generatedPassword ? ` | Password: ${generatedPassword}` : '');
+        }
+
+        const successText = 'Enrollment submitted successfully!' + (enrollmentId ? ' Enrollment ID: ' + enrollmentId + '.' : '')
+            + (credentialMessage ? ` Login credentials: ${credentialMessage}.` : '')
+            + ' Redirecting...';
+
+        showMessage('success', successText);
 
         setTimeout(() => {
-            window.location.href = '../../../dashboard/teacher_dashboard/teacher_dashboard.php';
-        }, 2500);
+            window.location.href = '../../../dashboard/student_dashboard/student_dashboard.php';
+        }, 5000);
 
         form.reset();
         goTo(1);

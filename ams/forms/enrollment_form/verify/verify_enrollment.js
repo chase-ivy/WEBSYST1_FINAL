@@ -288,10 +288,13 @@ function applyEnrollmentToForm(data) {
     setValue('with_lrn', enrollment.with_lrn ? '1' : '0');
     setValue('psa_bcn', enrollment.psa_bcn);
     setValue('returning', enrollment.is_returning_learner ? '1' : '0');
-    setValue('Returning_Grade_Level', enrollment.last_grade_level_completed);
-    setValue('Last_School_Year_Completed', enrollment.last_school_year_completed);
-    setValue('Last_School_Attended', enrollment.last_school_attended);
-    setValue('school_ID', enrollment.school_id);
+    
+    // Returning learner data is nested in data.returning_learner
+    if (data.returning_learner) {
+        setValue('Returning_Grade_Level', data.returning_learner.last_grade_level_completed);
+        setValue('Last_School_Year_Completed', data.returning_learner.last_school_year_completed);
+        setValue('Last_School_Attended', data.returning_learner.last_school_attended);
+    }
 
     setValue('Learner_Last_Name', enrollment.last_name);
     setValue('Learner_First_Name', enrollment.first_name);
@@ -302,10 +305,44 @@ function applyEnrollmentToForm(data) {
     setValue('sex', enrollment.sex);
     setValue('Place_of_Birth', enrollment.place_of_birth);
 
-    setValue('Mother_Tongue', enrollment.mother_tongue);
+    // Mother tongue and IP group are stored as IDs; pass the IDs
+    setValue('Mother_Tongue', enrollment.mother_tongue_id);
 
     setValue('ip', enrollment.is_indigenous ? 'Yes' : 'No');
-    setValue('IP_Group', enrollment.indigenous_group);
+    setValue('IP_Group', enrollment.indigenous_group_id);
+
+    // Populate mother tongue and IP group dropdowns from lookup tables
+    if (window.MOTHER_TONGUES && Array.isArray(window.MOTHER_TONGUES)) {
+        const mtSelect = document.getElementById('Mother_Tongue');
+        if (mtSelect) {
+            mtSelect.innerHTML = '<option value="">Select...</option><option value="Other">Other</option>';
+            window.MOTHER_TONGUES.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                if (String(item.id) === String(enrollment.mother_tongue_id)) {
+                    option.selected = true;
+                }
+                mtSelect.insertBefore(option, mtSelect.querySelector('option[value="Other"]'));
+            });
+        }
+    }
+    
+    if (window.INDIGENOUS_GROUPS && Array.isArray(window.INDIGENOUS_GROUPS)) {
+        const igSelect = document.getElementById('IP_Group');
+        if (igSelect) {
+            igSelect.innerHTML = '<option value="">Select...</option><option value="Other">Other</option>';
+            window.INDIGENOUS_GROUPS.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                if (String(item.id) === String(enrollment.indigenous_group_id)) {
+                    option.selected = true;
+                }
+                igSelect.insertBefore(option, igSelect.querySelector('option[value="Other"]'));
+            });
+        }
+    }
     setValue('fourps', enrollment.is_four_ps_beneficiary ? 'Yes' : 'No');
     setValue('FourPs_Specify', enrollment.four_ps_household_id);
     setValue('disability', enrollment.is_learner_with_disability ? 'Yes' : 'No');
@@ -345,14 +382,21 @@ function applyEnrollmentToForm(data) {
         setValue('Permanent_Zip_Code', permanentAddress.zip_code);
     }
 
-    const medical = data.medical || {};
-    setValue('has_allergies', medical.has_allergies);
-    setValue('has_med_condition', medical.has_med_condition);
-    setValue('has_surgery_hospitalization', medical.has_surgery_hospitalization);
-    setValue('is_taking_treatment', medical.is_taking_treatment);
-    setValue('family_medical_history', medical.family_medical_history);
-    setValue('exposed_to_cigarette_vape_smoke', medical.exposed_to_cigarette_vape_smoke);
-    setValue('other_pertinent_information', medical.other_pertinent_information);
+    // Medical data comes as separate arrays from get.php
+    const medInfo = data.medical_info || {};
+    const hasAllergies = (data.allergies && Array.isArray(data.allergies) && data.allergies.length > 0) ? '1' : '0';
+    const hasMedCondition = (data.conditions && Array.isArray(data.conditions) && data.conditions.length > 0) ? '1' : '0';
+    const hasSurgery = (data.surgeries && Array.isArray(data.surgeries) && data.surgeries.length > 0) ? '1' : '0';
+    const isTakingTreatment = (data.treatments && Array.isArray(data.treatments) && data.treatments.length > 0) ? '1' : '0';
+    const hasFamilyHistory = (data.family_history && Array.isArray(data.family_history) && data.family_history.length > 0) ? '1' : '0';
+    
+    setValue('has_allergies', hasAllergies);
+    setValue('has_med_condition', hasMedCondition);
+    setValue('has_surgery_hospitalization', hasSurgery);
+    setValue('is_taking_treatment', isTakingTreatment);
+    setValue('family_medical_history', hasFamilyHistory);
+    setValue('exposed_to_cigarette_vape_smoke', medInfo.exposed_to_cigarette_vape_smoke);
+    setValue('other_pertinent_information', medInfo.other_pertinent_information);
 
     if (typeof showField === 'function') showField();
     if (typeof showQ2 === 'function') showQ2();
@@ -483,7 +527,14 @@ async function fetchPendingEnrollments() {
         pending.forEach(item => {
             const option = document.createElement('option');
             option.value = item.enrollment_id;
-            const studentName = item.student_name || item.first_name || `Enrollment #${item.enrollment_id}`;
+            // Concatenate last_name + first_name for full student name
+            let studentName = item.student_name;
+            if (!studentName) {
+                const parts = [];
+                if (item.last_name) parts.push(item.last_name);
+                if (item.first_name) parts.push(item.first_name);
+                studentName = parts.length > 0 ? parts.join(', ') : `Enrollment #${item.enrollment_id}`;
+            }
             const schoolYear = item.school_year || '';
             const gradeLevel = item.grade_level || '';
             option.textContent = `${studentName} — ${schoolYear} ${gradeLevel}`.trim();

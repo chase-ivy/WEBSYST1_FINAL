@@ -5,7 +5,7 @@
 // Accessible by: student
 // ============================================================
 
-require_once __DIR__ . '/../endpoint_base.php';
+require_once __DIR__ . '/../../endpoint_base.php';
 
 require_role(['student']);
 requireMethod('GET');

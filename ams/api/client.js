@@ -120,9 +120,8 @@ const API = {
         create: function(data) { return API.enrollment.submit(data); },
         // Update: fallback shim. A proper server-side `endpoints/enrollment/update.php` is recommended.
         update: function(id, data) {
-            console.warn('API.enrollments.update() called — using submit fallback. Implement endpoints/enrollment/update.php for proper updates.');
             const payload = Object.assign({}, data || {}, { enrollment_id: id });
-            return API.call('endpoints/enrollment/submit', payload, 'POST');
+            return API.call('endpoints/enrollment/update', payload, 'POST');
         }
     },
 

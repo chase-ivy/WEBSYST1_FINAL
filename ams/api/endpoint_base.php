@@ -11,8 +11,8 @@
 ob_start();
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../../config/config.php';
-require_once __DIR__ . '/../../login/auth.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../login/auth.php';
 
 function sendJson(array $payload, int $status = 200): void {
     while (ob_get_level() > 0) {

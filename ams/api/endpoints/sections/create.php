@@ -19,7 +19,7 @@
 // Accessible by: admin only
 // ============================================================
 
-require_once __DIR__ . '/../endpoint_base.php';
+require_once __DIR__ . '/../../endpoint_base.php';
 require_once __DIR__ . '/sections_helper.php';
 
 require_role(['admin']);
