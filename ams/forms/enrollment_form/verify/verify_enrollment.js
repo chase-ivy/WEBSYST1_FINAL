@@ -525,7 +525,7 @@ async function saveEnrollmentUpdates() {
         payload.enrollment_id = parseInt(enrollmentId, 10);
 
         // Use API client to update enrollment
-        const response = await API.enrollments.update(
+        const response = await API.enrollment.update(
             parseInt(enrollmentId, 10),
             payload
         );
@@ -646,7 +646,7 @@ async function loadEnrollmentDetails(enrollmentId) {
     if (!enrollmentId) return;
     setMessage('', 'Loading enrollment details…');
     try {
-        const response = await API.enrollments.read(parseInt(enrollmentId, 10));
+        const response = await API.enrollment.get(parseInt(enrollmentId, 10));
         let enrollmentData = null;
 
         if (response.success && response.data) {

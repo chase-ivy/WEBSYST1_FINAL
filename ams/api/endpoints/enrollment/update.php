@@ -23,6 +23,41 @@ require_once __DIR__ . '/../../endpoint_base.php';
 require_role(['staff', 'admin']);
 requireMethod('POST');
 
+function normalizeCheckbox($value): int {
+    return in_array((string)$value, ['1', 'true', 'yes', 'on', 'Yes'], true) ? 1 : 0;
+}
+
+function parseIds($value): array {
+    if (is_array($value)) {
+        return array_values(array_filter(array_map('intval', $value), fn($v) => $v > 0));
+    }
+    if ($value === null || $value === '') return [];
+    $value = trim((string)$value);
+    return $value === '' ? [] : [intval($value)];
+}
+
+function strOrNull($value): ?string {
+    if (is_array($value)) {
+        $value = implode(', ', array_filter(array_map('trim', $value), fn($v) => $v !== ''));
+    }
+    $value = trim((string)($value ?? ''));
+    return $value === '' ? null : $value;
+}
+
+function ownershipType($value): ?string {
+    $map = [
+        'rental'                => 'rented',
+        'rented'                => 'rented',
+        'owned'                 => 'owned',
+        'living with relatives' => 'living_with_relatives',
+        'living_with_relatives' => 'living_with_relatives',
+        'inherited'             => 'inherited',
+    ];
+    if ($value === null) return null;
+    $val = strtolower(trim((string)$value));
+    return $map[$val] ?? null;
+}
+
 $data = getJsonInput();
 
 $enrollmentId = intval($data['enrollment_id'] ?? 0);
@@ -185,8 +220,101 @@ try {
     }
 
     // 4. Update student_parent_guardians (if provided in the form)
-    // For now, we only support reading/display, not updating guardians via this endpoint.
-    // Guardian updates would require a separate endpoint or form redesign.
+    $guardians = [
+        ['type_id' => 1, 'prefix' => 'father'],
+        ['type_id' => 2, 'prefix' => 'mother'],
+        ['type_id' => 3, 'prefix' => 'guardian'],
+    ];
+    foreach ($guardians as $guardian) {
+        $lastName = trim((string)($data["{$guardian['prefix']}_last_name"] ?? ''));
+        $firstName = trim((string)($data["{$guardian['prefix']}_first_name"] ?? ''));
+        $middleName = trim((string)($data["{$guardian['prefix']}_middle_name"] ?? ''));
+        $contact = trim((string)($data["{$guardian['prefix']}_contact_number"] ?? ''));
+
+        $guardianStmt = $pdo->prepare('SELECT parent_guardian_id FROM student_parent_guardians WHERE student_id = ? AND parent_guardian_type_id = ? LIMIT 1');
+        $guardianStmt->execute([$studentId, $guardian['type_id']]);
+        $existingGuardian = $guardianStmt->fetch();
+
+        if ($existingGuardian) {
+            $pdo->prepare('UPDATE student_parent_guardians SET last_name = ?, first_name = ?, middle_name = ?, contact_number = ? WHERE parent_guardian_id = ?')
+                ->execute([$lastName, $firstName, $middleName, $contact, $existingGuardian['parent_guardian_id']]);
+        } elseif ($lastName !== '' || $firstName !== '' || $contact !== '') {
+            $pdo->prepare('INSERT INTO student_parent_guardians (student_id, parent_guardian_type_id, last_name, first_name, middle_name, contact_number) VALUES (?, ?, ?, ?, ?, ?)')
+                ->execute([$studentId, $guardian['type_id'], $lastName, $firstName, $middleName, $contact]);
+        }
+    }
+
+    // 5. Update medical information and related child records
+    $medicalInfoStmt = $pdo->prepare('SELECT medical_information_id FROM enrollment_medical_information WHERE enrollment_id = ? LIMIT 1');
+    $medicalInfoStmt->execute([$enrollmentId]);
+    $medicalInformationId = intval($medicalInfoStmt->fetchColumn());
+
+    $medicalSmoke = normalizeCheckbox($data['exposed_to_cigarette_vape_smoke'] ?? 0);
+    $medicalNotes = strOrNull($data['other_pertinent_information'] ?? null);
+
+    if ($medicalInformationId > 0) {
+        $pdo->prepare('UPDATE enrollment_medical_information SET exposed_to_cigarette_vape_smoke = ?, other_pertinent_information = ? WHERE medical_information_id = ?')
+            ->execute([$medicalSmoke, $medicalNotes, $medicalInformationId]);
+    } else {
+        $pdo->prepare('INSERT INTO enrollment_medical_information (enrollment_id, exposed_to_cigarette_vape_smoke, other_pertinent_information) VALUES (?, ?, ?)')
+            ->execute([$enrollmentId, $medicalSmoke, $medicalNotes]);
+        $medicalInformationId = intval($pdo->lastInsertId());
+    }
+
+    if ($medicalInformationId > 0) {
+        $pdo->prepare('DELETE FROM enrollment_medical_allergies WHERE medical_information_id = ?')->execute([$medicalInformationId]);
+        $pdo->prepare('DELETE FROM enrollment_medical_conditions WHERE medical_information_id = ?')->execute([$medicalInformationId]);
+        $pdo->prepare('DELETE FROM enrollment_medical_surgeries WHERE medical_information_id = ?')->execute([$medicalInformationId]);
+        $pdo->prepare('DELETE FROM enrollment_medical_treatments WHERE medical_information_id = ?')->execute([$medicalInformationId]);
+        $pdo->prepare('DELETE FROM enrollment_family_medical_history WHERE medical_information_id = ?')->execute([$medicalInformationId]);
+
+        $allergyTypeIds = parseIds($data['medicine_allergy'] ?? []);
+        $allergyDescs = $data['allergy_description'] ?? [];
+        if (!is_array($allergyDescs)) {
+            $allergyDescs = ['default' => trim((string)$allergyDescs)];
+        }
+        if (!empty($allergyTypeIds)) {
+            $stmt = $pdo->prepare('INSERT INTO enrollment_medical_allergies (medical_information_id, allergy_type_id, description) VALUES (?, ?, ?)');
+            foreach ($allergyTypeIds as $typeId) {
+                $stmt->execute([$medicalInformationId, $typeId, strOrNull($allergyDescs[$typeId] ?? $allergyDescs['default'] ?? null)]);
+            }
+        }
+
+        $conditionTypeIds = parseIds($data['condition_type_id'] ?? []);
+        $conditionDesc = strOrNull($data['condition_description'] ?? null);
+        if (!empty($conditionTypeIds)) {
+            $stmt = $pdo->prepare('INSERT INTO enrollment_medical_conditions (medical_information_id, condition_type_id, description) VALUES (?, ?, ?)');
+            foreach ($conditionTypeIds as $typeId) {
+                $stmt->execute([$medicalInformationId, $typeId, $conditionDesc]);
+            }
+        }
+
+        $hasSurgery = normalizeCheckbox($data['has_surgery_hospitalization'] ?? 0);
+        $surgeryDate = strOrNull($data['surgery_date'] ?? null);
+        $hospitalName = strOrNull($data['hospital_name'] ?? null);
+        $bodyPart = strOrNull($data['body_part'] ?? null);
+        if ($hasSurgery || $surgeryDate || $hospitalName || $bodyPart) {
+            $pdo->prepare('INSERT INTO enrollment_medical_surgeries (medical_information_id, surgery_date, hospital_name, body_part) VALUES (?, ?, ?, ?)')
+                ->execute([$medicalInformationId, $surgeryDate, $hospitalName, $bodyPart]);
+        }
+
+        $hasTreatment = normalizeCheckbox($data['is_taking_treatment'] ?? 0);
+        $treatmentMedicine = strOrNull($data['treatment_medicine'] ?? null);
+        $scheduleDosage = strOrNull($data['schedule_dosage'] ?? null);
+        if ($hasTreatment || $treatmentMedicine || $scheduleDosage) {
+            $pdo->prepare('INSERT INTO enrollment_medical_treatments (medical_information_id, treatment_medicine, schedule_dosage) VALUES (?, ?, ?)')
+                ->execute([$medicalInformationId, $treatmentMedicine, $scheduleDosage]);
+        }
+
+        $familyTypeIds = parseIds($data['family_condition_type_id'] ?? []);
+        $familyDesc = strOrNull($data['family_condition_description'] ?? null);
+        if (!empty($familyTypeIds)) {
+            $stmt = $pdo->prepare('INSERT INTO enrollment_family_medical_history (medical_information_id, family_history_type_id, description) VALUES (?, ?, ?)');
+            foreach ($familyTypeIds as $typeId) {
+                $stmt->execute([$medicalInformationId, $typeId, $familyDesc]);
+            }
+        }
+    }
 
     $pdo->commit();
 

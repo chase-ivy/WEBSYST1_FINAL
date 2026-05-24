@@ -550,10 +550,13 @@ async function generateEnrollmentPdf(studentId) {
     }
 }
 
-document.getElementById('enrollmentForm').addEventListener('submit', async function (event) {
-    event.preventDefault();
-    showConfirmation(event.target);
-});
+const enrollmentFormEl = document.getElementById('enrollmentForm');
+if (enrollmentFormEl && typeof showConfirmation === 'function') {
+    enrollmentFormEl.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        showConfirmation(event.target);
+    });
+}
 
 function generateConfirmationSummary(form) {
     const data = serializeForm(form);
@@ -693,7 +696,7 @@ async function confirmSubmission() {
         showMessage('', 'Submitting enrollment...');
 
         // Submit enrollment
-        const response = await API.enrollments.create(payload);
+        const response = await API.enrollment.submit(payload);
         
         // Handle different API response formats
         let enrollmentId = null;

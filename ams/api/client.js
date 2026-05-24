@@ -109,18 +109,8 @@ const API = {
         queue: function(schoolYear, status = 'pending') {
             return API.call('endpoints/enrollment/get', { school_year: schoolYear, status }, 'GET');
         },
-    },
-
-    // ── Backwards-compat shim for older code using plural `enrollments` ──
-    enrollments: {
-        // Return raw list (compatible with previous code that expects an array or { enrollments: [] })
-        list: function() { return API.call('endpoints/enrollment/get', null, 'GET'); },
-        read: function(id) { return API.enrollment.get(id); },
-        // Create (legacy alias) -> use canonical submit endpoint
-        create: function(data) { return API.enrollment.submit(data); },
-        // Update: fallback shim. A proper server-side `endpoints/enrollment/update.php` is recommended.
-        update: function(id, data) {
-            const payload = Object.assign({}, data || {}, { enrollment_id: id });
+        update: function(enrollmentId, data) {
+            const payload = Object.assign({}, data || {}, { enrollment_id: enrollmentId });
             return API.call('endpoints/enrollment/update', payload, 'POST');
         }
     },
