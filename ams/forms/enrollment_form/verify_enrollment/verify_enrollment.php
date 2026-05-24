@@ -43,7 +43,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Verify Enrollments · Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="../enrollment.css" rel="stylesheet">
+    <link href="/WEBSYST1_FINAL/ams/forms/enrollment_form/enrollment.css" rel="stylesheet">
     <script>
         window.CURRENT_USER_ID = <?php echo intval($currentUserId); ?>;
     </script>
