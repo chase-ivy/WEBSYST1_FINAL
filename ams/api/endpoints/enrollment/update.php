@@ -63,7 +63,7 @@ try {
         'school_year', 'grade_level', 'is_returning_learner',
         'mother_tongue_id', 'is_indigenous', 'indigenous_group_id',
         'is_four_ps_beneficiary', 'four_ps_household_id',
-        'is_learner_with_disability', 'with_lrn'
+        'is_learner_with_disability'
     ];
     
     foreach ($enrollmentFields as $field) {
@@ -90,7 +90,8 @@ try {
         'extension_name' => 'Learner_Extension_Name',
         'birth_date' => 'Birth_Date',
         'sex' => 'sex',
-        'place_of_birth' => 'Place_of_Birth'
+        'place_of_birth' => 'Place_of_Birth',
+        'psa_bcn' => 'psa_bcn'
     ];
     
     foreach ($studentFields as $dbField => $formField) {

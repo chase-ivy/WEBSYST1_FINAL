@@ -656,6 +656,7 @@ async function confirmSubmission() {
                 password: payload.user_password || '',
                 email: payload.user_email || '',
                 lrn: payload.Learner_Reference_No || '',
+                psa_bcn: payload.psa_bcn || '',
                 last_name: payload.Learner_Last_Name || '',
                 first_name: payload.Learner_First_Name || '',
                 middle_name: payload.Learner_Middle_Name || '',

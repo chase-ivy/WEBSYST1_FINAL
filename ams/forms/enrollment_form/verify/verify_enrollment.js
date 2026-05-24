@@ -49,6 +49,13 @@ function getInput(id) {
     return getField(id);
 }
 
+function sameAddr(yes) {
+    const permBox = document.getElementById('permBox');
+    if (!permBox) return;
+    permBox.style.opacity = yes ? '.4' : '1';
+    permBox.style.pointerEvents = yes ? 'none' : 'auto';
+}
+
 function setValue(name, value) {
     const fields = getFields(name);
     if (fields.length === 0) {
@@ -301,6 +308,8 @@ function applyEnrollmentToForm(data) {
         setValue('Returning_Grade_Level', data.returning_learner.last_grade_level_completed);
         setValue('Last_School_Year_Completed', data.returning_learner.last_school_year_completed);
         setValue('Last_School_Attended', data.returning_learner.last_school_attended);
+        // Map school id (DB column `school_id`) to the verify form field `school_ID`
+        setValue('school_ID', data.returning_learner.school_id);
     }
 
     setValue('Learner_Last_Name', enrollment.last_name);
@@ -803,6 +812,17 @@ function initializeVerifyPage() {
     const saveBtn = document.getElementById('saveChangesBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', saveEnrollmentUpdates);
+    }
+
+    const sameAddressRadios = Array.from(document.querySelectorAll('[name="same_address"]'));
+    sameAddressRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            sameAddr(radio.value === 'Yes');
+        });
+    });
+    const selectedSameAddress = sameAddressRadios.find(radio => radio.checked);
+    if (selectedSameAddress) {
+        sameAddr(selectedSameAddress.value === 'Yes');
     }
 
     if (document.readyState === 'loading') {
