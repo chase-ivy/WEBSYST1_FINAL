@@ -199,8 +199,8 @@ function buildReviewSummary() {
     }
 
     const addresses = [
-        ['Current Address', ['Current_House_No','Current_Street_Name','Current_Barangay','Current_Municipality_City','Current_Province','Current_Zip_Code']],
-        ['Permanent Address', ['Permanent_House_No','Permanent_Street_Name','Permanent_Barangay','Permanent_Municipality_City','Permanent_Province','Permanent_Zip_Code']],
+        ['Current Address', ['Current_Subdivision_House_No','Current_House_No','Current_Street_Name','Current_Barangay','Current_Municipality_City','Current_Province','Current_Zip_Code']],
+        ['Permanent Address', ['Permanent_Subdivision_House_No','Permanent_House_No','Permanent_Street_Name','Permanent_Barangay','Permanent_Municipality_City','Permanent_Province','Permanent_Zip_Code']],
     ];
     addresses.forEach(([label, ids]) => {
         const parts = ids.map(id => getInput(id)?.value || '').filter(Boolean);
@@ -285,7 +285,7 @@ function applyEnrollmentToForm(data) {
 
     setValue('Grade_Level', enrollment.grade_level);
     setValue('Learner_Reference_No', enrollment.lrn);
-    setValue('with_lrn', enrollment.with_lrn ? '1' : '0');
+    // `with_lrn` removed from form/schema — do not set it here.
     setValue('psa_bcn', enrollment.psa_bcn);
     setValue('returning', enrollment.is_returning_learner ? '1' : '0');
     
@@ -294,6 +294,7 @@ function applyEnrollmentToForm(data) {
         setValue('Returning_Grade_Level', data.returning_learner.last_grade_level_completed);
         setValue('Last_School_Year_Completed', data.returning_learner.last_school_year_completed);
         setValue('Last_School_Attended', data.returning_learner.last_school_attended);
+        setValue('school_ID', data.returning_learner.school_id || data.returning_learner.school_ID || '');
     }
 
     setValue('Learner_Last_Name', enrollment.last_name);
@@ -363,6 +364,7 @@ function applyEnrollmentToForm(data) {
     const permanentAddress = getAddressByType(data.addresses, 'Permanent');
 
     if (currentAddress) {
+        setValue('Current_Subdivision_House_No', currentAddress.subdivision_house_no);
         setValue('Current_House_No', currentAddress.house_no);
         setValue('Current_Street_Name', currentAddress.street_name);
         setValue('Current_Barangay', currentAddress.barangay);
@@ -373,6 +375,7 @@ function applyEnrollmentToForm(data) {
     }
 
     if (permanentAddress) {
+        setValue('Permanent_Subdivision_House_No', permanentAddress.subdivision_house_no);
         setValue('Permanent_House_No', permanentAddress.house_no);
         setValue('Permanent_Street_Name', permanentAddress.street_name);
         setValue('Permanent_Barangay', permanentAddress.barangay);
@@ -728,3 +731,43 @@ function initializeVerifyPage() {
 }
 
 initializeVerifyPage();
+
+// Load disability subtypes (for Chronic Illness / Social Health Problem) and attach toggler
+(async function() {
+    try {
+        const resp = await API.disability_subtypes.list();
+        const subtypes = Array.isArray(resp.data) ? resp.data : [];
+        const socialBox = document.getElementById('socialOptionsBox');
+        if (socialBox) {
+            socialBox.innerHTML = '';
+            subtypes.filter(s => Number(s.disability_type_id) === 9).forEach(s => {
+                const id = s.disability_subtype_id;
+                const label = document.createElement('label');
+                label.className = 'check-item';
+                label.innerHTML = `<input type="checkbox" name="disability_sub[9][]" value="${id}"> ${s.name}`;
+                socialBox.appendChild(label);
+            });
+        }
+    } catch (e) {
+        console.warn('Failed to load disability subtypes', e);
+        // Fallback: add 'Cancer' checkbox so admins can still see one option
+        try {
+            const socialBox = document.getElementById('socialOptionsBox');
+            if (socialBox && socialBox.children.length === 0) {
+                const label = document.createElement('label');
+                label.className = 'check-item';
+                label.innerHTML = `<input type="checkbox" name="disability_sub[9][]" value="Cancer"> Cancer`;
+                socialBox.appendChild(label);
+            }
+        } catch (ee) { /* ignore */ }
+    }
+
+    const socialEl = document.getElementById('social_health');
+    const socialOptionsBox = document.getElementById('socialOptionsBox');
+    if (socialEl && socialOptionsBox) {
+        socialEl.addEventListener('change', function() {
+            socialOptionsBox.style.display = this.checked ? 'block' : 'none';
+        });
+        socialOptionsBox.style.display = socialEl.checked ? 'block' : 'none';
+    }
+})();

@@ -265,7 +265,7 @@ function convertRecordToEnrollment(record) {
         converted.year_end = '';
     }
 
-    converted.with_lrn = record.lrn ? '1' : '0';
+    // `with_lrn` removed from form/schema — derive from LRN if needed elsewhere dynamically
     converted.is_returning_learner = record.is_returning_learner || 0;
     converted.is_learner_with_disability = record.is_learner_with_disability || 0;
     converted.student_record_verified = 1;
@@ -404,13 +404,6 @@ async function openEnrollmentModal(studentId) {
                         <div class="form-group">
                             <label for="Learner_Reference_No">LRN</label>
                             <input id="Learner_Reference_No" name="Learner_Reference_No" value="${escapeHtml(student.lrn || '')}" />
-                        </div>
-                        <div class="form-group">
-                            <label for="with_lrn">With LRN?</label>
-                            <select id="with_lrn" name="with_lrn">
-                                <option value="1" ${enrollment.with_lrn == 1 ? 'selected' : ''}>Yes</option>
-                                <option value="0" ${enrollment.with_lrn == 0 ? 'selected' : ''}>No</option>
-                            </select>
                         </div>
                         <div class="form-group">
                             <label for="returning">Returning Learner?</label>
@@ -623,6 +616,10 @@ async function openEnrollmentModal(studentId) {
                     <h4>Current Address</h4>
                     <div class="form-grid">
                         <div class="form-group">
+                            <label for="Current_Subdivision_House_No">Subdivision / House No.</label>
+                            <input id="Current_Subdivision_House_No" name="Current_Subdivision_House_No" value="${escapeHtml(currentAddress.subdivision_house_no || '')}" />
+                        </div>
+                        <div class="form-group">
                             <label for="Current_House_No">House No.</label>
                             <input id="Current_House_No" name="Current_House_No" value="${escapeHtml(currentAddress.house_no || '')}" />
                         </div>
@@ -657,6 +654,10 @@ async function openEnrollmentModal(studentId) {
                 <div class="form-section">
                     <h4>Permanent Address</h4>
                     <div class="form-grid">
+                        <div class="form-group">
+                            <label for="Permanent_Subdivision_House_No">Subdivision / House No.</label>
+                            <input id="Permanent_Subdivision_House_No" name="Permanent_Subdivision_House_No" value="${escapeHtml(permanentAddress.subdivision_house_no || '')}" />
+                        </div>
                         <div class="form-group">
                             <label for="Permanent_House_No">House No.</label>
                             <input id="Permanent_House_No" name="Permanent_House_No" value="${escapeHtml(permanentAddress.house_no || '')}" />

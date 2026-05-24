@@ -261,6 +261,15 @@ if (_specialHealthEl) {
     if (_healthOptionsBox) _healthOptionsBox.style.display = _specialHealthEl.checked ? 'block' : 'none';
 }
 
+const _socialEl = document.getElementById('social_health');
+if (_socialEl) {
+    const _socialOptionsBox = document.getElementById('socialOptionsBox');
+    _socialEl.addEventListener('change', function() {
+        if (_socialOptionsBox) _socialOptionsBox.style.display = this.checked ? 'block' : 'none';
+    });
+    if (_socialOptionsBox) _socialOptionsBox.style.display = _socialEl.checked ? 'block' : 'none';
+}
+
 let current = 1;
 
 function goTo(n) {
@@ -327,6 +336,34 @@ async function loadEnrollmentLookups() {
 
         populateLookupSelect(motherTongueSelect, motherTongues, 'mother_tongue_id', 'name');
         populateLookupSelect(ipGroupSelect, indigenousGroups, 'indigenous_group_id', 'name');
+        // Load disability subtypes (e.g., Cancer under Chronic Illness / Social Health Problem)
+        try {
+            const subtypesResp = await API.disability_subtypes.list();
+            const subtypes = Array.isArray(subtypesResp.data) ? subtypesResp.data : [];
+            const socialBox = document.getElementById('socialOptionsBox');
+            if (socialBox) {
+                socialBox.innerHTML = '';
+                subtypes.filter(s => Number(s.disability_type_id) === 9).forEach(s => {
+                    const id = s.disability_subtype_id;
+                    const label = document.createElement('label');
+                    label.className = 'check-item';
+                    label.innerHTML = `<input type="checkbox" name="disability_sub[9][]" value="${id}"> ${s.name}`;
+                    socialBox.appendChild(label);
+                });
+            }
+        } catch (e) {
+            // non-fatal — add minimal fallback so public form users can still select 'Cancer'
+            console.warn('Failed to load disability subtypes', e);
+            try {
+                const socialBox = document.getElementById('socialOptionsBox');
+                if (socialBox && socialBox.children.length === 0) {
+                    const label = document.createElement('label');
+                    label.className = 'check-item';
+                    label.innerHTML = `<input type="checkbox" name="disability_sub[9][]" value="Cancer"> Cancer`;
+                    socialBox.appendChild(label);
+                }
+            } catch (ee) { /* ignore */ }
+        }
     } catch (error) {
         console.error('Failed to load lookup values:', error);
     }
@@ -480,6 +517,7 @@ function serializeForm(form) {
 
     if (data.same_address === 'Yes') {
         data.Permanent_House_No          = data.Current_House_No;
+        data.Permanent_Subdivision_House_No = data.Current_Subdivision_House_No;
         data.Permanent_Street_Name       = data.Current_Street_Name;
         data.Permanent_Barangay          = data.Current_Barangay;
         data.Permanent_Municipality_City = data.Current_Municipality_City;

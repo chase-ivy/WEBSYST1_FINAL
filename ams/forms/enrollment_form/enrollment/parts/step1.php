@@ -46,19 +46,8 @@
                 </div>
             </div>
 
-            <!-- With LRN / Returning -->
-            <div class="grid-2" style="margin-top:16px;">
-                <div class="field">
-                    <label>With LRN?</label>
-                    <div class="radio-group">
-                        <label class="radio-pill">
-                            <input type="radio" name="with_lrn" value="1" required> Yes
-                        </label>
-                        <label class="radio-pill">
-                            <input type="radio" name="with_lrn" value="0"> No
-                        </label>
-                    </div>
-                </div>
+            <!-- Returning -->
+            <div class="grid-1" style="margin-top:16px;">
                 <div class="field">
                     <label>Returning Learner?</label>
                     <div class="radio-group">
@@ -97,10 +86,10 @@
                         <label>Last School Attended</label>
                         <input type="text" name="Last_School_Attended" placeholder="School name">
                     </div>
-                    <div class="field span-2">
-                        <label>School ID</label>
-                        <input type="text" name="school_ID" placeholder="School ID">
-                    </div>
+                        <div class="field span-2">
+                            <label>School ID</label>
+                            <input type="text" name="school_ID" placeholder="School ID">
+                        </div>
                 </div>
             </div>
 
@@ -285,8 +274,11 @@
                         <input type="checkbox" name="disabilityDetails[8][]" value="8"> Speech / Language Disorder
                     </label>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[9][]" value="9"> Chronic Illness
+                        <input id="social_health" type="checkbox" name="disabilityDetails[9][]" value="9"> Social Health Problem/Chronic Disease
                     </label>
+                    <div id="socialOptionsBox" style="display:none; margin-left: 18px; margin-top:6px;">
+                        <!-- disability_subtypes for type 9 will be dynamically loaded here -->
+                    </div>
                     <label class="check-item">
                         <input type="checkbox" name="disabilityDetails[10][]" value="10"> Others (Multiple Disorder, Cerebral Palsy, etc.)
                     </label>

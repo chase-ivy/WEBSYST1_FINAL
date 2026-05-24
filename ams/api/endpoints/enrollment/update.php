@@ -11,6 +11,28 @@
 //   - student_parent_guardians (parent/guardian data)
 //   - enrollment_medical_* tables (allergies, conditions, surgeries, etc.)
 //
+    // 3.5 Update returning learner details (if provided)
+    if (isset($data['Returning_Grade_Level']) || isset($data['Last_School_Year_Completed']) || isset($data['Last_School_Attended']) || isset($data['school_ID']) || isset($data['school_id'])) {
+        $rStmt = $pdo->prepare('SELECT enrollment_id FROM enrollment_returning_learners WHERE enrollment_id = ? LIMIT 1');
+        $rStmt->execute([$enrollmentId]);
+        $hasReturning = (bool)$rStmt->fetchColumn();
+
+        $lastGrade = isset($data['Returning_Grade_Level']) ? trim((string)$data['Returning_Grade_Level']) ?: null : null;
+        $lastYear = isset($data['Last_School_Year_Completed']) ? trim((string)$data['Last_School_Year_Completed']) ?: null : null;
+        $lastSchool = isset($data['Last_School_Attended']) ? trim((string)$data['Last_School_Attended']) ?: null : null;
+        $schoolId = isset($data['school_ID']) ? trim((string)$data['school_ID']) ?: (isset($data['school_id']) ? trim((string)$data['school_id']) : null) : (isset($data['school_id']) ? trim((string)$data['school_id']) : null);
+
+        if ($hasReturning) {
+            $pdo->prepare('UPDATE enrollment_returning_learners SET last_grade_level_completed = ?, last_school_year_completed = ?, last_school_attended = ?, school_id = ? WHERE enrollment_id = ?')
+                ->execute([$lastGrade, $lastYear, $lastSchool, $schoolId, $enrollmentId]);
+        } else {
+            if ($lastGrade || $lastYear || $lastSchool || $schoolId) {
+                $pdo->prepare('INSERT INTO enrollment_returning_learners (enrollment_id, last_grade_level_completed, last_school_year_completed, last_school_attended, school_id) VALUES (?, ?, ?, ?, ?)')
+                    ->execute([$enrollmentId, $lastGrade, $lastYear, $lastSchool, $schoolId]);
+            }
+        }
+    }
+
 // POST body:
 //   enrollment_id (required)
 //   All optional fields from the enrollment form will be updated
@@ -52,24 +74,64 @@ if ($enrollment['enrollment_status'] !== 'pending') {
 
 $studentId = intval($enrollment['student_id']);
 
+function ownershipType($value): ?string {
+    $map = [
+        'rental' => 'rented', 'rented' => 'rented', 'owned' => 'owned',
+        'living with relatives' => 'living_with_relatives', 'living_with_relatives' => 'living_with_relatives',
+        'inherited' => 'inherited',
+    ];
+    if ($value === null) return null;
+    $val = strtolower(trim((string)$value));
+    return $map[$val] ?? null;
+}
+
 try {
     $pdo->beginTransaction();
 
-    // 1. Update enrollments table
+    // 1. Update enrollments table — accept form keys (Grade_Level, returning, ip, etc.)
     $enrollmentUpdates = [];
     $enrollmentParams = [];
-    
-    $enrollmentFields = [
-        'school_year', 'grade_level', 'is_returning_learner',
-        'mother_tongue_id', 'is_indigenous', 'indigenous_group_id',
-        'is_four_ps_beneficiary', 'four_ps_household_id',
-        'is_learner_with_disability', 'with_lrn'
-    ];
-    
-    foreach ($enrollmentFields as $field) {
-        if (isset($data[$field])) {
+
+    $fieldsToCheck = ['grade_level','is_returning_learner','mother_tongue_id','is_indigenous','indigenous_group_id','is_four_ps_beneficiary','four_ps_household_id','is_learner_with_disability'];
+    foreach ($fieldsToCheck as $field) {
+        $candidate = null;
+        switch ($field) {
+            case 'grade_level':
+                if (isset($data['Grade_Level'])) $candidate = trim((string)$data['Grade_Level']);
+                elseif (isset($data['grade_level'])) $candidate = trim((string)$data['grade_level']);
+                break;
+            case 'is_returning_learner':
+                if (isset($data['returning'])) $candidate = intval($data['returning']);
+                elseif (isset($data['is_returning_learner'])) $candidate = intval($data['is_returning_learner']);
+                break;
+            case 'mother_tongue_id':
+                if (isset($data['Mother_Tongue'])) $candidate = intval($data['Mother_Tongue']) ?: null;
+                elseif (isset($data['mother_tongue_id'])) $candidate = intval($data['mother_tongue_id']) ?: null;
+                break;
+            case 'is_indigenous':
+                if (isset($data['ip'])) $candidate = (strtolower((string)$data['ip']) === 'yes' || $data['ip'] === '1') ? 1 : 0;
+                elseif (isset($data['is_indigenous'])) $candidate = intval($data['is_indigenous']);
+                break;
+            case 'indigenous_group_id':
+                if (isset($data['IP_Group'])) $candidate = intval($data['IP_Group']) ?: null;
+                elseif (isset($data['indigenous_group_id'])) $candidate = intval($data['indigenous_group_id']) ?: null;
+                break;
+            case 'is_four_ps_beneficiary':
+                if (isset($data['fourps'])) $candidate = (strtolower((string)$data['fourps']) === 'yes' || $data['fourps'] === '1') ? 1 : 0;
+                elseif (isset($data['is_four_ps_beneficiary'])) $candidate = intval($data['is_four_ps_beneficiary']);
+                break;
+            case 'four_ps_household_id':
+                if (isset($data['FourPs_Specify'])) $candidate = trim((string)$data['FourPs_Specify']) ?: null;
+                elseif (isset($data['four_ps_household_id'])) $candidate = trim((string)$data['four_ps_household_id']) ?: null;
+                break;
+            case 'is_learner_with_disability':
+                if (isset($data['disability'])) $candidate = (strtolower((string)$data['disability']) === 'yes') ? 1 : 0;
+                elseif (isset($data['is_learner_with_disability'])) $candidate = intval($data['is_learner_with_disability']);
+                break;
+        }
+        if ($candidate !== null) {
             $enrollmentUpdates[] = "$field = ?";
-            $enrollmentParams[] = $data[$field];
+            $enrollmentParams[] = $candidate;
         }
     }
     
@@ -124,17 +186,23 @@ try {
             $params = [];
             $addressMap = [
                 'house_no' => 'Current_House_No',
+                'subdivision_house_no' => 'Current_Subdivision_House_No',
                 'street_name' => 'Current_Street_Name',
                 'barangay' => 'Current_Barangay',
                 'municipality_city' => 'Current_Municipality_City',
                 'province' => 'Current_Province',
                 'country' => 'Current_Country',
-                'zip_code' => 'Current_Zip_Code'
+                'zip_code' => 'Current_Zip_Code',
+                'ownership_type' => 'Current_Address_Status'
             ];
             foreach ($addressMap as $dbCol => $formField) {
                 if (isset($data[$formField])) {
                     $updates[] = "$dbCol = ?";
-                    $params[] = trim($data[$formField]) ?: null;
+                    $val = trim($data[$formField]) ?: null;
+                    if ($dbCol === 'ownership_type') {
+                        $val = ownershipType($val);
+                    }
+                    $params[] = $val;
                 }
             }
             if (count($updates) > 0) {
@@ -161,18 +229,24 @@ try {
             $updates = [];
             $params = [];
             $addressMap = [
-                'house_no' => 'Permanent_House_No',
-                'street_name' => 'Permanent_Street_Name',
-                'barangay' => 'Permanent_Barangay',
-                'municipality_city' => 'Permanent_Municipality_City',
-                'province' => 'Permanent_Province',
-                'country' => 'Permanent_Country',
-                'zip_code' => 'Permanent_Zip_Code'
+                 'house_no' => 'Permanent_House_No',
+                 'subdivision_house_no' => 'Permanent_Subdivision_House_No',
+                 'street_name' => 'Permanent_Street_Name',
+                 'barangay' => 'Permanent_Barangay',
+                 'municipality_city' => 'Permanent_Municipality_City',
+                 'province' => 'Permanent_Province',
+                 'country' => 'Permanent_Country',
+                 'zip_code' => 'Permanent_Zip_Code',
+                 'ownership_type' => 'Permanent_Address_Status'
             ];
             foreach ($addressMap as $dbCol => $formField) {
                 if (isset($data[$formField])) {
                     $updates[] = "$dbCol = ?";
-                    $params[] = trim($data[$formField]) ?: null;
+                    $val = trim($data[$formField]) ?: null;
+                    if ($dbCol === 'ownership_type') {
+                        $val = ownershipType($val);
+                    }
+                    $params[] = $val;
                 }
             }
             if (count($updates) > 0) {

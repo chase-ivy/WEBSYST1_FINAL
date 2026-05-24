@@ -463,8 +463,6 @@ $enrollmentData = [
 
     // Enrollment flags
     'psa_bcn'         => safe($enrollment['psa_bcn']                ?? ''),
-    'with_lrn_yes'    => ($enrollment['with_lrn']            ?? 0) == 1 ? 'Yes' : '',
-    'with_lrn_no'     => ($enrollment['with_lrn']            ?? 0) == 0 ? 'Yes' : '',
     'returning_yes'   => ($enrollment['is_returning_learner'] ?? 0) == 1 ? 'Yes' : '',
     'returning_no'    => ($enrollment['is_returning_learner'] ?? 0) == 0 ? 'Yes' : '',
     'mother_tongue'   => safeUp($enrollment['mother_tongue']   ?? ''),
