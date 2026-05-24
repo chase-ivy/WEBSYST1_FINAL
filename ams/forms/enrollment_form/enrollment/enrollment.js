@@ -534,20 +534,11 @@ function showMessage(type, message) {
     container.textContent = message;
 }
 
-async function generateEnrollmentPdf(studentId) {
-    const url = new URL('../pdf.php', window.location.href);
+function generateEnrollmentXlsx(studentId) {
+    const url = new URL('/WEBSYST1_FINAL/ams/generation/excel/excel.php', window.location.origin);
     url.searchParams.set('student_id', studentId);
     url.searchParams.set('type', 'combined');
-
-    const response = await fetch(url.toString(), {
-        method: 'GET',
-        credentials: 'same-origin',
-    });
-
-    if (!response.ok) {
-        const text = await response.text();
-        throw new Error('PDF generation failed: ' + text);
-    }
+    window.open(url.toString(), '_blank');
 }
 
 document.getElementById('enrollmentForm').addEventListener('submit', async function (event) {
