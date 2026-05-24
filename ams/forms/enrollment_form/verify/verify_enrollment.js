@@ -199,8 +199,8 @@ function buildReviewSummary() {
     }
 
     const addresses = [
-        ['Current Address', ['Current_Subdivision_House_No','Current_House_No','Current_Street_Name','Current_Barangay','Current_Municipality_City','Current_Province','Current_Zip_Code']],
-        ['Permanent Address', ['Permanent_Subdivision_House_No','Permanent_House_No','Permanent_Street_Name','Permanent_Barangay','Permanent_Municipality_City','Permanent_Province','Permanent_Zip_Code']],
+        ['Current Address', ['Current_House_No','Current_Street_Name','Current_Barangay','Current_Municipality_City','Current_Province','Current_Zip_Code']],
+        ['Permanent Address', ['Permanent_House_No','Permanent_Street_Name','Permanent_Barangay','Permanent_Municipality_City','Permanent_Province','Permanent_Zip_Code']],
     ];
     addresses.forEach(([label, ids]) => {
         const parts = ids.map(id => getInput(id)?.value || '').filter(Boolean);
@@ -260,9 +260,16 @@ function filterSectionsByGradeLevel(gradeLevel) {
 }
 
 function applyEnrollmentToForm(data) {
-    currentEnrollmentData = data;
-    if (!data || !data.enrollment) return;
+    if (!data) return;
+    if (!data.enrollment && data.enrollment_id) {
+        data = { enrollment: data };
+    }
+    if (!data.enrollment) {
+        console.error('applyEnrollmentToForm: missing enrollment payload', data);
+        return;
+    }
 
+    currentEnrollmentData = data;
     const enrollment = data.enrollment;
     const studentIdInput = document.getElementById('studentIdInput');
     const enrollmentIdInput = document.getElementById('enrollmentIdInput');
@@ -285,7 +292,7 @@ function applyEnrollmentToForm(data) {
 
     setValue('Grade_Level', enrollment.grade_level);
     setValue('Learner_Reference_No', enrollment.lrn);
-    // `with_lrn` removed from form/schema — do not set it here.
+    setValue('with_lrn', enrollment.with_lrn ? '1' : '0');
     setValue('psa_bcn', enrollment.psa_bcn);
     setValue('returning', enrollment.is_returning_learner ? '1' : '0');
     
@@ -294,7 +301,6 @@ function applyEnrollmentToForm(data) {
         setValue('Returning_Grade_Level', data.returning_learner.last_grade_level_completed);
         setValue('Last_School_Year_Completed', data.returning_learner.last_school_year_completed);
         setValue('Last_School_Attended', data.returning_learner.last_school_attended);
-        setValue('school_ID', data.returning_learner.school_id || data.returning_learner.school_ID || '');
     }
 
     setValue('Learner_Last_Name', enrollment.last_name);
@@ -353,6 +359,22 @@ function applyEnrollmentToForm(data) {
     toggle('fourpsBox', enrollment.is_four_ps_beneficiary ? true : false);
     toggle('disabilityBox', enrollment.is_learner_with_disability ? true : false);
 
+    // Tick individual disability checkboxes
+    (data.disabilities || []).forEach(d => {
+        const typeId = d.disability_type_id;
+        const subtypeId = d.disability_subtype_id;
+        const typeCheckbox = document.querySelector(`[name="disabilityDetails[${typeId}][]"]`);
+        if (typeCheckbox) typeCheckbox.checked = true;
+        if (subtypeId) {
+            const subCheckbox = document.querySelector(`[name="disability_sub[${typeId}][]"][value="${subtypeId}"]`);
+            if (subCheckbox) subCheckbox.checked = true;
+        }
+        if (typeId == 1) {
+            const visualBox = document.getElementById('visualOptionsBox');
+            if (visualBox) visualBox.style.display = '';
+        }
+    });
+
     if (document.getElementById('Mother_Tongue')) {
         toggleMotherTongueOther();
     }
@@ -364,7 +386,6 @@ function applyEnrollmentToForm(data) {
     const permanentAddress = getAddressByType(data.addresses, 'Permanent');
 
     if (currentAddress) {
-        setValue('Current_Subdivision_House_No', currentAddress.subdivision_house_no);
         setValue('Current_House_No', currentAddress.house_no);
         setValue('Current_Street_Name', currentAddress.street_name);
         setValue('Current_Barangay', currentAddress.barangay);
@@ -375,7 +396,6 @@ function applyEnrollmentToForm(data) {
     }
 
     if (permanentAddress) {
-        setValue('Permanent_Subdivision_House_No', permanentAddress.subdivision_house_no);
         setValue('Permanent_House_No', permanentAddress.house_no);
         setValue('Permanent_Street_Name', permanentAddress.street_name);
         setValue('Permanent_Barangay', permanentAddress.barangay);
@@ -384,6 +404,17 @@ function applyEnrollmentToForm(data) {
         setValue('Permanent_Country', permanentAddress.country);
         setValue('Permanent_Zip_Code', permanentAddress.zip_code);
     }
+
+    // Populate parent/guardian fields from guardians array
+    const typeMap = { 1: 'father', 2: 'mother', 3: 'guardian' };
+    (data.guardians || []).forEach(g => {
+        const prefix = typeMap[g.parent_guardian_type_id];
+        if (!prefix) return;
+        setValue(`${prefix}_last_name`,      g.last_name);
+        setValue(`${prefix}_first_name`,     g.first_name);
+        setValue(`${prefix}_middle_name`,    g.middle_name);
+        setValue(`${prefix}_contact_number`, g.contact_number);
+    });
 
     // Medical data comes as separate arrays from get.php
     const medInfo = data.medical_info || {};
@@ -401,11 +432,62 @@ function applyEnrollmentToForm(data) {
     setValue('exposed_to_cigarette_vape_smoke', medInfo.exposed_to_cigarette_vape_smoke);
     setValue('other_pertinent_information', medInfo.other_pertinent_information);
 
+    // Call showQ* first — they rebuild the dynamic DOM, so we populate AFTER
     if (typeof showField === 'function') showField();
     if (typeof showQ2 === 'function') showQ2();
     if (typeof showQ3 === 'function') showQ3();
     if (typeof showQ4 === 'function') showQ4();
     if (typeof showQ5 === 'function') showQ5();
+
+    // Tick allergy checkboxes and fill descriptions (medicine_allergy[])
+    (data.allergies || []).forEach(a => {
+        const cb = document.querySelector(`[name="medicine_allergy[]"][value="${a.allergy_type_id}"]`);
+        if (cb) cb.checked = true;
+        if (a.description) {
+            const txt = document.querySelector(`[name="allergy_description[${a.allergy_type_id}]"]`);
+            if (txt) txt.value = a.description;
+        }
+    });
+
+    // Tick condition checkboxes and fill description
+    (data.conditions || []).forEach(c => {
+        const cb = document.querySelector(`[name="condition_type_id"][value="${c.condition_type_id}"]`);
+        if (cb) cb.checked = true;
+    });
+    if (data.conditions && data.conditions.length > 0 && data.conditions[0].description) {
+        const txt = document.querySelector('[name="condition_description"]');
+        if (txt) txt.value = data.conditions[0].description;
+    }
+
+    // Fill surgery fields
+    if (data.surgeries && data.surgeries.length > 0) {
+        const s = data.surgeries[0];
+        const dateEl = document.querySelector('[name="surgery_date"]');
+        const hospEl = document.querySelector('[name="hospital_name"]');
+        const partEl = document.querySelector('[name="body_part"]');
+        if (dateEl) dateEl.value = s.surgery_date || '';
+        if (hospEl) hospEl.value = s.hospital_name || '';
+        if (partEl) partEl.value = s.body_part || '';
+    }
+
+    // Fill treatment fields
+    if (data.treatments && data.treatments.length > 0) {
+        const t = data.treatments[0];
+        const medEl = document.querySelector('[name="treatment_medicine"]');
+        const dosEl = document.querySelector('[name="schedule_dosage"]');
+        if (medEl) medEl.value = t.treatment_medicine || '';
+        if (dosEl) dosEl.value = t.schedule_dosage || '';
+    }
+
+    // Tick family history checkboxes
+    (data.family_history || []).forEach(f => {
+        const cb = document.querySelector(`[name="family_condition_type_id"][value="${f.family_history_type_id}"]`);
+        if (cb) cb.checked = true;
+    });
+    if (data.family_history && data.family_history.length > 0 && data.family_history[0].description) {
+        const txt = document.querySelector('[name="family_condition_description"]');
+        if (txt) txt.value = data.family_history[0].description;
+    }
 
     // Filter section dropdown to only show sections matching this enrollment's grade level
     if (enrollment.grade_level) {
@@ -555,23 +637,23 @@ async function loadEnrollmentDetails(enrollmentId) {
     if (!enrollmentId) return;
     setMessage('', 'Loading enrollment details…');
     try {
-        // Use the API client to fetch enrollment details
         const response = await API.enrollments.read(parseInt(enrollmentId, 10));
-        
-        // Handle different response formats
         let enrollmentData = null;
+
         if (response.success && response.data) {
             enrollmentData = response.data;
         } else if (response.enrollment) {
             enrollmentData = response;
+        } else if (response.data) {
+            enrollmentData = response.data;
         } else if (!response.success) {
             throw new Error(response.error || 'Unable to load enrollment details');
         }
-        
+
         if (!enrollmentData) {
             throw new Error('No enrollment data returned from API');
         }
-        
+
         applyEnrollmentToForm(enrollmentData);
         setMessage('success', 'Enrollment loaded. Review the values and click Verify & Archive.');
         goTo(1);
@@ -731,43 +813,3 @@ function initializeVerifyPage() {
 }
 
 initializeVerifyPage();
-
-// Load disability subtypes (for Chronic Illness / Social Health Problem) and attach toggler
-(async function() {
-    try {
-        const resp = await API.disability_subtypes.list();
-        const subtypes = Array.isArray(resp.data) ? resp.data : [];
-        const socialBox = document.getElementById('socialOptionsBox');
-        if (socialBox) {
-            socialBox.innerHTML = '';
-            subtypes.filter(s => Number(s.disability_type_id) === 9).forEach(s => {
-                const id = s.disability_subtype_id;
-                const label = document.createElement('label');
-                label.className = 'check-item';
-                label.innerHTML = `<input type="checkbox" name="disability_sub[9][]" value="${id}"> ${s.name}`;
-                socialBox.appendChild(label);
-            });
-        }
-    } catch (e) {
-        console.warn('Failed to load disability subtypes', e);
-        // Fallback: add 'Cancer' checkbox so admins can still see one option
-        try {
-            const socialBox = document.getElementById('socialOptionsBox');
-            if (socialBox && socialBox.children.length === 0) {
-                const label = document.createElement('label');
-                label.className = 'check-item';
-                label.innerHTML = `<input type="checkbox" name="disability_sub[9][]" value="Cancer"> Cancer`;
-                socialBox.appendChild(label);
-            }
-        } catch (ee) { /* ignore */ }
-    }
-
-    const socialEl = document.getElementById('social_health');
-    const socialOptionsBox = document.getElementById('socialOptionsBox');
-    if (socialEl && socialOptionsBox) {
-        socialEl.addEventListener('change', function() {
-            socialOptionsBox.style.display = this.checked ? 'block' : 'none';
-        });
-        socialOptionsBox.style.display = socialEl.checked ? 'block' : 'none';
-    }
-})();

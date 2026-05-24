@@ -331,6 +331,13 @@ async function openEnrollmentModal(studentId) {
                             <input id="Learner_Reference_No" name="Learner_Reference_No" value="${escapeHtml(student.lrn || '')}" />
                         </div>
                         <div class="form-group">
+                            <label for="with_lrn">With LRN?</label>
+                            <select id="with_lrn" name="with_lrn">
+                                <option value="1" ${enrollment.with_lrn == 1 ? 'selected' : ''}>Yes</option>
+                                <option value="0" ${enrollment.with_lrn == 0 ? 'selected' : ''}>No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label for="returning">Returning Learner?</label>
                             <select id="returning" name="returning">
                                 <option value="1" ${enrollment.is_returning_learner == 1 ? 'selected' : ''}>Yes</option>

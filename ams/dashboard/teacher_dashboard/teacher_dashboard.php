@@ -132,7 +132,7 @@ $staff = $stmt->fetch();
     </main>
 </div>
 
-<script src="../../api/client.js"></script>
+<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
 <script>
     async function loadDashboard() {
         try {

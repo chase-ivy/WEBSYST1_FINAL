@@ -39,7 +39,7 @@ if ($username === '') {
     if ($email) {
         $base = strtolower(preg_replace('/[^a-z0-9]+/', '', strstr($email, '@', true)));
     } else {
-        $base = strtolower(preg_replace('/[^a-z0-9]+/', '', ($data['first_name'] ?? '') . ($data['last_name'] ?? '')));
+        $base = preg_replace('/[^a-z0-9]+/', '', strtolower(($data['first_name'] ?? '') . ($data['last_name'] ?? '')));
     }
     if ($base === '') {
         $base = 'user';

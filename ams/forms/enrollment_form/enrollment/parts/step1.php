@@ -46,8 +46,19 @@
                 </div>
             </div>
 
-            <!-- Returning -->
-            <div class="grid-1" style="margin-top:16px;">
+            <!-- With LRN / Returning -->
+            <div class="grid-2" style="margin-top:16px;">
+                <div class="field">
+                    <label>With LRN?</label>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input type="radio" name="with_lrn" value="1" required> Yes
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" name="with_lrn" value="0"> No
+                        </label>
+                    </div>
+                </div>
                 <div class="field">
                     <label>Returning Learner?</label>
                     <div class="radio-group">
@@ -86,10 +97,10 @@
                         <label>Last School Attended</label>
                         <input type="text" name="Last_School_Attended" placeholder="School name">
                     </div>
-                        <div class="field span-2">
-                            <label>School ID</label>
-                            <input type="text" name="school_ID" placeholder="School ID">
-                        </div>
+                    <div class="field span-2">
+                        <label>School ID</label>
+                        <input type="text" name="school_ID" placeholder="School ID">
+                    </div>
                 </div>
             </div>
 
@@ -204,7 +215,7 @@
                     <label>IP Community / Cultural Group</label>
                     <select name="IP_Group" id="IP_Group" onchange="toggleIpOther()">
                         <option value="" hidden>Select IP group</option>
-                        <option value="Ibalio[1][]">Ibalio</option>
+                        <option value="Ibaloi[1][]">Ibaloi</option>
                         <option value="Kankanaey[2][]">Kankanaey</option>
                         <option value="Ifugao[3][]">Ifugao</option>
                         <option value="Bontoc[4][]">Bontoc</option>
@@ -274,13 +285,19 @@
                         <input type="checkbox" name="disabilityDetails[8][]" value="8"> Speech / Language Disorder
                     </label>
                     <label class="check-item">
-                        <input id="social_health" type="checkbox" name="disabilityDetails[9][]" value="9"> Social Health Problem/Chronic Disease
+                        <input type="checkbox" name="disabilityDetails[9][]" value="9"> Chronic Illness
                     </label>
-                    <div id="socialOptionsBox" style="display:none; margin-left: 18px; margin-top:6px;">
-                        <!-- disability_subtypes for type 9 will be dynamically loaded here -->
-                    </div>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[10][]" value="10"> Others (Multiple Disorder, Cerebral Palsy, etc.)
+                        <input type="checkbox" name="disabilityDetails[9][]" value="9"> Chronic Illness
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" name="disabilityDetails[11][]" value="11"> Cerebral Palsy
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" name="disabilityDetails[12][]" value="12"> Multiple Disorder
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" name="disabilityDetails[10][]" value="10"> Others
                     </label>
                 </div>
             </div>

@@ -15,10 +15,6 @@
 
             <div class="grid-2">
                 <div class="field">
-                    <label>Subdivision / House No.</label>
-                    <input type="text" name="Current_Subdivision_House_No" placeholder="Subdivision / House No.">
-                </div>
-                <div class="field">
                     <label>House No.</label>
                     <input type="number" name="Current_House_No" placeholder="123">
                 </div>
@@ -75,10 +71,6 @@
 
             <div id="permBox">
                 <div class="grid-2">
-                    <div class="field">
-                        <label>Subdivision / House No.</label>
-                        <input type="text" name="Permanent_Subdivision_House_No" placeholder="Subdivision / House No.">
-                    </div>
                     <div class="field">
                         <label>House No.</label>
                         <input type="number" name="Permanent_House_No" placeholder="123">

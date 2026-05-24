@@ -56,7 +56,7 @@ require_role(['staff']);
     </main>
 </div>
 
-<script src="../../api/client.js"></script>
+<script src="/WEBSYST1_FINAL/ams/api/client.js"></script>
 <script>
     async function loadClasses() {
         try {

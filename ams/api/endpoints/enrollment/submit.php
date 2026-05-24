@@ -77,19 +77,26 @@ function insertGuardian(PDO $pdo, int $studentId, int $typeId, array $data, stri
     $firstName   = trim((string)($data["{$prefix}_first_name"]          ?? ''));
     $middleName  = trim((string)($data["{$prefix}_middle_name"]         ?? ''));
     $contact     = trim((string)($data["{$prefix}_contact_number"]      ?? ''));
-    // Keep guardian minimal: form does not collect legacy occupation/facebook/emergency fields.
-    $isVisible = isset($data["{$prefix}_is_contact_visible"]) ? normalizeCheckbox($data["{$prefix}_is_contact_visible"]) : 1;
+    $occupation  = strOrNull($data["{$prefix}_occupation"]              ?? null);
+    $relStatus   = strOrNull($data["{$prefix}_relationship_status"]     ?? null);
+    $fb          = strOrNull($data["{$prefix}_facebook_messenger"]      ?? null);
+    $isEmergency = normalizeCheckbox($data["{$prefix}_is_emergency_contact"] ?? 0);
+    $priority    = isset($data["{$prefix}_contact_priority"]) ? intval($data["{$prefix}_contact_priority"]) : null;
+    $isVisible   = isset($data["{$prefix}_is_contact_visible"]) ? normalizeCheckbox($data["{$prefix}_is_contact_visible"]) : 1;
 
-    // If the guardian has no name and no contact, skip creating a row.
-    if ($lastName === '' && $firstName === '' && $contact === '') return;
+    if ($lastName === '' && $firstName === '' && $contact === '' && $occupation === null) return;
 
     $pdo->prepare('
         INSERT INTO student_parent_guardians
-            (student_id, parent_guardian_type_id, last_name, first_name, middle_name, contact_number, is_contact_visible)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+            (student_id, parent_guardian_type_id, last_name, first_name, middle_name,
+             contact_number, occupation, relationship_status, facebook_messenger,
+             is_emergency_contact, contact_priority, is_contact_visible)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ')->execute([
         $studentId, $typeId,
-        $lastName, $firstName, $middleName, $contact, $isVisible,
+        $lastName, $firstName, $middleName, $contact,
+        $occupation, $relStatus, $fb,
+        $isEmergency, $priority, $isVisible,
     ]);
 }
 
@@ -171,27 +178,26 @@ try {
     $sameAddress = isset($data['same_address']) && $data['same_address'] === 'Yes';
     $addrStmt = $pdo->prepare('
         INSERT INTO student_addresses
-            (student_id, address_type, house_no, subdivision_house_no, street_name, barangay,
+            (student_id, address_type, house_no, street_name, barangay,
              municipality_city, province, country, zip_code, enrollment_id, ownership_type)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
 
     $addrStmt->execute([
         $studentId, 'current',
-        strOrNull($data['Current_House_No']                    ?? null),
-        strOrNull($data['Current_Subdivision_House_No']        ?? null),
-        strOrNull($data['Current_Street_Name']                 ?? null),
-        strOrNull($data['Current_Barangay']                    ?? null),
-        strOrNull($data['Current_Municipality_City']           ?? null),
-        strOrNull($data['Current_Province']                    ?? null),
-        strOrNull($data['Current_Country']                     ?? null) ?? 'Philippines',
-        strOrNull($data['Current_Zip_Code']                    ?? null),
+        strOrNull($data['Current_House_No']          ?? null),
+        strOrNull($data['Current_Street_Name']       ?? null),
+        strOrNull($data['Current_Barangay']          ?? null),
+        strOrNull($data['Current_Municipality_City'] ?? null),
+        strOrNull($data['Current_Province']          ?? null),
+        strOrNull($data['Current_Country']           ?? null) ?? 'Philippines',
+        strOrNull($data['Current_Zip_Code']          ?? null),
         $enrollmentId,
-        ownershipType($data['Current_Address_Status']         ?? null),
+        ownershipType($data['Current_Address_Status'] ?? null),
     ]);
 
     // 3. permanent address (copy current if same_address)
-    $permKeys = ['Subdivision_House_No','House_No', 'Street_Name', 'Barangay', 'Municipality_City', 'Province', 'Country', 'Zip_Code'];
+    $permKeys = ['House_No', 'Street_Name', 'Barangay', 'Municipality_City', 'Province', 'Country', 'Zip_Code'];
     $permData = [];
     foreach ($permKeys as $key) {
         $permData[$key] = strOrNull($sameAddress ? ($data["Current_$key"] ?? null) : ($data["Permanent_$key"] ?? null));
@@ -199,7 +205,7 @@ try {
 
     $addrStmt->execute([
         $studentId, 'permanent',
-        $permData['House_No'], $permData['Subdivision_House_No'], $permData['Street_Name'], $permData['Barangay'],
+        $permData['House_No'], $permData['Street_Name'], $permData['Barangay'],
         $permData['Municipality_City'], $permData['Province'],
         $permData['Country'] ?? 'Philippines',
         $permData['Zip_Code'],
@@ -288,30 +294,7 @@ try {
             $typeId = intval($typeId);
             if ($typeId === 0 || !is_array($values)) continue;
             $processedTypes[$typeId] = true;
-            // Resolve subtype values: allow numeric IDs or string names (public form fallback)
-            $resolved = [];
-            foreach ($values as $v) {
-                if ($v === '' || $v === null) continue;
-                if (is_numeric($v)) {
-                    $resolved[] = intval($v);
-                    continue;
-                }
-                // Try to find subtype by name for this type
-                $name = trim((string)$v);
-                if ($name === '') continue;
-                $sStmt = $pdo->prepare('SELECT disability_subtype_id FROM disability_subtypes WHERE disability_type_id = ? AND name = ? LIMIT 1');
-                $sStmt->execute([$typeId, $name]);
-                $found = $sStmt->fetchColumn();
-                if ($found) {
-                    $resolved[] = intval($found);
-                } else {
-                    // Insert new subtype (useful for public submissions when migration hasn't run)
-                    $iStmt = $pdo->prepare('INSERT INTO disability_subtypes (disability_type_id, name, is_active) VALUES (?, ?, 1)');
-                    $iStmt->execute([$typeId, $name]);
-                    $resolved[] = intval($pdo->lastInsertId());
-                }
-            }
-            $subtypeIds = array_unique($resolved);
+            $subtypeIds = array_unique(array_map('intval', array_filter($values, fn($v) => $v !== '')));
             if (empty($subtypeIds)) {
                 $disabilityRows[] = ['type_id' => $typeId, 'subtype_id' => null];
             } else {

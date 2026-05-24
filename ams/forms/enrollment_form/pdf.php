@@ -463,6 +463,8 @@ $enrollmentData = [
 
     // Enrollment flags
     'psa_bcn'         => safe($enrollment['psa_bcn']                ?? ''),
+    'with_lrn_yes'    => ($enrollment['with_lrn']            ?? 0) == 1 ? 'Yes' : '',
+    'with_lrn_no'     => ($enrollment['with_lrn']            ?? 0) == 0 ? 'Yes' : '',
     'returning_yes'   => ($enrollment['is_returning_learner'] ?? 0) == 1 ? 'Yes' : '',
     'returning_no'    => ($enrollment['is_returning_learner'] ?? 0) == 0 ? 'Yes' : '',
     'mother_tongue'   => safeUp($enrollment['mother_tongue']   ?? ''),
@@ -487,8 +489,8 @@ $enrollmentData = [
     'cerebral_palsy'                => chk(in_array('cerebral palsy',                        $disabilityTypes,    true)),
     'intellectual_disability'       => chk(in_array('intellectual disability',               $disabilityTypes,    true)),
     'orthopedic_physical_handicap'  => chk(in_array('orthopedic / physical handicap',       $disabilityTypes,    true)),
-    'social_health_problem'         => chk(in_array('chronic illness',                       $disabilityTypes,    true)),
-    'multiple_disorder'             => chk(in_array('others',                                $disabilityTypes,    true)),
+    'social_health_problem'         => chk(in_array('special health problem/ chronic disease', $disabilityTypes, true)),
+    'multiple_disorder'             => chk(in_array('multiple disorder',                      $disabilityTypes,    true)),
 
     // Current address
     'house_no'           => $currentAddr['house_no'],

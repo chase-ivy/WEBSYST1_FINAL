@@ -12,17 +12,6 @@ require_role(['staff', 'admin']);
 requireMethod('POST');
 
 $data = getJsonInput();
-
-function ownershipType($value): ?string {
-    $map = [
-        'rental' => 'rented', 'rented' => 'rented', 'owned' => 'owned',
-        'living with relatives' => 'living_with_relatives', 'living_with_relatives' => 'living_with_relatives',
-        'inherited' => 'inherited',
-    ];
-    if ($value === null) return null;
-    $val = strtolower(trim((string)$value));
-    return $map[$val] ?? null;
-}
 $studentId = intval($data['student_id'] ?? 0);
 $enrollmentId = intval($data['enrollment_id'] ?? 0);
 
@@ -87,6 +76,7 @@ try {
         $enrollmentFields = [
             'school_year' => $schoolYear,
             'grade_level' => normalizeString($data['Grade_Level'] ?? null),
+            'with_lrn' => isset($data['with_lrn']) ? intval($data['with_lrn']) : null,
             'is_returning_learner' => isset($data['returning']) ? intval($data['returning']) : null,
             'mother_tongue_id' => isset($data['Mother_Tongue']) ? intval($data['Mother_Tongue']) : null,
             'is_indigenous' => isset($data['ip']) ? intval($data['ip']) : null,
@@ -112,19 +102,18 @@ try {
             'last_grade_level_completed' => normalizeString($data['Returning_Grade_Level'] ?? null),
             'last_school_year_completed' => normalizeString($data['Last_School_Year_Completed'] ?? null),
             'last_school_attended' => normalizeString($data['Last_School_Attended'] ?? null),
-            'school_id' => normalizeString($data['school_ID'] ?? $data['school_id'] ?? null),
         ];
 
         $returningStmt = $pdo->prepare('SELECT returning_learner_id FROM enrollment_returning_learners WHERE enrollment_id = ? LIMIT 1');
         $returningStmt->execute([$enrollmentId]);
         $returningExists = $returningStmt->fetch();
         if ($returningExists) {
-            $pdo->prepare('UPDATE enrollment_returning_learners SET last_grade_level_completed = ?, last_school_year_completed = ?, last_school_attended = ?, school_id = ? WHERE enrollment_id = ?')
-                ->execute([$returning['last_grade_level_completed'], $returning['last_school_year_completed'], $returning['last_school_attended'], $returning['school_id'], $enrollmentId]);
+            $pdo->prepare('UPDATE enrollment_returning_learners SET last_grade_level_completed = ?, last_school_year_completed = ?, last_school_attended = ? WHERE enrollment_id = ?')
+                ->execute([$returning['last_grade_level_completed'], $returning['last_school_year_completed'], $returning['last_school_attended'], $enrollmentId]);
         } else {
-            if ($returning['last_grade_level_completed'] || $returning['last_school_year_completed'] || $returning['last_school_attended'] || $returning['school_id']) {
-                $pdo->prepare('INSERT INTO enrollment_returning_learners (enrollment_id, last_grade_level_completed, last_school_year_completed, last_school_attended, school_id) VALUES (?, ?, ?, ?, ?)')
-                    ->execute([$enrollmentId, $returning['last_grade_level_completed'], $returning['last_school_year_completed'], $returning['last_school_attended'], $returning['school_id']]);
+            if ($returning['last_grade_level_completed'] || $returning['last_school_year_completed'] || $returning['last_school_attended']) {
+                $pdo->prepare('INSERT INTO enrollment_returning_learners (enrollment_id, last_grade_level_completed, last_school_year_completed, last_school_attended) VALUES (?, ?, ?, ?)')
+                    ->execute([$enrollmentId, $returning['last_grade_level_completed'], $returning['last_school_year_completed'], $returning['last_school_attended']]);
             }
         }
 
@@ -132,14 +121,13 @@ try {
             $prefix = $type === 'current' ? 'Current' : 'Permanent';
             $address = [
                 'house_no' => normalizeString($data["{$prefix}_House_No"] ?? null),
-                'subdivision_house_no' => normalizeString($data["{$prefix}_Subdivision_House_No"] ?? null),
                 'street_name' => normalizeString($data["{$prefix}_Street_Name"] ?? null),
                 'barangay' => normalizeString($data["{$prefix}_Barangay"] ?? null),
                 'municipality_city' => normalizeString($data["{$prefix}_Municipality_City"] ?? null),
                 'province' => normalizeString($data["{$prefix}_Province"] ?? null),
                 'country' => normalizeString($data["{$prefix}_Country"] ?? 'Philippines'),
                 'zip_code' => normalizeString($data["{$prefix}_Zip_Code"] ?? null),
-                'ownership_type' => ownershipType(normalizeString($data["{$prefix}_Address_Status"] ?? null)),
+                'ownership_type' => normalizeString($data["{$prefix}_Address_Status"] ?? null),
             ];
             $addressStmt = $pdo->prepare('SELECT address_id FROM student_addresses WHERE student_id = ? AND address_type = ? AND enrollment_id = ? LIMIT 1');
             $addressStmt->execute([$studentId, $type, $enrollmentId]);
@@ -154,8 +142,8 @@ try {
                 $params[] = $existingAddress['address_id'];
                 $pdo->prepare('UPDATE student_addresses SET ' . implode(', ', $set) . ' WHERE address_id = ?')->execute($params);
             } else {
-                $pdo->prepare('INSERT INTO student_addresses (student_id, address_type, house_no, subdivision_house_no, street_name, barangay, municipality_city, province, country, zip_code, enrollment_id, ownership_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-                    ->execute([$studentId, $type, $address['house_no'], $address['subdivision_house_no'], $address['street_name'], $address['barangay'], $address['municipality_city'], $address['province'], $address['country'] ?? 'Philippines', $address['zip_code'], $enrollmentId, $address['ownership_type']]);
+                $pdo->prepare('INSERT INTO student_addresses (student_id, address_type, house_no, street_name, barangay, municipality_city, province, country, zip_code, enrollment_id, ownership_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                    ->execute([$studentId, $type, $address['house_no'], $address['street_name'], $address['barangay'], $address['municipality_city'], $address['province'], $address['country'] ?? 'Philippines', $address['zip_code'], $enrollmentId, $address['ownership_type']]);
             }
         }
 
