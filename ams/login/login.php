@@ -11,7 +11,7 @@ if (isset($_POST["login"])) {
     if (empty($username) || empty($password)) {
         $error = 'Username and password are required';
     } else {
-        $stmt = $pdo->prepare('SELECT user_id, email, password_hash, role FROM users WHERE email = ? LIMIT 1');
+        $stmt = $pdo->prepare('SELECT user_id, username, email, password_hash, role FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$username]);
         $user = $stmt->fetch();
         $passwordValid = false;
@@ -26,7 +26,7 @@ if (isset($_POST["login"])) {
         if ($user && $passwordValid) {
             session_regenerate_id(true);
             $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['username'] = $user['email'];
+            $_SESSION['username'] = $user['username'] ?: $user['email'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['logged_in'] = true;
 

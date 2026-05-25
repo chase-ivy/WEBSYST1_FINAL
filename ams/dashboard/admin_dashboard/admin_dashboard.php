@@ -34,7 +34,21 @@ $staffList = getStaffList($pdo);
 <!-- ── TOPBAR ──────────────────────────────────────────────── -->
 <header class="topbar">
     <div class="topbar-brand">Gibraltar <span>AMES</span></div>
-    <span class="topbar-label">Admin Panel</span>
+    <div class="topbar-right">
+        <div class="topbar-welcome" aria-live="polite">
+            <div class="welcome-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"></path>
+                    <path d="M6 20v-1a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v1"></path>
+                </svg>
+            </div>
+            <div class="welcome-copy">
+                <div class="welcome-title">Welcome back, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin', ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="welcome-subtitle">Academic Management system is ready!</div>
+            </div>
+        </div>
+        <span class="topbar-label">Admin Panel</span>
+    </div>
 </header>
 
 <!-- ── LAYOUT SHELL ────────────────────────────────────────── -->
@@ -222,7 +236,26 @@ $staffList = getStaffList($pdo);
     </main>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', adminDashboardInit);
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof adminDashboardInit === 'function') {
+            adminDashboardInit();
+        }
+
+        const alert = document.querySelector('.topbar-welcome');
+        if (!alert) {
+            return;
+        }
+
+        requestAnimationFrame(() => alert.classList.add('show'));
+        alert.addEventListener('click', () => alert.classList.add('dismissed'));
+
+        window.setTimeout(() => {
+            alert.classList.add('dismissed');
+            window.setTimeout(() => {
+                alert.style.display = 'none';
+            }, 260);
+        }, 3000);
+    });
 </script>
 
 </body>
