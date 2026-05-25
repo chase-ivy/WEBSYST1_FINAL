@@ -138,10 +138,10 @@
                     <label>Birth Date</label>
                     <input type="date" name="Birth_Date" id="birthDate">
                 </div>
-                <div class="field">
+                <!-- <div class="field">
                     <label>Age</label>
                     <input type="number" name="Age" min="3" max="20" placeholder="6" id="ageField" readonly>
-                </div>
+                </div> -->
             </div>
 
             <!-- Sex / Place of Birth -->
@@ -169,6 +169,7 @@
                     <label>Mother Tongue</label>
                     <select name="Mother_Tongue" id="Mother_Tongue">
                         <option value="" hidden>Select mother tongue</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
             </div>
@@ -207,6 +208,7 @@
                     <label>IP Community / Cultural Group</label>
                     <select name="IP_Group" id="IP_Group">
                         <option value="" hidden>Select IP group</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
             </div>
@@ -289,7 +291,7 @@
         </div>
 
         <div class="card-foot">
-            <button type="button" class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+            <button type="button" class="btn btn-ghost" onclick="goTo(1)">← Back</button>
             <span class="step-count">Step 1 of 5</span>
             <button type="button" class="btn btn-primary" onclick="goTo(2)">Next: Address →</button>
         </div>
