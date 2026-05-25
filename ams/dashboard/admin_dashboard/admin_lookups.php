@@ -222,5 +222,10 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </section>
     </main>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    adminLookupsInit('<?php echo htmlspecialchars($table, ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($primaryKey, ENT_QUOTES, 'UTF-8'); ?>');
+});
+</script>
 </body>
 </html>

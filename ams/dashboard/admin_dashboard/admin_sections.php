@@ -253,5 +253,8 @@ if (empty($schoolYears)) {
         </section>
     </main>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', adminSectionsInit);
+</script>
 </body>
 </html>

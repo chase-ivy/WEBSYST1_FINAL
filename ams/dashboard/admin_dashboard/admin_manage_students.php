@@ -213,7 +213,7 @@ function renderStudents(students) {
                 <td>${escapeHtml(student.school_year || 'N/A')}</td>
                 <td class="td-actions">
                     <button class="btn-secondary btn-sm" type="button" onclick="openEnrollmentModal(${student.student_id})">Edit Student</button>
-                    <button class="btn-danger btn-sm" type="button" onclick="confirmDeleteStudent(${student.student_id})">Delete</button>
+                    <button class="btn-danger btn-sm" type="button" onclick="confirmDeleteStudent(${student.student_id}, this)">Delete</button>
                 </td>
             </tr>
         `;
@@ -228,30 +228,6 @@ function renderStudents(students) {
     container.innerHTML = html;
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text || '';
-    return div.innerHTML;
-}
-
-function showModal(contentHtml) {
-    const modalContainer = document.getElementById('modalContainer');
-    modalContainer.innerHTML = `
-        <div class="modal" role="dialog" aria-modal="true">
-            <div class="modal-content">
-                <div class="modal-header">
-                    ${contentHtml.header}
-                    <button class="modal-close" type="button" onclick="closeModal()">×</button>
-                </div>
-                <div class="modal-body">${contentHtml.body}</div>
-            </div>
-        </div>
-    `;
-}
-
-function closeModal() {
-    document.getElementById('modalContainer').innerHTML = '';
-}
 
 async function openEnrollmentModal(studentId) {
     try {
@@ -386,37 +362,16 @@ async function openEnrollmentModal(studentId) {
     }
 }
 
-function serializeForm(form) {
-    const formData = new FormData(form);
-    const data = {};
-
-    for (const [name, value] of formData.entries()) {
-        if (name.includes('[')) {
-            // Handle array fields like disabilities[]
-            const arrayName = name.replace('[]', '');
-            if (!data[arrayName]) {
-                data[arrayName] = [];
-            }
-            data[arrayName].push(value);
-            continue;
-        }
-
-        if (data[name] !== undefined) {
-            if (!Array.isArray(data[name])) {
-                data[name] = [data[name]];
-            }
-            data[name].push(value);
-        } else {
-            data[name] = value;
-        }
-    }
-
-    return data;
-}
 
 async function saveEnrollmentUpdate(event) {
     event.preventDefault();
     const form = event.currentTarget;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const origText = submitBtn ? submitBtn.textContent : null;
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving…';
+    }
     const studentId = parseInt(form.dataset.studentId, 10);
     const data = serializeForm(form);
 
@@ -444,11 +399,23 @@ async function saveEnrollmentUpdate(event) {
         console.error(error);
         showAlert('error', error.message || 'Error updating student.');
     }
+    finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = origText || 'Save Enrollment';
+        }
+    }
 }
 
-async function confirmDeleteStudent(studentId) {
+async function confirmDeleteStudent(studentId, btn) {
     if (!confirm('Delete this student and all related enrollment records?')) {
         return;
+    }
+
+    const origText = btn ? btn.textContent : null;
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Deleting…';
     }
 
     try {
@@ -461,19 +428,15 @@ async function confirmDeleteStudent(studentId) {
     } catch (error) {
         console.error(error);
         showAlert('error', error.message || 'Error deleting student.');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = origText || 'Delete';
+        }
     }
 }
 
-function showAlert(type, message) {
-    const existing = document.querySelector('.alert');
-    if (existing) existing.remove();
 
-    const alert = document.createElement('div');
-    alert.className = `alert ${type === 'success' ? 'alert-success' : 'alert-error'}`;
-    alert.textContent = message;
-    document.querySelector('.page-header').insertAdjacentElement('afterend', alert);
-    setTimeout(() => alert.remove(), 5000);
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     loadStudents();
