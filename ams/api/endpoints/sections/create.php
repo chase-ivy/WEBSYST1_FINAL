@@ -36,8 +36,9 @@ if ($gradeLevel === '') sendJson(['success' => false, 'error' => 'grade_level is
 if ($name === '')       sendJson(['success' => false, 'error' => 'name is required'], 400);
 
 $subjects = is_array($data['subjects'] ?? null) ? $data['subjects'] : [];
+$adviserId = array_key_exists('adviser_id', $data) ? ($data['adviser_id'] === '' ? null : intval($data['adviser_id'])) : null;
 
-$result = createSection($pdo, $schoolYear, $gradeLevel, $name, 1, $subjects);
+$result = createSection($pdo, $schoolYear, $gradeLevel, $name, 1, $subjects, $adviserId);
 if (!$result['success']) {
     sendJson(['success' => false, 'error' => $result['error']], 400);
 }

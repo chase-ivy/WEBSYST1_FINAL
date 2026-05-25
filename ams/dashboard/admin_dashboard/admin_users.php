@@ -110,6 +110,17 @@ $editUser = null;
 if ($editUserId > 0) {
     $editUser = getStaffById($pdo, $editUserId);
 }
+
+$resetUserId = intval($_GET['reset_id'] ?? 0);
+$resetUser = null;
+if ($resetUserId > 0) {
+    $stmt = $pdo->prepare('SELECT user_id, username, email FROM users WHERE user_id = ? LIMIT 1');
+    $stmt->execute([$resetUserId]);
+    $resetUser = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    if (!$resetUser) {
+        $errors[] = 'Unable to find the account to reset password.';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -227,6 +238,29 @@ if ($editUserId > 0) {
                 </form>
             </div>
         </section>
+
+        <?php if ($resetUser): ?>
+        <section class="section">
+            <div class="section-header">
+                <h2>Reset Password for <?php echo htmlspecialchars($resetUser['username'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                <p>Set a new password for this account.</p>
+            </div>
+            <div class="section-body">
+                <form method="post" class="form-grid">
+                    <input type="hidden" name="action" value="reset_password">
+                    <input type="hidden" name="user_id" value="<?php echo intval($resetUser['user_id']); ?>">
+                    <div class="form-group">
+                        <label for="reset_password">New Password</label>
+                        <input id="reset_password" type="password" name="new_password" placeholder="Min. 6 characters" required>
+                    </div>
+                    <div class="form-actions full">
+                        <button type="submit" class="btn-primary">Save New Password</button>
+                        <a href="admin_users.php" class="btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </section>
+        <?php endif; ?>
 
         <?php if ($editUser): ?>
         <section class="section">

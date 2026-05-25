@@ -105,11 +105,26 @@
                 const name = (form.querySelector('input[name="name"]').value || '').trim();
                 const idInput = form.querySelector('input[name="id"]');
                 try {
-                    if (action === 'create') {
-                        await API.call('endpoints/sections/create', { school_year: form.school_year.value, grade_level: form.grade_level.value, name, is_active: parseInt(form.is_active.value, 10) || 0 }, 'POST');
+                    const adviserValue = form.adviser_id ? form.adviser_id.value : '';
+                const adviserId = adviserValue ? parseInt(adviserValue, 10) : null;
+                if (action === 'create') {
+                        await API.call('endpoints/sections/create', {
+                            school_year: form.school_year.value,
+                            grade_level: form.grade_level.value,
+                            name,
+                            is_active: parseInt(form.is_active.value, 10) || 0,
+                            adviser_id: adviserId
+                        }, 'POST');
                         window.location.reload();
                     } else if (action === 'update' && idInput) {
-                        await API.call('endpoints/sections/update', { id: parseInt(idInput.value, 10), school_year: form.school_year.value, grade_level: form.grade_level.value, name, is_active: parseInt(form.is_active.value, 10) || 0 }, 'POST');
+                        await API.call('endpoints/sections/update', {
+                            section_id: parseInt(idInput.value, 10),
+                            school_year: form.school_year.value,
+                            grade_level: form.grade_level.value,
+                            name,
+                            is_active: parseInt(form.is_active.value, 10) || 0,
+                            adviser_id: adviserId
+                        }, 'POST');
                         window.location.href = 'admin_sections.php';
                     }
                 } catch (err) {
