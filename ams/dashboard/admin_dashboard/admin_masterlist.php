@@ -225,15 +225,16 @@ async function loadMasterlist() {
     const schoolYear = document.getElementById('schoolYearFilter').value;
     const sectionId = document.getElementById('sectionFilter').value;
 
-    const params = new URLSearchParams();
-    if (schoolYear) params.append('school_year', schoolYear);
-    if (sectionId) params.append('section_id', sectionId);
-
-    const url = `/WEBSYST1_FINAL/ams/api/endpoints/admin/get_masterlist.php${params ? '?' + params : ''}`;
+    const url = new URL('../../api/endpoints/admin/get_masterlist.php', window.location.href);
+    if (schoolYear) url.searchParams.set('school_year', schoolYear);
+    if (sectionId) url.searchParams.set('section_id', sectionId);
 
     try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to load masterlist');
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`${response.status} ${response.statusText}${text ? ' - ' + text : ''}`);
+        }
 
         const json = await response.json();
         if (!json.success) throw new Error(json.error || 'Unknown error');
