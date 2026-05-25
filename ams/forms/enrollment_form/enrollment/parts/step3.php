@@ -1,7 +1,7 @@
 <!-- ═══════════════════════════════════════════════════════
      STEP 3 — PARENT / GUARDIAN INFORMATION
 ════════════════════════════════════════════════════════ -->
-<div class="panel" id="panel-3">
+<div class="panel" id="panel-4">
     <div class="card">
 
         <div class="card-head">
@@ -143,9 +143,9 @@
         </div><!-- /.card-body -->
 
         <div class="card-foot">
-            <button type="button" class="btn btn-ghost"   onclick="goTo(2)">← Back</button>
-            <span class="step-count">Step 3 of 5</span>
-            <button type="button" class="btn btn-primary" onclick="goTo(4)"> Next: Medical →</button>
+            <button type="button" class="btn btn-ghost"   onclick="goTo(3)">← Back</button>
+            <span class="step-count">Step 4 of 6</span>
+            <button type="button" class="btn btn-primary" onclick="goTo(5)"> Next: Medical →</button>
         </div>
 
     </div><!-- /.card -->

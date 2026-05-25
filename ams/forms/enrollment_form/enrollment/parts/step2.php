@@ -1,7 +1,7 @@
 <!-- ═══════════════════════════════════════════════════════
      STEP 2 — ADDRESS INFORMATION
 ════════════════════════════════════════════════════════ -->
-<div class="panel" id="panel-2">
+<div class="panel" id="panel-3">
     <div class="card">
 
         <div class="card-head">
@@ -115,9 +115,9 @@
         </div><!-- /.card-body -->
 
         <div class="card-foot">
-            <button type="button" class="btn btn-ghost"   onclick="goTo(1)">← Back</button>
-            <span class="step-count">Step 2 of 5</span>
-            <button type="button" class="btn btn-primary" onclick="goTo(3)">Next: Parents →</button>
+            <button type="button" class="btn btn-ghost"   onclick="goTo(2)">← Back</button>
+            <span class="step-count">Step 3 of 6</span>
+            <button type="button" class="btn btn-primary" onclick="goTo(4)">Next: Parents →</button>
         </div>
 
     </div><!-- /.card -->

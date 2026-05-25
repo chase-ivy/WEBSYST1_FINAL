@@ -1,7 +1,7 @@
 <!-- ═══════════════════════════════════════════════════════
      STEP 1 — LEARNER INFORMATION
 ════════════════════════════════════════════════════════ -->
-<div class="panel active" id="panel-1">
+<div class="panel" id="panel-2">
     <div class="card">
 
         <div class="card-head">
@@ -310,8 +310,9 @@
         </div><!-- /.card-body -->
 
         <div class="card-foot">
-            <span class="step-count">Step 1 of 5</span>
-            <button type="button" class="btn btn-primary" onclick="goTo(2)">Next: Address →</button>
+            <button type="button" class="btn btn-ghost" onclick="goTo(1)">← Back</button>
+            <span class="step-count">Step 2 of 6</span>
+            <button type="button" class="btn btn-primary" onclick="goTo(3)">Next: Address →</button>
         </div>
 
     </div><!-- /.card -->

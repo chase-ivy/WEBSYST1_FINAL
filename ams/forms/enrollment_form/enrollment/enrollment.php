@@ -43,22 +43,26 @@ try {
     <div class="stepper" id="stepper">
         <div class="step active" id="s1">
             <div class="step-dot">1</div>
-            <span class="step-label">Learner Info</span>
+            <span class="step-label">Consent</span>
         </div>
         <div class="step" id="s2">
             <div class="step-dot">2</div>
-            <span class="step-label">Address</span>
+            <span class="step-label">Learner Info</span>
         </div>
         <div class="step" id="s3">
             <div class="step-dot">3</div>
-            <span class="step-label">Parents</span>
+            <span class="step-label">Address</span>
         </div>
         <div class="step" id="s4">
             <div class="step-dot">4</div>
-            <span class="step-label">Medical Form</span>
+            <span class="step-label">Parents</span>
         </div>
         <div class="step" id="s5">
             <div class="step-dot">5</div>
+            <span class="step-label">Medical Form</span>
+        </div>
+        <div class="step" id="s6">
+            <div class="step-dot">6</div>
             <span class="step-label">Review</span>
         </div>
     </div>
@@ -67,6 +71,7 @@ try {
         <div id="formMessage" class="message" aria-live="polite"></div>
         <form id="enrollmentForm" novalidate>
 
+        <?php require __DIR__ . '/parts/step0.php'; ?>
         <?php require __DIR__ . '/parts/step1.php'; ?>
         <?php require __DIR__ . '/parts/step2.php'; ?>
         <?php require __DIR__ . '/parts/step3.php'; ?>

@@ -1,7 +1,7 @@
 <!-- ═══════════════════════════════════════════════════════
      STEP 4 — MEDICAL INFORMATION
 ════════════════════════════════════════════════════════ -->
-<div class="panel" id="panel-4">
+<div class="panel" id="panel-5">
     <div class="card">
 
         <div class="card-head">
@@ -82,9 +82,9 @@
         </div>
 
         <div class="card-foot">
-            <button type="button" class="btn btn-ghost"  onclick="goTo(3)">← Back</button>
-            <span class="step-count">Step 4 of 5</span>
-            <button type="button" class="btn btn-primary" onclick="goTo(5)">Next: Agreement →</button>
+            <button type="button" class="btn btn-ghost"  onclick="goTo(4)">← Back</button>
+            <span class="step-count">Step 5 of 6</span>
+            <button type="button" class="btn btn-primary" onclick="goTo(6)">Next: Review →</button>
         </div>
 
     </div>

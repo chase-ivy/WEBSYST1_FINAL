@@ -1,7 +1,7 @@
 <!-- ═══════════════════════════════════════════════════════
      STEP 5 — REVIEW AND SUBMIT
 ════════════════════════════════════════════════════════ -->
-<div class="panel" id="panel-5">
+<div class="panel" id="panel-6">
     <div class="card">
 
         <div class="card-head">
@@ -21,43 +21,13 @@
                 <span>By submitting this form, you confirm that all information provided is accurate and complete to the best of your knowledge.</span>
             </div>
 
-            <!-- Declaration box -->
-            <div style="border:1.5px solid var(--brand); border-radius:var(--radius-md); overflow:hidden;">
-
-                <div style="background:var(--brand); color:#fff; padding:10px 16px; font-size:13px; font-weight:600;">
-                    Declaration of Parents / Guardians
-                </div>
-
-                <div style="padding:16px; font-size:13px; color:#333; line-height:1.7; background:#fff;">
-                    <p>I hereby certify that the information provided in this enrollment form is true and correct. I understand that providing false information may result in the cancellation of the enrollment.</p>
-                </div>
-
-                <div style="background:var(--brand); color:#fff; padding:10px 16px; font-size:13px; font-weight:600;">
-                    Consent for Data Collection and Usage
-                </div>
-
-                <div style="padding:16px; font-size:13px; color:#333; line-height:1.7; background:#fff;">
-                    <p>I hereby consent to the collection and usage of my personal data for the purpose of enrollment and academic administration.</p>
-                </div>
-
-
-                <div style="background:#f5f5f5; border-top:1px solid var(--border); padding:12px 16px;">
-                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
-                        <input type="checkbox" name="declaration" required style="width:15px; height:15px; accent-color:var(--brand);">
-                        I agree to the above declaration
-                    </label>
-                </div>
-
-
-            </div><!-- /.declaration box -->
-
         </div><!-- /.card-body -->
 
         <div class="card-foot">
-            <button type="button" class="btn btn-ghost"  onclick="goTo(4)">← Back</button>
-            <span class="step-count">Step 5 of 5</span>
+            <button type="button" class="btn btn-ghost"  onclick="goTo(5)">← Back</button>
+            <span class="step-count">Step 6 of 6</span>
             <button type="submit" class="btn btn-primary">Submit Enrollment</button>
         </div>
 
     </div><!-- /.card -->
-</div><!-- /#panel-5 -->
+</div><!-- /#panel-6 -->
