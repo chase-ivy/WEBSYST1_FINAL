@@ -18,7 +18,9 @@ $schoolYear  = trim($_GET['school_year'] ?? '');
 $gradeLevel  = trim($_GET['grade_level'] ?? '');
 $isActive    = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
-$baseSelect = 'SELECT s.*, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id';
+$baseSelect = sectionHasAdviserId($pdo)
+    ? 'SELECT s.*, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id'
+    : 'SELECT s.*, NULL AS adviser_name FROM sections s';
 
 if ($id !== null && $id > 0) {
     $stmt = $pdo->prepare($baseSelect . ' WHERE s.section_id = ? LIMIT 1');
@@ -52,3 +54,9 @@ $stmt->execute($params);
 $sections = $stmt->fetchAll();
 
 sendJson(['success' => true, 'data' => $sections]);
+
+function sectionHasAdviserId(PDO $pdo): bool {
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?');
+    $stmt->execute(['sections', 'adviser_id']);
+    return intval($stmt->fetchColumn()) > 0;
+}

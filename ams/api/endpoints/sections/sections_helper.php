@@ -1,4 +1,10 @@
 <?php
+function sectionHasAdviserId(PDO $pdo): bool {
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?');
+    $stmt->execute(['sections', 'adviser_id']);
+    return intval($stmt->fetchColumn()) > 0;
+}
+
 function createSection(PDO $pdo, string $schoolYear, string $gradeLevel, string $name, int $isActive = 1, array $subjects = [], ?int $adviserId = null): array {
     if ($schoolYear === '') {
         return ['success' => false, 'error' => 'school_year is required'];
@@ -13,8 +19,14 @@ function createSection(PDO $pdo, string $schoolYear, string $gradeLevel, string 
     try {
         $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare('INSERT INTO sections (school_year, grade_level, name, is_active, adviser_id) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$schoolYear, $gradeLevel, $name, $isActive, $adviserId]);
+        $hasAdviser = sectionHasAdviserId($pdo);
+        if ($hasAdviser) {
+            $stmt = $pdo->prepare('INSERT INTO sections (school_year, grade_level, name, is_active, adviser_id) VALUES (?, ?, ?, ?, ?)');
+            $stmt->execute([$schoolYear, $gradeLevel, $name, $isActive, $adviserId]);
+        } else {
+            $stmt = $pdo->prepare('INSERT INTO sections (school_year, grade_level, name, is_active) VALUES (?, ?, ?, ?)');
+            $stmt->execute([$schoolYear, $gradeLevel, $name, $isActive]);
+        }
         $sectionId = intval($pdo->lastInsertId());
 
         if (!empty($subjects)) {
@@ -55,7 +67,12 @@ function updateSection(PDO $pdo, int $sectionId, array $fields): array {
         return ['success' => false, 'error' => 'Valid section_id is required'];
     }
 
-    $allowed = ['school_year', 'grade_level', 'name', 'is_active', 'adviser_id'];
+    $hasAdviser = sectionHasAdviserId($pdo);
+    $allowed = ['school_year', 'grade_level', 'name', 'is_active'];
+    if ($hasAdviser) {
+        $allowed[] = 'adviser_id';
+    }
+
     $set = [];
     $params = [];
 

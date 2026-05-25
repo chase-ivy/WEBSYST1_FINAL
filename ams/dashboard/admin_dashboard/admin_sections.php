@@ -141,12 +141,17 @@ if (!empty($_GET['edit_id'])) {
 $staffStmt = $pdo->query("SELECT user_id, username FROM users WHERE role = 'staff' AND is_active = 1 ORDER BY username");
 $staffList = $staffStmt->fetchAll(PDO::FETCH_ASSOC);
 
+$supportsAdviser = supportsSectionAdviser($pdo);
+
 // Load subjects master list
 $subjectsStmt = $pdo->query("SELECT subject_id, name FROM subjects WHERE is_active = 1 ORDER BY name ASC");
 $subjectsList = $subjectsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Load all sections including adviser name
-$stmt = $pdo->query('SELECT s.*, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id ORDER BY s.school_year DESC, s.grade_level, s.name');
+// Load all sections including adviser name when supported
+$sectionQuery = $supportsAdviser
+    ? 'SELECT s.*, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id ORDER BY s.school_year DESC, s.grade_level, s.name'
+    : 'SELECT s.*, NULL AS adviser_name FROM sections s ORDER BY s.school_year DESC, s.grade_level, s.name';
+$stmt = $pdo->query($sectionQuery);
 $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // If editing, load current subject assignments for that section
@@ -228,6 +233,7 @@ if (empty($schoolYears)) {
                                     <option value="0">Inactive</option>
                                 </select>
                             </div>
+                            <?php if ($supportsAdviser): ?>
                             <div>
                                 <select name="adviser_id">
                                     <option value="">No adviser</option>
@@ -236,6 +242,7 @@ if (empty($schoolYears)) {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <?php endif; ?>
                             <button type="submit" class="btn-primary">Add Section</button>
                         </div>
                     </form>
@@ -273,6 +280,7 @@ if (empty($schoolYears)) {
                             </div>
                         </div>
                         <div class="form-group"><label>Section Name</label><input name="name" value="<?php echo htmlspecialchars($editSection['name'], ENT_QUOTES, 'UTF-8'); ?>" required></div>
+                        <?php if ($supportsAdviser): ?>
                         <div class="form-group">
                             <label>Adviser</label>
                             <div class="select-wrap">
@@ -284,6 +292,7 @@ if (empty($schoolYears)) {
                                 </select>
                             </div>
                         </div>
+                        <?php endif; ?>
                         <div class="form-group">
                             <label>Status</label>
                             <div class="select-wrap">

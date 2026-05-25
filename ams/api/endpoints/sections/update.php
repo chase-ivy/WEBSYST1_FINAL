@@ -76,7 +76,10 @@ try {
     $stmt->execute($params);
 
     // Return updated record
-    $row = $pdo->prepare('SELECT s.*, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id WHERE s.section_id = ? LIMIT 1');
+    $baseSelect = $hasAdviser
+        ? 'SELECT s.*, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id'
+        : 'SELECT s.*, NULL AS adviser_name FROM sections s';
+    $row = $pdo->prepare($baseSelect . ' WHERE s.section_id = ? LIMIT 1');
     $row->execute([$sectionId]);
     $section = $row->fetch();
 
