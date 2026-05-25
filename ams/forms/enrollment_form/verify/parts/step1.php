@@ -138,6 +138,13 @@
                     <label>Birth Date</label>
                     <input type="date" name="Birth_Date" id="birthDate">
                 </div>
+
+                <div class="field">
+                    <label>Religion</label>
+                    <select name="Religion" id="Religion">
+                    <option value="" hidden>Select Religion</option>
+                    <select>
+                </div>
                 <!-- <div class="field">
                     <label>Age</label>
                     <input type="number" name="Age" min="3" max="20" placeholder="6" id="ageField" readonly>
