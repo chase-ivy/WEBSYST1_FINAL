@@ -299,30 +299,8 @@ try {
     </div>
 </div>
 
-<script src="../../api/client.js"></script>
+<script src="../../api/client.js?v=2"></script>
 <script>
-// ── Helpers ──────────────────────────────────────────────────
-function esc(v) {
-    return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-}
-function val(v, fallback = '—') {
-    const s = String(v ?? '').trim();
-    return s === '' ? fallback : s;
-}
-function badge(status) {
-    const map = { pending: 'badge-pending', verified: 'badge-verified', rejected: 'badge-rejected' };
-    return `<span class="badge ${map[status] || ''}">${esc(status)}</span>`;
-}
-function tags(arr, labelKey) {
-    if (!arr || arr.length === 0) return '<span class="tag none">None recorded</span>';
-    return arr.map(i => `<span class="tag">${esc(i[labelKey] || JSON.stringify(i))}</span>`).join('');
-}
-function formatDate(s) {
-    if (!s) return '—';
-    const d = new Date(s);
-    return isNaN(d) ? s : d.toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
-}
-
 // ── State ────────────────────────────────────────────────────
 let currentEnrollmentId = null;
 let rejectPending = false;
@@ -378,7 +356,7 @@ async function loadQueue() {
                 <td>${badge(item.enrollment_status)}</td>
                 <td>${formatDate(item.created_at)}</td>
                 <td class="td-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="openReview(${item.enrollment_id})">Review</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openReview(${item.enrollment_id}, this)">Review</button>
                 </td>
             </tr>
         `).join('');
@@ -542,7 +520,7 @@ function buildModalBody(data) {
 }
 
 // ── Open review modal ────────────────────────────────────────
-async function openReview(enrollmentId) {
+async function openReview(enrollmentId, btn) {
     currentEnrollmentId = enrollmentId;
     rejectPending = false;
     rejectReasonWrap.classList.remove('visible');
@@ -553,6 +531,12 @@ async function openReview(enrollmentId) {
     clearModalMessage();
     modalBody.innerHTML = '<p style="color:var(--muted);">Loading enrollment details…</p>';
     openModal();
+
+    const origText = btn ? btn.textContent : null;
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Loading…';
+    }
 
     try {
         const response = await API.enrollment.get(enrollmentId);
@@ -567,6 +551,12 @@ async function openReview(enrollmentId) {
         }
     } catch (err) {
         modalBody.innerHTML = `<p style="color:#991b1b;">Error: ${esc(err.message)}</p>`;
+    }
+    finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = origText;
+        }
     }
 }
 

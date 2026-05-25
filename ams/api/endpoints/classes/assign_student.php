@@ -46,7 +46,9 @@ if (!$section) {
 }
 
 // Validate grade level match
-if ($section['grade_level'] !== $record['grade_level']) {
+$sectionGrade = mb_strtolower(trim((string)$section['grade_level']));
+$studentGrade = mb_strtolower(trim((string)$record['grade_level']));
+if ($sectionGrade !== $studentGrade) {
     sendJson(['success' => false, 'error' => 'Cannot assign: section grade level does not match student grade level'], 400);
 }
 

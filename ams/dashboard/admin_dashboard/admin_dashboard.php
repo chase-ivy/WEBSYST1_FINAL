@@ -221,63 +221,8 @@ $staffList = getStaffList($pdo);
 
     </main>
 </div>
-
-<script src="../../api/client.js?v=3"></script>
 <script>
-    function getRoleBadgeClass(role) {
-        const map = { admin: 'badge-admin', teacher: 'badge-teacher', staff: 'badge-staff' };
-        return map[(role || '').toLowerCase()] || 'badge-default';
-    }
-
-    async function loadAdminStaff() {
-        try {
-            const response = await API.crud.list('users');
-            if (!response || !response.success) {
-                throw new Error(response?.error || 'Unable to load staff list.');
-            }
-
-            const rows     = (response.data || []).filter(user => (user.role || '').toLowerCase() !== 'admin');
-            const tbody    = document.getElementById('staff-tbody');
-            const count    = document.getElementById('staff-count');
-
-            if (tbody && count) {
-                count.textContent = rows.length;
-
-                if (rows.length === 0) {
-                    // Preserve existing server-side rows if the API returns empty due to a transient issue.
-                    if (tbody.querySelector('tr:not(.empty-row)')) {
-                        return;
-                    }
-
-                    tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = rows.map(staff => {
-                    const role       = staff.role || 'Unassigned';
-                    const badgeClass = getRoleBadgeClass(role);
-                    return `
-                        <tr>
-                            <td class="td-primary">${staff.username}</td>
-                            <td>${staff.email}</td>
-                            <td><span class="badge ${badgeClass}">${role}</span></td>
-                            <td>${staff.created_at}</td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-        } catch (error) {
-            const container = document.getElementById('staff-error');
-            const msg       = document.getElementById('staff-error-msg');
-            if (container && msg) {
-                msg.textContent         = error.message || 'Unable to load staff list.';
-                container.style.display = 'flex';
-            }
-            console.error('Unable to load staff list', error);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', loadAdminStaff);
+    document.addEventListener('DOMContentLoaded', adminDashboardInit);
 </script>
 
 </body>

@@ -385,8 +385,8 @@ if (document.readyState === 'loading') {
 }
 
 function sameAddr(yes) {
-    document.getElementById('permBox').style.opacity       = yes ? '.4'    : '1';
-    document.getElementById('permBox').style.pointerEvents = yes ? 'none'  : 'auto';
+    // When 'same as current' = Yes, collapse the permanent address box; No = show it
+    toggle('permBox', !yes);
 }
 
 // Auto-calculate Age when Birth Date changes — replaces enroll.js birthDate listener
@@ -729,8 +729,7 @@ async function confirmSubmission() {
         form.reset();
         goTo(1);
         document.getElementById('ageField').value = '';
-        document.getElementById('permBox').style.opacity = '1';
-        document.getElementById('permBox').style.pointerEvents = 'auto';
+        toggle('permBox', true); // Reset permanent address box to visible on form reset
     } catch (error) {
         showMessage('error', error.message || 'Enrollment submission failed. Please review the form and try again.');
         console.error('Enrollment submission error:', error);

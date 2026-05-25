@@ -186,5 +186,8 @@ $subjects = $subjectsStmt->fetchAll(PDO::FETCH_ASSOC);
         </section>
     </main>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', adminSubjectsInit);
+</script>
 </body>
 </html>
