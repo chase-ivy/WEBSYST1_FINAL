@@ -237,7 +237,7 @@
                  1=Visual Impairment, 2=Hearing Impairment, 3=Learning Disability,
                  4=Intellectual Disability, 5=Autism Spectrum Disorder,
                  6=Emotional/Behavioral Disorder, 7=Orthopedic/Physical Handicap,
-                 8=Speech/Language Disorder, 9=Chronic Illness, 10=Others,
+                 8=Speech/Language Disorder, 9=Social Health Problem / Chronic Disease, 10=Others,
                  11=Cerebral Palsy, 12=Multiple Disorder
                  Subtypes (disability_subtypes): 1=Blind, 2=Low Vision (type 1 only) -->
             <div class="collapse" id="disabilityBox">
@@ -272,7 +272,7 @@
                         <input type="checkbox" name="disabilityDetails[8][]" value="8"> Speech/Language Disorder
                     </label>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[9][]" value="9"> Chronic Illness
+                        <input type="checkbox" name="disabilityDetails[9][]" value="9"> Social Health Problem / Chronic Disease
                     </label>
                     <label class="check-item">
                         <input type="checkbox" name="disabilityDetails[11][]" value="11"> Cerebral Palsy

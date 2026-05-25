@@ -33,11 +33,26 @@
                 <input type="text" name="father_contact_number" placeholder="09XX XXX XXXX">
             </div>
 
+            <div class="grid-2" style="margin-top:14px; gap:12px;">
+                <div class="field">
+                    <label>Occupation</label>
+                    <input type="text" name="father_occupation" placeholder="Teacher, Driver, etc.">
+                </div>
+                <div class="field">
+                    <label>Relationship Status</label>
+                    <input type="text" name="father_relationship_status" placeholder="Married, Single, Widowed">
+                </div>
+            </div>
+            <div class="field" style="margin-top:14px;">
+                <label>Facebook / Messenger</label>
+                <input type="text" name="father_facebook_messenger" placeholder="fb.com/username">
+            </div>
+
             <div class="sec-divider"><span>Mother's Information</span></div>
 
             <div class="grid-3">
                 <div class="field">
-                    <label>Last Name</label>
+                    <label>Maiden Last Name</label>
                     <input type="text" name="mother_last_name" placeholder="Dela Cruz">
                 </div>
                 <div class="field">
@@ -53,6 +68,21 @@
             <div class="field" style="margin-top:14px; max-width:300px;">
                 <label>Contact Number</label>
                 <input type="text" name="mother_contact_number" placeholder="09XX XXX XXXX">
+            </div>
+
+            <div class="grid-2" style="margin-top:14px; gap:12px;">
+                <div class="field">
+                    <label>Occupation</label>
+                    <input type="text" name="mother_occupation" placeholder="Teacher, Driver, etc.">
+                </div>
+                <div class="field">
+                    <label>Relationship Status</label>
+                    <input type="text" name="mother_relationship_status" placeholder="Married, Single, Widowed">
+                </div>
+            </div>
+            <div class="field" style="margin-top:14px;">
+                <label>Facebook / Messenger</label>
+                <input type="text" name="mother_facebook_messenger" placeholder="fb.com/username">
             </div>
 
             <div class="sec-divider"><span>Guardian's Information</span></div>
@@ -75,6 +105,39 @@
             <div class="field" style="margin-top:14px; max-width:300px;">
                 <label>Contact Number</label>
                 <input type="text" name="guardian_contact_number" placeholder="09XX XXX XXXX">
+            </div>
+
+            <div class="grid-2" style="margin-top:14px; gap:12px;">
+                <div class="field">
+                    <label>Occupation</label>
+                    <input type="text" name="guardian_occupation" placeholder="Teacher, Driver, etc.">
+                </div>
+                <div class="field">
+                    <label>Relationship Status</label>
+                    <input type="text" name="guardian_relationship_status" placeholder="Married, Single, Widowed">
+                </div>
+            </div>
+            <div class="field" style="margin-top:14px;">
+                <label>Facebook / Messenger</label>
+                <input type="text" name="guardian_facebook_messenger" placeholder="fb.com/username">
+            </div>
+
+
+            <div class="sec-divider"><span>Emergency Contact</span></div>
+
+            <div class="field">
+                <label>Who should we contact first in case of emergency?</label>
+                <div class="radio-group" style="margin-top:8px;">
+                    <label class="radio-pill">
+                        <input type="radio" name="emergency_contact" value="father"> Father
+                    </label>
+                    <label class="radio-pill">
+                        <input type="radio" name="emergency_contact" value="mother"> Mother
+                    </label>
+                    <label class="radio-pill">
+                        <input type="radio" name="emergency_contact" value="guardian"> Guardian
+                    </label>
+                </div>
             </div>
 
         </div><!-- /.card-body -->

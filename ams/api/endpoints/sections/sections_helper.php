@@ -1,5 +1,5 @@
 <?php
-function createSection(PDO $pdo, string $schoolYear, string $gradeLevel, string $name, int $isActive = 1, array $subjects = []): array {
+function createSection(PDO $pdo, string $schoolYear, string $gradeLevel, string $name, int $isActive = 1, array $subjects = [], ?int $adviserId = null): array {
     if ($schoolYear === '') {
         return ['success' => false, 'error' => 'school_year is required'];
     }
@@ -13,8 +13,8 @@ function createSection(PDO $pdo, string $schoolYear, string $gradeLevel, string 
     try {
         $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare('INSERT INTO sections (school_year, grade_level, name, is_active) VALUES (?, ?, ?, ?)');
-        $stmt->execute([$schoolYear, $gradeLevel, $name, $isActive]);
+        $stmt = $pdo->prepare('INSERT INTO sections (school_year, grade_level, name, is_active, adviser_id) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([$schoolYear, $gradeLevel, $name, $isActive, $adviserId]);
         $sectionId = intval($pdo->lastInsertId());
 
         if (!empty($subjects)) {
@@ -31,16 +31,53 @@ function createSection(PDO $pdo, string $schoolYear, string $gradeLevel, string 
 
         $pdo->commit();
         return [
-            'success' => true,
-            'section_id' => $sectionId,
+            'success'     => true,
+            'section_id'  => $sectionId,
             'school_year' => $schoolYear,
             'grade_level' => $gradeLevel,
-            'name' => $name,
+            'name'        => $name,
+            'adviser_id'  => $adviserId,
         ];
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
+        $message = $e->getMessage();
+        if (str_contains($message, 'Duplicate entry')) {
+            return ['success' => false, 'error' => 'A section with that name already exists for this grade level and school year'];
+        }
+        return ['success' => false, 'error' => $message];
+    }
+}
+
+function updateSection(PDO $pdo, int $sectionId, array $fields): array {
+    if ($sectionId <= 0) {
+        return ['success' => false, 'error' => 'Valid section_id is required'];
+    }
+
+    $allowed = ['school_year', 'grade_level', 'name', 'is_active', 'adviser_id'];
+    $set = [];
+    $params = [];
+
+    foreach ($allowed as $field) {
+        if (!array_key_exists($field, $fields)) continue;
+        $set[] = "$field = ?";
+        $params[] = ($field === 'adviser_id' && ($fields[$field] === '' || $fields[$field] === 0))
+            ? null
+            : $fields[$field];
+    }
+
+    if (empty($set)) {
+        return ['success' => false, 'error' => 'No fields to update'];
+    }
+
+    $params[] = $sectionId;
+
+    try {
+        $stmt = $pdo->prepare('UPDATE sections SET ' . implode(', ', $set) . ' WHERE section_id = ?');
+        $stmt->execute($params);
+        return ['success' => true];
+    } catch (Exception $e) {
         $message = $e->getMessage();
         if (str_contains($message, 'Duplicate entry')) {
             return ['success' => false, 'error' => 'A section with that name already exists for this grade level and school year'];

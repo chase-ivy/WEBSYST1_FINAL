@@ -172,6 +172,12 @@ const API = {
         list: function(filters = {}) {
             return API.call('endpoints/sections/get', filters, 'GET');
         },
+        update: function(sectionId, data) {
+            return API.call('endpoints/sections/update', Object.assign({}, data, { section_id: sectionId }), 'POST');
+        },
+        get: function(sectionId) {
+            return API.call('endpoints/sections/get', { section_id: sectionId }, 'GET');
+        },
     },
 
     // ── Teacher helpers (compat shim for dashboard JS) ─────────

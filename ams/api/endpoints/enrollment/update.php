@@ -94,17 +94,35 @@ try {
     $enrollmentUpdates = [];
     $enrollmentParams = [];
     
-    $enrollmentFields = [
-        'school_year', 'grade_level', 'is_returning_learner',
-        'mother_tongue_id', 'is_indigenous', 'indigenous_group_id',
-        'is_four_ps_beneficiary', 'four_ps_household_id',
-        'is_learner_with_disability'
+    // Map: db_column => form_field_name (form uses different casing/names for some fields)
+    $enrollmentFieldMap = [
+        'grade_level'                => 'Grade_Level',
+        'is_returning_learner'       => 'returning',
+        'mother_tongue_id'           => 'mother_tongue_id',
+        'is_indigenous'              => 'ip',
+        'indigenous_group_id'        => 'indigenous_group_id',
+        'is_four_ps_beneficiary'     => 'fourps',
+        'four_ps_household_id'       => 'FourPs_Specify',
+        'is_learner_with_disability' => 'disability',
     ];
-    
-    foreach ($enrollmentFields as $field) {
-        if (isset($data[$field])) {
-            $enrollmentUpdates[] = "$field = ?";
-            $enrollmentParams[] = $data[$field];
+
+    // school_year is composed from two separate form fields
+    if (array_key_exists('year_start', $data) || array_key_exists('year_end', $data)) {
+        $ys = trim((string)($data['year_start'] ?? ''));
+        $ye = trim((string)($data['year_end']   ?? ''));
+        if ($ys !== '' && $ye !== '') {
+            $enrollmentUpdates[] = 'school_year = ?';
+            $enrollmentParams[]  = "$ys-$ye";
+        }
+    }
+
+    $boolEnrollmentFields = ['is_returning_learner', 'is_indigenous', 'is_four_ps_beneficiary', 'is_learner_with_disability'];
+    foreach ($enrollmentFieldMap as $dbField => $formField) {
+        if (array_key_exists($formField, $data)) {
+            $enrollmentUpdates[] = "$dbField = ?";
+            $enrollmentParams[]  = in_array($dbField, $boolEnrollmentFields, true)
+                ? normalizeCheckbox($data[$formField])
+                : strOrNull($data[$formField]);
         }
     }
     
@@ -230,17 +248,33 @@ try {
         $firstName = trim((string)($data["{$guardian['prefix']}_first_name"] ?? ''));
         $middleName = trim((string)($data["{$guardian['prefix']}_middle_name"] ?? ''));
         $contact = trim((string)($data["{$guardian['prefix']}_contact_number"] ?? ''));
+        $occupation = strOrNull($data["{$guardian['prefix']}_occupation"] ?? null);
+        $relationshipStatus = strOrNull($data["{$guardian['prefix']}_relationship_status"] ?? null);
+        $facebookMessenger = strOrNull($data["{$guardian['prefix']}_facebook_messenger"] ?? null);
+        $isEmergencyContact = (strOrNull($data['emergency_contact'] ?? null) === $guardian['prefix']) ? 1 : 0;
+        $contactPriority = (isset($data["{$guardian['prefix']}_contact_priority"]) && trim((string)$data["{$guardian['prefix']}_contact_priority"]) !== '')
+            ? intval($data["{$guardian['prefix']}_contact_priority"])
+            : null;
 
         $guardianStmt = $pdo->prepare('SELECT parent_guardian_id FROM student_parent_guardians WHERE student_id = ? AND parent_guardian_type_id = ? LIMIT 1');
         $guardianStmt->execute([$studentId, $guardian['type_id']]);
         $existingGuardian = $guardianStmt->fetch();
 
         if ($existingGuardian) {
-            $pdo->prepare('UPDATE student_parent_guardians SET last_name = ?, first_name = ?, middle_name = ?, contact_number = ? WHERE parent_guardian_id = ?')
-                ->execute([$lastName, $firstName, $middleName, $contact, $existingGuardian['parent_guardian_id']]);
-        } elseif ($lastName !== '' || $firstName !== '' || $contact !== '') {
-            $pdo->prepare('INSERT INTO student_parent_guardians (student_id, parent_guardian_type_id, last_name, first_name, middle_name, contact_number) VALUES (?, ?, ?, ?, ?, ?)')
-                ->execute([$studentId, $guardian['type_id'], $lastName, $firstName, $middleName, $contact]);
+            $pdo->prepare('UPDATE student_parent_guardians SET last_name = ?, first_name = ?, middle_name = ?, contact_number = ?, occupation = ?, relationship_status = ?, facebook_messenger = ?, is_emergency_contact = ?, contact_priority = ? WHERE parent_guardian_id = ?')
+                ->execute([
+                    $lastName, $firstName, $middleName, $contact,
+                    $occupation, $relationshipStatus, $facebookMessenger,
+                    $isEmergencyContact, $contactPriority,
+                    $existingGuardian['parent_guardian_id']
+                ]);
+        } elseif ($lastName !== '' || $firstName !== '' || $contact !== '' || $occupation !== null || $relationshipStatus !== null || $facebookMessenger !== null) {
+            $pdo->prepare('INSERT INTO student_parent_guardians (student_id, parent_guardian_type_id, last_name, first_name, middle_name, contact_number, occupation, relationship_status, facebook_messenger, is_emergency_contact, contact_priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                ->execute([
+                    $studentId, $guardian['type_id'], $lastName, $firstName, $middleName, $contact,
+                    $occupation, $relationshipStatus, $facebookMessenger,
+                    $isEmergencyContact, $contactPriority
+                ]);
         }
     }
 
@@ -329,4 +363,3 @@ try {
     if ($pdo->inTransaction()) $pdo->rollBack();
     sendJson(['success' => false, 'error' => $e->getMessage()], 500);
 }
-

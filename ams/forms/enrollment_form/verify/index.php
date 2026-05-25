@@ -113,8 +113,6 @@ try {
                     </div>
                 </div>
                 <form id="enrollmentForm" novalidate>
-                    <input type="hidden" name="student_record_verified" id="studentRecordVerifiedInput" value="0">
-                <input type="hidden" name="medical_record_verified" id="medicalRecordVerifiedInput" value="0">
                 <input type="hidden" name="student_id" id="studentIdInput" value="0">
                 <input type="hidden" name="enrollment_id" id="enrollmentIdInput" value="0">
 
