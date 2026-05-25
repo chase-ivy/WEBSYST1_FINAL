@@ -138,10 +138,6 @@
                     <label>Birth Date</label>
                     <input type="date" name="Birth_Date" id="birthDate">
                 </div>
-                <div class="field">
-                    <label>Age</label>
-                    <input type="number" name="Age" min="3" max="20" placeholder="6" id="ageField" readonly>
-                </div>
             </div>
 
             <!-- Sex / Place of Birth -->
@@ -175,7 +171,6 @@
                         <option value="Pangasinan[4][]">Pangasinan</option>
                         <option value="Cebuano[5][]">Cebuano</option>
                         <option value="English[6][]">English</option>
-                        <option value="Other">Other</option>
                     </select>
                     <input type="text" id="Mother_Tongue" name="Mother_Tongue" placeholder="Please specify" style="display:none; margin-top:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif;">
                 </div>

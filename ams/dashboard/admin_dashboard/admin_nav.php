@@ -6,6 +6,7 @@ function renderAdminSidebar(string $active = 'dashboard'): void {
         'users'            => ['Manage Users',      'admin_users.php',     false],
         'students_label'   => ['Student Management', '#',                   true],
         'manage_students'  => ['Manage Students',    'admin_manage_students.php', false],
+        'masterlist'       => ['Student Masterlist', 'admin_masterlist.php', false],
         'sections_label'   => ['Section Management', '#',                   true],
         'sections'         => ['Manage Sections',    'admin_sections.php',  false],
         'enrollment_label' => ['Enrollment',         '#',                   true],
