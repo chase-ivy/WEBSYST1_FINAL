@@ -37,6 +37,9 @@ try {
             <img src="../../../style/logo.png" alt="Logo">
             <span>Gibraltar Elementary School</span>
         </div>
+        <a href="../../../dashboard/teacher_dashboard/teacher_dashboard.php" class="topbar-back">
+            ← Back to Dashboard
+        </a>
     </div>
 
     <!-- PROGRESS STEPPER -->
