@@ -24,6 +24,7 @@ requireMethod('GET');
 
 $schoolYear = trim($_GET['school_year'] ?? '');
 $sectionId = isset($_GET['section_id']) ? intval($_GET['section_id']) : null;
+$sex = trim($_GET['sex'] ?? '');
 
 try {
     // Base query to fetch masterlist from student profile and latest enrollment data.
@@ -69,6 +70,12 @@ try {
             WHERE st.section_id = ?
         )';
         $params[] = $sectionId;
+    }
+
+    // Filter by gender if provided.
+    if ($sex !== '') {
+        $query .= ' AND s.sex = ?';
+        $params[] = $sex;
     }
 
     $query .= ' ORDER BY s.last_name ASC, s.first_name ASC';

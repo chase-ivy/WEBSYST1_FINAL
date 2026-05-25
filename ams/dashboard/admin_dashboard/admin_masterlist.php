@@ -78,20 +78,23 @@ try {
         }
 
         .btn-export {
-            padding: 8px 16px;
-            background-color: var(--primary);
+            padding: 10px 18px;
+            background-color: #1a73e8;
             color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 999px;
+            font-weight: 700;
             font-size: 13px;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.75px;
+            min-width: 170px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
         }
 
         .btn-export:hover {
-            background-color: var(--primary-dark);
+            background-color: #1664c0;
+            transform: translateY(-1px);
         }
 
         .table-wrap {
@@ -165,10 +168,6 @@ try {
         </div>
 
         <section class="section">
-            <div class="section-header">
-                <h2>Filter & Export</h2>
-                <p>Filter the masterlist by school year or section, then export as needed.</p>
-            </div>
             <div class="section-body">
                 <div class="filter-controls">
                     <div>
@@ -189,7 +188,15 @@ try {
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <button class="btn-export" onclick="exportToExcel()">Export to Excel</button>
+                    <div>
+                        <label for="sexFilter">Gender</label>
+                        <select id="sexFilter">
+                            <option value="">All</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn-export" onclick="exportToExcel()">Download CSV</button>
                 </div>
 
                 <div id="messageContainer"></div>
@@ -224,10 +231,12 @@ let currentMasterlistData = [];
 async function loadMasterlist() {
     const schoolYear = document.getElementById('schoolYearFilter').value;
     const sectionId = document.getElementById('sectionFilter').value;
+    const sex = document.getElementById('sexFilter').value;
 
     const url = new URL('../../api/endpoints/admin/get_masterlist.php', window.location.href);
     if (schoolYear) url.searchParams.set('school_year', schoolYear);
     if (sectionId) url.searchParams.set('section_id', sectionId);
+    if (sex) url.searchParams.set('sex', sex);
 
     try {
         const response = await fetch(url);
@@ -323,6 +332,7 @@ function exportToExcel() {
 // Event listeners
 document.getElementById('schoolYearFilter').addEventListener('change', loadMasterlist);
 document.getElementById('sectionFilter').addEventListener('change', loadMasterlist);
+document.getElementById('sexFilter').addEventListener('change', loadMasterlist);
 
 // Initial load
 document.addEventListener('DOMContentLoaded', loadMasterlist);
