@@ -24,10 +24,25 @@ $lastName   = trim($data['last_name'] ?? '');
 $firstName  = trim($data['first_name'] ?? '');
 $birthDate  = trim($data['birth_date'] ?? '');
 $sex        = trim($data['sex'] ?? '');
+$lrn        = trim($data['lrn'] ?? '');
 $sectionId  = intval($data['section_id'] ?? 0);
 
-if ($username === '' || $password === '' || $lastName === '' || $firstName === '' || $birthDate === '' || !in_array($sex, ['Male', 'Female'], true) || $sectionId <= 0) {
+if ($username === '' || $lastName === '' || $firstName === '' || $birthDate === '' || !in_array($sex, ['Male', 'Female'], true) || $sectionId <= 0) {
     sendJson(['success' => false, 'error' => 'Missing required fields'], 400);
+}
+
+// Prefer LRN as password if available, otherwise require explicit password
+if ($password === '') {
+    if ($lrn !== '') {
+        $password = $lrn;
+    } else {
+        sendJson(['success' => false, 'error' => 'password or lrn is required'], 400);
+    }
+}
+
+// Auto-generate email if not provided
+if ($email === null || $email === '') {
+    $email = $username . '@ges.edu';
 }
 
 // Ensure section exists and derive school_year/grade_level

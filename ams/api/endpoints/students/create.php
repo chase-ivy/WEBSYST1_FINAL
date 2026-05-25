@@ -47,9 +47,23 @@ $data = getJsonInput();
 $username  = trim($data['username']  ?? '');
 $password  = trim($data['password']  ?? '');
 $email     = trim($data['email']     ?? '') ?: null;
+$lrn       = trim($data['lrn']       ?? '');
 
 if ($username === '') sendJson(['success' => false, 'error' => 'username is required'], 400);
-if ($password === '') sendJson(['success' => false, 'error' => 'password is required'], 400);
+
+// Prefer LRN as password if available, otherwise require explicit password
+if ($password === '') {
+    if ($lrn !== '') {
+        $password = $lrn;
+    } else {
+        sendJson(['success' => false, 'error' => 'password or lrn is required'], 400);
+    }
+}
+
+// Auto-generate email if not provided
+if ($email === null || $email === '') {
+    $email = $username . '@ges.edu';
+}
 
 $lastName  = trim($data['last_name']  ?? '');
 $firstName = trim($data['first_name'] ?? '');

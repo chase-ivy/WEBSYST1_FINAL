@@ -56,15 +56,27 @@ if ($username === '') {
     $username = $candidate;
 }
 
+// Prefer LRN as password if available, otherwise generate random
+$lrn = trim($data['lrn'] ?? '');
 if ($password === '') {
-    // generate a random password for the user (returned in response)
-    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
-    $pw = '';
-    for ($i = 0; $i < 10; $i++) { $pw .= $chars[random_int(0, strlen($chars) - 1)]; }
-    $password = $pw;
-    $generatedPassword = $password;
+    if ($lrn !== '') {
+        $password = $lrn;
+        $generatedPassword = null; // Not random, explicit from LRN
+    } else {
+        // generate a random password for the user (returned in response)
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()'; 
+        $pw = '';
+        for ($i = 0; $i < 10; $i++) { $pw .= $chars[random_int(0, strlen($chars) - 1)]; }
+        $password = $pw;
+        $generatedPassword = $password;
+    }
 } else {
     $generatedPassword = null;
+}
+
+// Auto-generate email if not provided
+if ($email === null || $email === '') {
+    $email = $username . '@ges.edu';
 }
 
 // Public requests can only create student accounts
