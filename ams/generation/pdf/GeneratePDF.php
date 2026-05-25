@@ -1,6 +1,11 @@
 <?php
 namespace Classes;
 
+// autoload composer if available
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
 use mikehaertl\pdftk\Pdf;
 
 class GeneratePDF {
@@ -47,7 +52,8 @@ class GeneratePDF {
         $pdf->flatten();
 
         if (!$pdf->saveAs($outputPath)) {
-            throw new \RuntimeException('PDF generation failed: ' . $pdf->getError());
+            $error = $pdf->getError();
+            throw new \RuntimeException('PDF generation failed: ' . $error . '. Ensure pdftk binary is installed and in PATH.');
         }
 
         return $outputPath;

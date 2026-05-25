@@ -37,7 +37,7 @@
 // Accessible by: staff, admin
 // ============================================================
 
-require_once __DIR__ . '/../endpoint_base.php';
+require_once __DIR__ . '/../../endpoint_base.php';
 
 require_role(['staff', 'admin']);
 requireMethod('POST');
@@ -109,7 +109,7 @@ try {
     // 3. Addresses (optional)
     $addressStmt = $pdo->prepare('
         INSERT INTO student_addresses
-            (student_id, type, street, barangay, city_municipality,
+            (student_id, address_type, street_name, barangay, municipality_city,
              province, zip_code, ownership_type)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ');

@@ -15,7 +15,7 @@
 // Accessible by: any logged-in user (student, staff, admin)
 // ============================================================
 
-require_once __DIR__ . '/../endpoint_base.php';
+require_once __DIR__ . '/../../endpoint_base.php';
 
 if (!is_logged_in()) {
     sendJson(['success' => false, 'error' => 'Unauthorized'], 401);
@@ -80,7 +80,7 @@ function insertGuardian(PDO $pdo, int $studentId, int $typeId, array $data, stri
     $occupation  = strOrNull($data["{$prefix}_occupation"]              ?? null);
     $relStatus   = strOrNull($data["{$prefix}_relationship_status"]     ?? null);
     $fb          = strOrNull($data["{$prefix}_facebook_messenger"]      ?? null);
-    $isEmergency = normalizeCheckbox($data["{$prefix}_is_emergency_contact"] ?? 0);
+    $isEmergency = (strOrNull($data['emergency_contact'] ?? null) === $prefix) ? 1 : 0;
     $priority    = isset($data["{$prefix}_contact_priority"]) ? intval($data["{$prefix}_contact_priority"]) : null;
     $isVisible   = isset($data["{$prefix}_is_contact_visible"]) ? normalizeCheckbox($data["{$prefix}_is_contact_visible"]) : 1;
 
@@ -324,13 +324,14 @@ try {
     if ($isReturning) {
         $pdo->prepare('
             INSERT INTO enrollment_returning_learners
-                (enrollment_id, last_grade_level_completed, last_school_attended, last_school_year_completed)
-            VALUES (?, ?, ?, ?)
+                (enrollment_id, last_grade_level_completed, last_school_attended, last_school_year_completed, school_id)
+            VALUES (?, ?, ?, ?, ?)
         ')->execute([
             $enrollmentId,
             strOrNull($data['Returning_Grade_Level']      ?? null),
             strOrNull($data['Last_School_Attended']       ?? null),
             strOrNull($data['Last_School_Year_Completed'] ?? null),
+            strOrNull($data['school_ID']                  ?? null),
         ]);
     }
 

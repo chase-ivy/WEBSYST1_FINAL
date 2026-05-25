@@ -23,7 +23,21 @@ $staff = $stmt->fetch();
 
 <header class="topbar">
     <div class="topbar-brand">Gibraltar <span>AMS</span></div>
-    <span class="topbar-label">Teacher Portal</span>
+    <div class="topbar-right">
+        <div class="topbar-welcome teacher" aria-live="polite" role="status">
+            <div class="welcome-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"></path>
+                    <path d="M6 20v-1a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v1"></path>
+                </svg>
+            </div>
+            <div class="welcome-copy">
+                <div class="welcome-title">Welcome back, <?php echo htmlspecialchars($_SESSION['username'] ?? $staff['username'] ?? 'Teacher', ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="welcome-subtitle">Good to see you again! You're now in your teacher dashboard.</div>
+            </div>
+        </div>
+        <span class="topbar-label">Teacher Portal</span>
+    </div>
 </header>
 
 <div class="shell">
@@ -174,7 +188,15 @@ $staff = $stmt->fetch();
         `).join('');
     }
 
-    document.addEventListener('DOMContentLoaded', loadDashboard);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboard();
+        const welcome = document.querySelector('.topbar-welcome');
+        if (!welcome) return;
+
+        requestAnimationFrame(() => welcome.classList.add('show'));
+        welcome.addEventListener('click', () => welcome.classList.add('dismissed'));
+        setTimeout(() => welcome.classList.add('dismissed'), 3000);
+    });
 </script>
 
 </body>

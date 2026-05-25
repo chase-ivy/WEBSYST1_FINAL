@@ -15,7 +15,7 @@
 // Accessible by: staff, admin
 // ============================================================
 
-require_once __DIR__ . '/../endpoint_base.php';
+require_once __DIR__ . '/../../endpoint_base.php';
 
 require_role(['staff', 'admin']);
 requireMethod('POST');
@@ -48,6 +48,10 @@ if ($record['academic_status'] !== 'active') {
     sendJson(['success' => false, 'error' => 'Student record is not active'], 400);
 }
 
+if (empty(trim((string)($record['grade_level'] ?? '')))) {
+    sendJson(['success' => false, 'error' => 'Student school record has no grade level — cannot match to a section'], 400);
+}
+
 // Verify section exists and matches grade_level
 $sectionCheck = $pdo->prepare('SELECT section_id, grade_level FROM sections WHERE section_id = ? AND is_active = 1 LIMIT 1');
 $sectionCheck->execute([$sectionId]);
@@ -57,7 +61,9 @@ if (!$section) {
 }
 
 // Validate grade_level match
-if ($section['grade_level'] !== $record['grade_level']) {
+$sectionGrade = mb_strtolower(trim((string)$section['grade_level']));
+$studentGrade = mb_strtolower(trim((string)$record['grade_level']));
+if ($sectionGrade !== $studentGrade) {
     sendJson(['success' => false, 'error' => 'Cannot assign: section grade level does not match student grade level'], 400);
 }
 

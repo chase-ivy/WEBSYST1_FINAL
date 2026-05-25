@@ -1,3 +1,21 @@
+<?php
+require_once __DIR__ . '/../../../config/config.php';
+
+$motherTongues = [];
+$indigenousGroups = [];
+try {
+    $stmt = $pdo->prepare('SELECT mother_tongue_id AS id, name FROM mother_tongues ORDER BY name');
+    $stmt->execute();
+    $motherTongues = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $pdo->prepare('SELECT indigenous_group_id AS id, name FROM indigenous_groups ORDER BY name');
+    $stmt->execute();
+    $indigenousGroups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $motherTongues = [];
+    $indigenousGroups = [];
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +24,10 @@
     <title>Enrollment Form · Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="../enrollment.css" rel="stylesheet">
+    <script>
+        window.MOTHER_TONGUES = <?php echo json_encode($motherTongues); ?>;
+        window.INDIGENOUS_GROUPS = <?php echo json_encode($indigenousGroups); ?>;
+    </script>
 </head>
 <body>
 
@@ -15,6 +37,9 @@
             <img src="../../../style/logo.png" alt="Logo">
             <span>Gibraltar Elementary School</span>
         </div>
+        <a href="../../../dashboard/teacher_dashboard/teacher_dashboard.php" class="topbar-back">
+            ← Back to Dashboard
+        </a>
     </div>
 
     <!-- PROGRESS STEPPER -->

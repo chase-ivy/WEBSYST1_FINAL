@@ -11,7 +11,7 @@ if (isset($_POST["login"])) {
     if (empty($username) || empty($password)) {
         $error = 'Username and password are required';
     } else {
-        $stmt = $pdo->prepare('SELECT user_id, email, password_hash, role FROM users WHERE email = ? LIMIT 1');
+        $stmt = $pdo->prepare('SELECT user_id, username, email, password_hash, role FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$username]);
         $user = $stmt->fetch();
         $passwordValid = false;
@@ -26,7 +26,7 @@ if (isset($_POST["login"])) {
         if ($user && $passwordValid) {
             session_regenerate_id(true);
             $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['username'] = $user['email'];
+            $_SESSION['username'] = $user['username'] ?: $user['email'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['logged_in'] = true;
 
@@ -87,7 +87,7 @@ unset($_SESSION['login_error']);
         --text:         #000000;
         --muted:        #6b7280;
         --surface:      #ffffff;
-        --canvas:       #d4e3f8;
+        /* --canvas removed: page uses hero image layer instead */
         --shadow-sm:    0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
         --shadow-md:    0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
         --radius-sm:    6px;
@@ -110,7 +110,6 @@ unset($_SESSION['login_error']);
     *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
     body {
         font-family: 'DM Sans', sans-serif;
-        background: var(--canvas);
         color: var(--text);
         min-height: 100vh;
         display: flex;
@@ -123,18 +122,20 @@ unset($_SESSION['login_error']);
         min-height: 100vh;
         overflow: hidden;
     }
-    .left::before {
+    /* page hero image (single layer) */
+    body::before {
         content: "";
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: url('https://images.unsplash.com/photo-1635424239131-32dc44986b56?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;
-        filter: blur(3px);
-    }
-    .left::after {
-        content: '';
-        position: absolute;
+        position: fixed;
         inset: 0;
+        z-index: -2;
+        background: url('https://images.unsplash.com/photo-1635424239131-32dc44986b56?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;
+        filter: blur(3px) saturate(1.02);
+    }
+    body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
         background: linear-gradient(160deg, rgba(19, 14, 14, 0.88) 0%, rgba(12, 12, 12, 0.68) 100%);
     }
     .left-copy {
@@ -147,43 +148,66 @@ unset($_SESSION['login_error']);
     }
     .left-logo {
         font-family: 'Syne', sans-serif;
-        font-size: 26px;
+        font-size: 28px;
         font-weight: 800;
         letter-spacing: 1px;
-        margin-bottom: 4px;
+        margin-bottom: 10px;
         line-height: 1;
     }
     .left-logo span { color: var(--brand-dark); }
     .left-tagline {
         font-size: 11px;
-        color: red;
-        font-weight: 600;
-        letter-spacing: 2.5px;
+        color: rgba(255, 255, 255, 0.82);
+        font-weight: 700;
+        letter-spacing: 2px;
         text-transform: uppercase;
-        opacity: .6;
-        margin-bottom: 24px;
+        margin-bottom: 18px;
+    }
+    .left-lead {
+        font-size: 15px;
+        color: rgba(255,255,255,0.92);
+        line-height: 1.7;
+        margin-bottom: 28px;
+        max-width: 340px;
     }
     .brand-pill {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        background: rgba(249, 248, 248, 0.18);
-        border: 1px solid rgba(0, 0, 0, 0.35);
-        color: rgb(233, 233, 233);
+        gap: 8px;
+        background: rgba(255,255,255,0.16);
+        border: 1px solid rgba(255,255,255,0.20);
+        color: #f8fafc;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
         letter-spacing: .4px;
         text-transform: uppercase;
-        padding: 5px 12px;
+        padding: 6px 14px;
         border-radius: 9999px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
     }
     .brand-pill i {
-        width: 6px; height: 6px;
+        width: 7px; height: 7px;
         border-radius: 50%;
-        background: var(--brand-dark);
+        background: var(--brand);
         display: inline-block;
         flex-shrink: 0;
+    }
+    .left-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+    }
+    .left-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 9999px;
+        background: rgba(255,255,255,0.12);
+        color: #f8fafc;
+        font-size: 12px;
+        letter-spacing: .04em;
     }
     .left-copy h2 {
         font-family: 'Syne', sans-serif;
@@ -192,35 +216,35 @@ unset($_SESSION['login_error']);
         line-height: 1.15;
         margin-bottom: 10px;
     }
-    .left-copy p { font-size: 14px; opacity: .72; line-height: 1.65; }
 
     /* ── RIGHT PANEL ────────────────────────────────────────── */
     .right {
         flex: 1;
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 40px 24px;
-        background: radial-gradient(circle at top left, rgba(78,3,3,0.08), transparent 28%),
-                    radial-gradient(circle at bottom right, rgba(78,3,3,0.05), transparent 24%),
-                    linear-gradient(180deg, #fbfbfb 0%, #f5f7fa 100%);
-        border: 1px solid rgba(78,3,3,0.08);
+        padding: 44px 24px;
+        overflow: hidden;
     }
+    /* right panel uses the page background (no separate layer) */
     .box {
+        position: relative;
         width: 100%;
-        max-width: 480px;
-        background: var(--surface);
-        border: 5px solid rgba(99, 7, 7, 0.12);
+        max-width: 520px;
+        background: rgba(253, 252, 252, 0.62);
         border-radius: var(--radius-xl);
-        padding: 45px 40px;
-        box-shadow: 20px 30px 55px rgba(78,3,3,0.08);
-        transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+        border: 1px solid rgba(255,255,255,0.14);
+        padding: 44px 38px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), background var(--transition);
         animation: up .45s both;
+        backdrop-filter: blur(2px) saturate(120%);
     }
     .box:hover {
         transform: translateY(-2px);
-        border-color: rgba(78,3,3,0.22);
-        box-shadow: 0 24px 72px rgba(78,3,3,0.16);
+        border-color: rgba(236, 63, 63, 0.28);
+        box-shadow: 0 55px 60px rgba(247, 248, 246, 0.28);
     }
     @keyframes up {
         from { opacity:0; transform:translateY(14px); }
@@ -228,12 +252,12 @@ unset($_SESSION['login_error']);
     }
     .box h2 {
         font-family: 'Syne', sans-serif;
-        font-size: 25px;
+        font-size: 26px;
         font-weight: 800;
-        margin-bottom: 4px;
+        margin-bottom: 8px;
     }
-    .box .sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
-    .divider { height: 1px; background: var(--border); opacity: .6; margin-bottom: 24px; }
+    .box .sub { font-size: 13px; color: #475569; margin-bottom: 24px; }
+    .divider { height: 1px; background: var(--border); opacity: .55; margin-bottom: 24px; }
 
     /* ── USERNAME FIELD — floating label + validation (NEW) ─── */
     .username-field {
@@ -439,7 +463,6 @@ unset($_SESSION['login_error']);
     @media(max-width:820px) {
         .left { display: none; }
         .right {
-            background: var(--canvas);
             padding: 28px 16px;
         }
         .box {
@@ -466,14 +489,15 @@ unset($_SESSION['login_error']);
 
 <!-- LEFT PANEL -->
 <div class="left">
-    <div class="left-copy">
-        <div class="left-logo">Gibraltar <span>AMES</span></div>
-        <div class="left-tagline">Academic Management System</div>
-        <div class="brand-pill"><i></i>Staff &amp; Student Portal</div>
-        <h2>Welcome back</h2>
-        <p>Access your dashboard, manage records, and track academic progress in one place.</p>
-    </div>
-</div>
+        <div class="left-copy">
+                <div class="left-logo">Gibraltar <span>AMES</span></div>
+                <div class="left-tagline">Attendance Monitoring and Enrollment System</div>
+                <h2>Welcome back!</h2>
+                <p class="left-lead">Access student records, attendance, and grades in a secure portal built for educators and learners.</p>
+                
+                <div class="brand-pill"><i></i>Staff &amp; Student Portal</div>
+            </div>
+        </div>
 
 <!-- RIGHT PANEL -->
 <div class="right">

@@ -215,7 +215,7 @@
                     <label>IP Community / Cultural Group</label>
                     <select name="IP_Group" id="IP_Group" onchange="toggleIpOther()">
                         <option value="" hidden>Select IP group</option>
-                        <option value="Ibalio[1][]">Ibalio</option>
+                        <option value="Ibaloi[1][]">Ibaloi</option>
                         <option value="Kankanaey[2][]">Kankanaey</option>
                         <option value="Ifugao[3][]">Ifugao</option>
                         <option value="Bontoc[4][]">Bontoc</option>
@@ -251,7 +251,7 @@
                  1=Visual Impairment, 2=Hearing Impairment, 3=Learning Disability,
                  4=Intellectual Disability, 5=Autism Spectrum Disorder,
                  6=Emotional/Behavioral Disorder, 7=Orthopedic/Physical Handicap,
-                 8=Speech/Language Disorder, 9=Chronic Illness, 10=Others
+                 8=Speech/Language Disorder, 9=Social Health Problem / Chronic Disease, 10=Others
                  Subtypes (disability_subtypes): 1=Blind, 2=Low Vision (type 1 only) -->
             <div class="collapse" id="disabilityBox">
                 <div class="disability-grid" style="margin-top:10px;">
@@ -285,10 +285,16 @@
                         <input type="checkbox" name="disabilityDetails[8][]" value="8"> Speech / Language Disorder
                     </label>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[9][]" value="9"> Chronic Illness
+                        <input type="checkbox" name="disabilityDetails[9][]" value="9"> Social Health Problem / Chronic Disease
                     </label>
                     <label class="check-item">
-                        <input type="checkbox" name="disabilityDetails[10][]" value="10"> Others (Multiple Disorder, Cerebral Palsy, etc.)
+                        <input type="checkbox" name="disabilityDetails[11][]" value="11"> Cerebral Palsy
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" name="disabilityDetails[12][]" value="12"> Multiple Disorder
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" name="disabilityDetails[10][]" value="10"> Others
                     </label>
                 </div>
             </div>

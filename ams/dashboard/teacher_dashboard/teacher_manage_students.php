@@ -1319,7 +1319,7 @@ function showAlert(type, message) {
 }
 
 function downloadEnrollmentForm(studentId) {
-    window.open(`../../forms/enrollment_form/pdf.php?student_id=${studentId}&type=combined`, '_blank');
+    window.open(`/WEBSYST1_FINAL/ams/generation/excel/excel.php?student_id=${studentId}&type=combined`, '_blank');
 }
 
    //INIT

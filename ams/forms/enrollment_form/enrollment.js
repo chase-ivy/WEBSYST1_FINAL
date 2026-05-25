@@ -312,15 +312,29 @@ async function loadEnrollmentLookups() {
         return;
     }
 
+    const populateFromGlobals = () => {
+        if (window.MOTHER_TONGUES && Array.isArray(window.MOTHER_TONGUES)) {
+            populateLookupSelect(motherTongueSelect, window.MOTHER_TONGUES, 'id', 'name');
+        }
+        if (window.INDIGENOUS_GROUPS && Array.isArray(window.INDIGENOUS_GROUPS)) {
+            populateLookupSelect(ipGroupSelect, window.INDIGENOUS_GROUPS, 'id', 'name');
+        }
+    };
+
+    if (window.MOTHER_TONGUES && Array.isArray(window.MOTHER_TONGUES) && window.INDIGENOUS_GROUPS && Array.isArray(window.INDIGENOUS_GROUPS)) {
+        populateFromGlobals();
+        return;
+    }
+
     try {
         // Load mother tongues from API
         let motherTongues = [];
         if (API?.mother_tongues) {
             const mtResponse = await API.mother_tongues.list();
             if (mtResponse.success && Array.isArray(mtResponse.data)) {
-                motherTongues = mtResponse.data.map(mt => mt.mother_tongue_name || mt.name);
+                motherTongues = mtResponse.data;
             } else if (Array.isArray(mtResponse)) {
-                motherTongues = mtResponse.map(mt => mt.mother_tongue_name || mt.name);
+                motherTongues = mtResponse;
             }
         }
         
@@ -329,21 +343,22 @@ async function loadEnrollmentLookups() {
         if (API?.indigenous_groups) {
             const igResponse = await API.indigenous_groups.list();
             if (igResponse.success && Array.isArray(igResponse.data)) {
-                indigenousGroups = igResponse.data.map(ig => ig.indigenous_group_name || ig.name);
+                indigenousGroups = igResponse.data;
             } else if (Array.isArray(igResponse)) {
-                indigenousGroups = igResponse.map(ig => ig.indigenous_group_name || ig.name);
+                indigenousGroups = igResponse;
             }
         }
 
-        if (motherTongues.length > 0) populateLookupSelect(motherTongueSelect, motherTongues);
-        if (indigenousGroups.length > 0) populateLookupSelect(ipGroupSelect, indigenousGroups);
+        if (motherTongues.length > 0) populateLookupSelect(motherTongueSelect, motherTongues, 'mother_tongue_id', 'name');
+        if (indigenousGroups.length > 0) populateLookupSelect(ipGroupSelect, indigenousGroups, 'indigenous_group_id', 'name');
     } catch (error) {
         console.error('Failed to load lookup values:', error);
+        populateFromGlobals();
         // Silently fail - form will work with hardcoded defaults if lookups unavailable
     }
 }
 
-function populateLookupSelect(select, values) {
+function populateLookupSelect(select, values, valueField = 'id', labelField = 'name') {
     const otherOption = Array.from(select.options).find(option => option.value === 'Other');
     select.querySelectorAll('option').forEach(option => {
         if (option.value !== '' && option.value !== 'Other') {
@@ -351,11 +366,15 @@ function populateLookupSelect(select, values) {
         }
     });
 
-    values.forEach(value => {
-        if (!value) return;
+    values.forEach(item => {
+        if (!item) return;
+        const value = typeof item === 'object' ? (item[valueField] ?? item.id ?? '') : item;
+        const label = typeof item === 'object' ? (item[labelField] ?? item.name ?? String(item)) : String(item);
+        if (!value && value !== 0) return;
+
         const option = document.createElement('option');
-        option.value = value;
-        option.textContent = value;
+        option.value = String(value);
+        option.textContent = label;
         select.insertBefore(option, otherOption || null);
     });
 }
@@ -489,20 +508,11 @@ function showMessage(type, message) {
     container.textContent = message;
 }
 
-async function generateEnrollmentPdf(studentId) {
-    const url = new URL('pdf.php', window.location.href);
+function generateEnrollmentXlsx(studentId) {
+    const url = new URL('/WEBSYST1_FINAL/ams/generation/excel/excel.php', window.location.origin);
     url.searchParams.set('student_id', studentId);
     url.searchParams.set('type', 'combined');
-
-    const response = await fetch(url.toString(), {
-        method: 'GET',
-        credentials: 'same-origin',
-    });
-
-    if (!response.ok) {
-        const text = await response.text();
-        throw new Error('PDF generation failed: ' + text);
-    }
+    window.open(url.toString(), '_blank');
 }
 
 function initEnrollmentPage() {

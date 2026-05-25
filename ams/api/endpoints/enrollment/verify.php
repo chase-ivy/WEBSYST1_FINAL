@@ -13,7 +13,7 @@
 // Accessible by: staff, admin
 // ============================================================
 
-require_once __DIR__ . '/../endpoint_base.php';
+require_once __DIR__ . '/../../endpoint_base.php';
 
 require_role(['staff', 'admin']);
 requireMethod('POST');
@@ -46,6 +46,12 @@ if (!$enrollment) {
 
 if ($enrollment['enrollment_status'] !== 'pending') {
     sendJson(['success' => false, 'error' => 'Only pending enrollments can be verified'], 400);
+}
+
+// Guard: grade_level is required for school records and section assignment.
+// Old enrollments submitted before validation was enforced may have a null grade_level.
+if (empty(trim((string)($enrollment['grade_level'] ?? '')))) {
+    sendJson(['success' => false, 'error' => 'This enrollment is missing a grade level. Please edit and save the enrollment (Step 1) before verifying.'], 422);
 }
 
 // ── Resolve lookup names ──────────────────────────────────────
@@ -139,8 +145,54 @@ if ($medInfo) {
 
 // ── Write permanent records ───────────────────────────────────
 
+$existingSchoolRecord = $pdo->prepare('SELECT school_record_id FROM student_school_records WHERE enrollment_id = ? LIMIT 1');
+$existingSchoolRecord->execute([$enrollmentId]);
+$schoolRecordId = $existingSchoolRecord->fetchColumn();
+
 try {
     $pdo->beginTransaction();
+
+    if ($schoolRecordId) {
+        $schoolRecordId = intval($schoolRecordId);
+
+        $existingMedical = $pdo->prepare('SELECT 1 FROM student_medical_records WHERE school_record_id = ? LIMIT 1');
+        $existingMedical->execute([$schoolRecordId]);
+        $hasMedical = $existingMedical->fetchColumn() !== false;
+
+        if (!$hasMedical) {
+            $pdo->prepare('INSERT INTO student_medical_records
+                (school_record_id, exposed_to_cigarette_vape_smoke, other_pertinent_information,
+                 allergies, conditions, surgeries, treatments, family_medical_history)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                ->execute([
+                    $schoolRecordId,
+                    $exposedToSmoke,
+                    $otherPertinentInfo,
+                    $allergiesJson,
+                    $conditionsJson,
+                    $surgeriesJson,
+                    $treatmentsJson,
+                    $familyHistoryJson,
+                ]);
+        }
+
+        $pdo->prepare('UPDATE enrollments
+            SET enrollment_status = ?, verified_by = ?, verified_at = NOW()
+            WHERE enrollment_id = ?')
+            ->execute(['verified', $verifiedBy, $enrollmentId]);
+
+        $pdo->commit();
+
+        sendJson([
+            'success'         => true,
+            'enrollment_id'   => $enrollmentId,
+            'school_record_id'=> $schoolRecordId,
+            'message'         => $hasMedical
+                ? 'Enrollment already had permanent record; verification status repaired.'
+                : 'Enrollment already had school record; medical record created and enrollment verified.',
+        ]);
+        return;
+    }
 
     // 1. student_school_records — fresh INSERT (not update)
     $pdo->prepare('

@@ -311,8 +311,23 @@ function toggleIpOther() {
 async function loadEnrollmentLookups() {
     const motherTongueSelect = document.getElementById('Mother_Tongue');
     const ipGroupSelect = document.getElementById('IP_Group');
+    if (!motherTongueSelect || !ipGroupSelect) return;
 
-    if (!motherTongueSelect || !ipGroupSelect || !API?.mother_tongues || !API?.indigenous_groups) {
+    const injectedMotherTongues   = Array.isArray(window.MOTHER_TONGUES) ? window.MOTHER_TONGUES : [];
+    const injectedIndigenousGroups = Array.isArray(window.INDIGENOUS_GROUPS) ? window.INDIGENOUS_GROUPS : [];
+
+    if (injectedMotherTongues.length) {
+        populateLookupSelect(motherTongueSelect, injectedMotherTongues, 'id', 'name');
+    }
+    if (injectedIndigenousGroups.length) {
+        populateLookupSelect(ipGroupSelect, injectedIndigenousGroups, 'id', 'name');
+    }
+
+    if (injectedMotherTongues.length && injectedIndigenousGroups.length) {
+        return;
+    }
+
+    if (!API?.mother_tongues || !API?.indigenous_groups) {
         return;
     }
 
@@ -325,8 +340,8 @@ async function loadEnrollmentLookups() {
         const motherTongues = Array.isArray(motherTonguesResponse.data) ? motherTonguesResponse.data : [];
         const indigenousGroups = Array.isArray(indigenousGroupsResponse.data) ? indigenousGroupsResponse.data : [];
 
-        populateLookupSelect(motherTongueSelect, motherTongues, 'mother_tongue_id', 'name');
-        populateLookupSelect(ipGroupSelect, indigenousGroups, 'indigenous_group_id', 'name');
+        if (motherTongues.length) populateLookupSelect(motherTongueSelect, motherTongues, 'mother_tongue_id', 'name');
+        if (indigenousGroups.length) populateLookupSelect(ipGroupSelect, indigenousGroups, 'indigenous_group_id', 'name');
     } catch (error) {
         console.error('Failed to load lookup values:', error);
     }
@@ -385,8 +400,8 @@ if (document.readyState === 'loading') {
 }
 
 function sameAddr(yes) {
-    document.getElementById('permBox').style.opacity       = yes ? '.4'    : '1';
-    document.getElementById('permBox').style.pointerEvents = yes ? 'none'  : 'auto';
+    // When 'same as current' = Yes, collapse the permanent address box; No = show it
+    toggle('permBox', !yes);
 }
 
 // Auto-calculate Age when Birth Date changes — replaces enroll.js birthDate listener
@@ -534,26 +549,20 @@ function showMessage(type, message) {
     container.textContent = message;
 }
 
-async function generateEnrollmentPdf(studentId) {
-    const url = new URL('../pdf.php', window.location.href);
+function generateEnrollmentXlsx(studentId) {
+    const url = new URL('/WEBSYST1_FINAL/ams/generation/excel/excel.php', window.location.origin);
     url.searchParams.set('student_id', studentId);
     url.searchParams.set('type', 'combined');
-
-    const response = await fetch(url.toString(), {
-        method: 'GET',
-        credentials: 'same-origin',
-    });
-
-    if (!response.ok) {
-        const text = await response.text();
-        throw new Error('PDF generation failed: ' + text);
-    }
+    window.open(url.toString(), '_blank');
 }
 
-document.getElementById('enrollmentForm').addEventListener('submit', async function (event) {
-    event.preventDefault();
-    showConfirmation(event.target);
-});
+const enrollmentFormEl = document.getElementById('enrollmentForm');
+if (enrollmentFormEl && typeof showConfirmation === 'function') {
+    enrollmentFormEl.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        showConfirmation(event.target);
+    });
+}
 
 function generateConfirmationSummary(form) {
     const data = serializeForm(form);
@@ -641,24 +650,39 @@ async function confirmSubmission() {
 
         // Create or update student record
         let studentId = payload.student_id ? parseInt(payload.student_id, 10) : null;
+        let generatedPassword = '';
+        let registeredUsername = '';
+        let registrationEmail = '';
+        let registrationPassword = '';
+
         if (!studentId) {
             showMessage('', 'Creating student record...');
             
+            // Map enrollment form fields to the public student register endpoint
             const studentPayload = {
+                // allow server to auto-generate username if not provided
+                username: payload.user_email ? (payload.user_email.split('@')[0]) : '',
+                password: payload.user_password || '',
+                email: payload.user_email || '',
                 lrn: payload.Learner_Reference_No || '',
-                first_name: payload.Learner_First_Name || '',
+                psa_bcn: payload.psa_bcn || '',
                 last_name: payload.Learner_Last_Name || '',
+                first_name: payload.Learner_First_Name || '',
                 middle_name: payload.Learner_Middle_Name || '',
                 extension_name: payload.Learner_Extension_Name || '',
                 birth_date: payload.Birth_Date || '',
                 sex: payload.sex || '',
-                place_of_birth: payload.Place_of_Birth || '',
-                user_email: payload.user_email || '',
-                user_password: payload.user_password || ''
+                place_of_birth: payload.Place_of_Birth || ''
             };
 
-            const studentResp = await API.students.create(studentPayload);
+            // Use the public register endpoint for open enrollment (creates account + student)
+            const studentResp = await API.students.register(studentPayload);
             
+            generatedPassword = studentResp.generated_password || studentResp.data?.generated_password || '';
+            registeredUsername = studentResp.username || studentResp.data?.username || studentPayload.username || '';
+            registrationEmail = studentPayload.email || '';
+            registrationPassword = studentPayload.password || '';
+
             // Handle different API response formats
             if (studentResp.success && studentResp.data) {
                 studentId = studentResp.data.id || studentResp.data.student_id;
@@ -671,13 +695,14 @@ async function confirmSubmission() {
             if (!studentId) {
                 throw new Error('Failed to create student record. Please try again or contact support.');
             }
+
+            payload.student_id = studentId;
         }
 
-        payload.student_id = studentId;
         showMessage('', 'Submitting enrollment...');
 
         // Submit enrollment
-        const response = await API.enrollments.create(payload);
+        const response = await API.enrollment.submit(payload);
         
         // Handle different API response formats
         let enrollmentId = null;
@@ -693,17 +718,33 @@ async function confirmSubmission() {
             throw new Error(response.error || response.message || 'Enrollment submission failed.');
         }
 
-        showMessage('success', 'Enrollment submitted successfully!' + (enrollmentId ? ' Enrollment ID: ' + enrollmentId : '') + '. Redirecting...');
+        let credentialMessage = '';
+        if (registrationEmail) {
+            credentialMessage += `Email: ${registrationEmail}`;
+        }
+        if (generatedPassword) {
+            credentialMessage += (credentialMessage ? ' | ' : '') + `Password: ${generatedPassword}`;
+        } else if (registrationPassword) {
+            credentialMessage += (credentialMessage ? ' | ' : '') + 'Password: (the one you entered)';
+        }
+        if (!registrationEmail && registeredUsername) {
+            credentialMessage = `Username: ${registeredUsername}` + (generatedPassword ? ` | Password: ${generatedPassword}` : '');
+        }
+
+        const successText = 'Enrollment submitted successfully!' + (enrollmentId ? ' Enrollment ID: ' + enrollmentId + '.' : '')
+            + (credentialMessage ? ` Login credentials: ${credentialMessage}.` : '')
+            + ' Redirecting...';
+
+        showMessage('success', successText);
 
         setTimeout(() => {
-            window.location.href = '../../../dashboard/teacher_dashboard/teacher_dashboard.php';
-        }, 2500);
+            window.location.href = '../../../dashboard/student_dashboard/student_dashboard.php';
+        }, 5000);
 
         form.reset();
         goTo(1);
         document.getElementById('ageField').value = '';
-        document.getElementById('permBox').style.opacity = '1';
-        document.getElementById('permBox').style.pointerEvents = 'auto';
+        toggle('permBox', true); // Reset permanent address box to visible on form reset
     } catch (error) {
         showMessage('error', error.message || 'Enrollment submission failed. Please review the form and try again.');
         console.error('Enrollment submission error:', error);

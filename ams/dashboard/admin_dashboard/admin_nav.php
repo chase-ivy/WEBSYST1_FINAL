@@ -30,6 +30,11 @@ function renderAdminSidebar(string $active = 'dashboard'): void {
         }
     }
     echo '</nav>';
+    
+    // Load API client for frontend admin pages (versioned to bust caches)
+    echo '<script src="/WEBSYST1_FINAL/ams/api/client.js?v=2"></script>';
+    // Include shared admin utilities
+    echo '<script src="/WEBSYST1_FINAL/ams/dashboard/admin_dashboard/admin.js?v=1"></script>';
 
     echo '<a href="../../login/logout.php">Logout</a>';
     echo '</aside>';

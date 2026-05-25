@@ -32,9 +32,15 @@ function redirect_to_dashboard($role) {
 
 function get_login_url() {
     $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    $amsPos = strpos($script, '/ams/');
+    if ($amsPos !== false) {
+        return substr($script, 0, $amsPos + 4) . '/login/login.php';
+    }
+
     if (strpos($script, '/dashboard/') !== false) {
         return dirname($script, 3) . '/login/login.php';
     }
+
     return dirname($script) . '/login/login.php';
 }
 

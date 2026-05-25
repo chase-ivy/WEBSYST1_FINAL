@@ -299,94 +299,10 @@ try {
     </div>
 </div>
 
-<script src="../../api/client.js"></script>
 <script>
-// ── Helpers ──────────────────────────────────────────────────
-function esc(v) {
-    return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-}
-function val(v, fallback = '—') {
-    const s = String(v ?? '').trim();
-    return s === '' ? fallback : s;
-}
-function badge(status) {
-    const map = { pending: 'badge-pending', verified: 'badge-verified', rejected: 'badge-rejected' };
-    return `<span class="badge ${map[status] || ''}">${esc(status)}</span>`;
-}
-function tags(arr, labelKey) {
-    if (!arr || arr.length === 0) return '<span class="tag none">None recorded</span>';
-    return arr.map(i => `<span class="tag">${esc(i[labelKey] || JSON.stringify(i))}</span>`).join('');
-}
-function formatDate(s) {
-    if (!s) return '—';
-    const d = new Date(s);
-    return isNaN(d) ? s : d.toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
-}
+document.addEventListener('DOMContentLoaded', adminEnrollmentQueueInit);
+</script>
 
-// ── State ────────────────────────────────────────────────────
-let currentEnrollmentId = null;
-let rejectPending = false;
-
-// ── DOM refs ─────────────────────────────────────────────────
-const queueBody       = document.getElementById('queueBody');
-const queueMessage    = document.getElementById('queueMessage');
-const yearFilter      = document.getElementById('yearFilter');
-const statusFilter    = document.getElementById('statusFilter');
-const refreshQueue    = document.getElementById('refreshQueue');
-const modal           = document.getElementById('reviewModal');
-const modalBody       = document.getElementById('modalBody');
-const modalMessage    = document.getElementById('modalMessage');
-const btnVerify       = document.getElementById('btnVerify');
-const btnReject       = document.getElementById('btnReject');
-const btnConfirmReject= document.getElementById('btnConfirmReject');
-const btnCancel       = document.getElementById('btnCancel');
-const modalClose      = document.getElementById('modalClose');
-const rejectReasonWrap= document.getElementById('rejectReasonWrap');
-const rejectReasonText= document.getElementById('rejectReasonText');
-
-// ── Queue loading ────────────────────────────────────────────
-function setQueueMessage(type, msg) {
-    queueMessage.style.display = 'flex';
-    queueMessage.className = 'message ' + (type === 'error' ? 'error' : 'success');
-    queueMessage.textContent = msg;
-}
-function clearQueueMessage() {
-    queueMessage.style.display = 'none';
-}
-
-async function loadQueue() {
-    clearQueueMessage();
-    queueBody.innerHTML = '<tr class="empty-row"><td colspan="9">Loading…</td></tr>';
-    try {
-        const year   = yearFilter.value || null;
-        const status = statusFilter.value || null;
-        const response = await API.enrollment.queue(year, status || 'pending');
-        if (!response.success) throw new Error(response.error || 'Failed to load');
-        const items = response.data || [];
-        if (items.length === 0) {
-            queueBody.innerHTML = '<tr class="empty-row"><td colspan="9">No enrollments found.</td></tr>';
-            return;
-        }
-        queueBody.innerHTML = items.map((item, i) => `
-            <tr>
-                <td>${i + 1}</td>
-                <td>${esc(item.queue_number ?? '—')}</td>
-                <td class="td-primary">${esc(item.last_name)}, ${esc(item.first_name)}</td>
-                <td>${esc(item.lrn || '—')}</td>
-                <td>${esc(item.school_year)}</td>
-                <td>${esc(item.grade_level)}</td>
-                <td>${badge(item.enrollment_status)}</td>
-                <td>${formatDate(item.created_at)}</td>
-                <td class="td-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="openReview(${item.enrollment_id})">Review</button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        queueBody.innerHTML = '<tr class="empty-row"><td colspan="9">Failed to load enrollments.</td></tr>';
-        setQueueMessage('error', err.message);
-    }
-}
 
 // ── Modal helpers ────────────────────────────────────────────
 function openModal() { modal.classList.add('open'); }
@@ -542,7 +458,7 @@ function buildModalBody(data) {
 }
 
 // ── Open review modal ────────────────────────────────────────
-async function openReview(enrollmentId) {
+async function openReview(enrollmentId, btn) {
     currentEnrollmentId = enrollmentId;
     rejectPending = false;
     rejectReasonWrap.classList.remove('visible');
@@ -553,6 +469,12 @@ async function openReview(enrollmentId) {
     clearModalMessage();
     modalBody.innerHTML = '<p style="color:var(--muted);">Loading enrollment details…</p>';
     openModal();
+
+    const origText = btn ? btn.textContent : null;
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Loading…';
+    }
 
     try {
         const response = await API.enrollment.get(enrollmentId);
@@ -567,6 +489,12 @@ async function openReview(enrollmentId) {
         }
     } catch (err) {
         modalBody.innerHTML = `<p style="color:#991b1b;">Error: ${esc(err.message)}</p>`;
+    }
+    finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = origText;
+        }
     }
 }
 

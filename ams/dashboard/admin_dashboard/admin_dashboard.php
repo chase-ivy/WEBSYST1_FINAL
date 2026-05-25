@@ -34,7 +34,21 @@ $staffList = getStaffList($pdo);
 <!-- ── TOPBAR ──────────────────────────────────────────────── -->
 <header class="topbar">
     <div class="topbar-brand">Gibraltar <span>AMES</span></div>
-    <span class="topbar-label">Admin Panel</span>
+    <div class="topbar-right">
+        <div class="topbar-welcome" aria-live="polite">
+            <div class="welcome-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"></path>
+                    <path d="M6 20v-1a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v1"></path>
+                </svg>
+            </div>
+            <div class="welcome-copy">
+                <div class="welcome-title">Welcome back, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin', ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="welcome-subtitle">Academic Management system is ready!</div>
+            </div>
+        </div>
+        <span class="topbar-label">Admin Panel</span>
+    </div>
 </header>
 
 <!-- ── LAYOUT SHELL ────────────────────────────────────────── -->
@@ -98,8 +112,8 @@ $staffList = getStaffList($pdo);
                     <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                 </div>
                 <h3>Create Staff</h3>
-                <p>Add new staff or student accounts to the system.</p>
-                <a class="btn-action" href="admin_create.php">
+                <p>Add new staff accounts to the system.</p>
+                <a class="btn-action" href="admin_users.php">
                     Go to Create
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
@@ -111,7 +125,7 @@ $staffList = getStaffList($pdo);
                 </div>
                 <h3>Update Staff</h3>
                 <p>Review and edit existing staff records and permissions.</p>
-                <a class="btn-action" href="admin_update.php">
+                <a class="btn-action" href="admin_users.php">
                     Go to Update
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
@@ -123,7 +137,7 @@ $staffList = getStaffList($pdo);
                 </div>
                 <h3>Delete Staff</h3>
                 <p>Remove staff accounts that should no longer have access.</p>
-                <a class="btn-action" href="admin_delete.php">
+                <a class="btn-action" href="admin_users.php">
                     Go to Delete
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
@@ -221,63 +235,27 @@ $staffList = getStaffList($pdo);
 
     </main>
 </div>
-
-<script src="../../api/client.js?v=3"></script>
 <script>
-    function getRoleBadgeClass(role) {
-        const map = { admin: 'badge-admin', teacher: 'badge-teacher', staff: 'badge-staff' };
-        return map[(role || '').toLowerCase()] || 'badge-default';
-    }
-
-    async function loadAdminStaff() {
-        try {
-            const response = await API.crud.list('users');
-            if (!response || !response.success) {
-                throw new Error(response?.error || 'Unable to load staff list.');
-            }
-
-            const rows     = (response.data || []).filter(user => (user.role || '').toLowerCase() !== 'admin');
-            const tbody    = document.getElementById('staff-tbody');
-            const count    = document.getElementById('staff-count');
-
-            if (tbody && count) {
-                count.textContent = rows.length;
-
-                if (rows.length === 0) {
-                    // Preserve existing server-side rows if the API returns empty due to a transient issue.
-                    if (tbody.querySelector('tr:not(.empty-row)')) {
-                        return;
-                    }
-
-                    tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = rows.map(staff => {
-                    const role       = staff.role || 'Unassigned';
-                    const badgeClass = getRoleBadgeClass(role);
-                    return `
-                        <tr>
-                            <td class="td-primary">${staff.username}</td>
-                            <td>${staff.email}</td>
-                            <td><span class="badge ${badgeClass}">${role}</span></td>
-                            <td>${staff.created_at}</td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-        } catch (error) {
-            const container = document.getElementById('staff-error');
-            const msg       = document.getElementById('staff-error-msg');
-            if (container && msg) {
-                msg.textContent         = error.message || 'Unable to load staff list.';
-                container.style.display = 'flex';
-            }
-            console.error('Unable to load staff list', error);
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof adminDashboardInit === 'function') {
+            adminDashboardInit();
         }
-    }
 
-    document.addEventListener('DOMContentLoaded', loadAdminStaff);
+        const alert = document.querySelector('.topbar-welcome');
+        if (!alert) {
+            return;
+        }
+
+        requestAnimationFrame(() => alert.classList.add('show'));
+        alert.addEventListener('click', () => alert.classList.add('dismissed'));
+
+        window.setTimeout(() => {
+            alert.classList.add('dismissed');
+            window.setTimeout(() => {
+                alert.style.display = 'none';
+            }, 260);
+        }, 3000);
+    });
 </script>
 
 </body>
