@@ -152,6 +152,61 @@
         });
     };
 
+    window.adminManageStudentsInit = async function () {
+        const container = document.getElementById('studentsTable');
+        if (!container) return;
+
+        if (typeof API === 'undefined' || !API.students || !API.students.list) {
+            container.innerHTML = '<div class="empty-row">Student management is unavailable. Please reload the page.</div>';
+            return;
+        }
+
+        try {
+            const result = await API.students.list();
+            const students = result?.data || [];
+            if (!students.length) {
+                container.innerHTML = '<div class="empty-row">No students found.</div>';
+                return;
+            }
+
+            const rows = students.map(student => {
+                const status = student.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>';
+                const schoolYear = student.school_year || '—';
+                const section = student.section || '—';
+                return `
+                    <tr>
+                        <td>${escapeHtml(student.last_name || '')}, ${escapeHtml(student.first_name || '')} ${escapeHtml(student.middle_name || '')}</td>
+                        <td>${escapeHtml(student.lrn || '')}</td>
+                        <td>${escapeHtml(student.grade_level || '')}</td>
+                        <td>${escapeHtml(schoolYear)}</td>
+                        <td>${escapeHtml(section)}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>LRN</th>
+                                <th>Grade Level</th>
+                                <th>School Year</th>
+                                <th>Section</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-error">Failed to load students: ${escapeHtml(err.message || 'Unknown error')}</div>`;
+        }
+    };
+
     window.adminSubjectsInit = function () {
         const hasAPI = typeof window.API !== 'undefined';
         const form = document.querySelector('form.form-grid');

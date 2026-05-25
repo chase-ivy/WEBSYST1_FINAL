@@ -311,8 +311,23 @@ function toggleIpOther() {
 async function loadEnrollmentLookups() {
     const motherTongueSelect = document.getElementById('Mother_Tongue');
     const ipGroupSelect = document.getElementById('IP_Group');
+    if (!motherTongueSelect || !ipGroupSelect) return;
 
-    if (!motherTongueSelect || !ipGroupSelect || !API?.mother_tongues || !API?.indigenous_groups) {
+    const injectedMotherTongues   = Array.isArray(window.MOTHER_TONGUES) ? window.MOTHER_TONGUES : [];
+    const injectedIndigenousGroups = Array.isArray(window.INDIGENOUS_GROUPS) ? window.INDIGENOUS_GROUPS : [];
+
+    if (injectedMotherTongues.length) {
+        populateLookupSelect(motherTongueSelect, injectedMotherTongues, 'id', 'name');
+    }
+    if (injectedIndigenousGroups.length) {
+        populateLookupSelect(ipGroupSelect, injectedIndigenousGroups, 'id', 'name');
+    }
+
+    if (injectedMotherTongues.length && injectedIndigenousGroups.length) {
+        return;
+    }
+
+    if (!API?.mother_tongues || !API?.indigenous_groups) {
         return;
     }
 
@@ -325,8 +340,8 @@ async function loadEnrollmentLookups() {
         const motherTongues = Array.isArray(motherTonguesResponse.data) ? motherTonguesResponse.data : [];
         const indigenousGroups = Array.isArray(indigenousGroupsResponse.data) ? indigenousGroupsResponse.data : [];
 
-        populateLookupSelect(motherTongueSelect, motherTongues, 'mother_tongue_id', 'name');
-        populateLookupSelect(ipGroupSelect, indigenousGroups, 'indigenous_group_id', 'name');
+        if (motherTongues.length) populateLookupSelect(motherTongueSelect, motherTongues, 'mother_tongue_id', 'name');
+        if (indigenousGroups.length) populateLookupSelect(ipGroupSelect, indigenousGroups, 'indigenous_group_id', 'name');
     } catch (error) {
         console.error('Failed to load lookup values:', error);
     }

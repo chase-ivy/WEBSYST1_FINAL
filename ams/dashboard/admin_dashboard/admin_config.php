@@ -1,8 +1,16 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
 
+function supportsSectionAdviser(PDO $pdo): bool {
+    return columnExists($pdo, 'sections', 'adviser_id');
+}
+
 function getActiveSections(PDO $pdo): array {
-    $stmt = $pdo->prepare('SELECT s.section_id, s.school_year, s.grade_level, s.name, s.is_active, s.adviser_id, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id WHERE s.is_active = 1 ORDER BY s.school_year DESC, s.grade_level, s.name');
+    if (supportsSectionAdviser($pdo)) {
+        $stmt = $pdo->prepare('SELECT s.section_id, s.school_year, s.grade_level, s.name, s.is_active, s.adviser_id, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id WHERE s.is_active = 1 ORDER BY s.school_year DESC, s.grade_level, s.name');
+    } else {
+        $stmt = $pdo->prepare('SELECT s.section_id, s.school_year, s.grade_level, s.name, s.is_active, NULL AS adviser_id, NULL AS adviser_name FROM sections s WHERE s.is_active = 1 ORDER BY s.school_year DESC, s.grade_level, s.name');
+    }
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -18,12 +26,17 @@ function getStaffById(PDO $pdo, int $userId): ?array {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$user) return null;
 
-    // Look up the section this teacher is currently assigned as adviser
-    $secStmt = $pdo->prepare('SELECT section_id, grade_level FROM sections WHERE adviser_id = ? AND is_active = 1 ORDER BY school_year DESC LIMIT 1');
-    $secStmt->execute([$userId]);
-    $section = $secStmt->fetch(PDO::FETCH_ASSOC);
-    $user['section_id']  = $section ? $section['section_id']  : null;
-    $user['grade_level'] = $section ? $section['grade_level'] : null;
+    $user['section_id']  = null;
+    $user['grade_level'] = null;
+
+    if (supportsSectionAdviser($pdo)) {
+        // Look up the section this teacher is currently assigned as adviser
+        $secStmt = $pdo->prepare('SELECT section_id, grade_level FROM sections WHERE adviser_id = ? AND is_active = 1 ORDER BY school_year DESC LIMIT 1');
+        $secStmt->execute([$userId]);
+        $section = $secStmt->fetch(PDO::FETCH_ASSOC);
+        $user['section_id']  = $section ? $section['section_id']  : null;
+        $user['grade_level'] = $section ? $section['grade_level'] : null;
+    }
 
     return $user;
 }
@@ -114,11 +127,13 @@ function updateStaff(PDO $pdo, int $userId, string $username, string $email, str
 
     // Handle section adviser assignment:
     // 1. Remove this teacher as adviser from any section they currently advise
-    $pdo->prepare('UPDATE sections SET adviser_id = NULL WHERE adviser_id = ?')->execute([$userId]);
+    if (supportsSectionAdviser($pdo)) {
+        $pdo->prepare('UPDATE sections SET adviser_id = NULL WHERE adviser_id = ?')->execute([$userId]);
 
-    // 2. If a section was chosen, set them as adviser of that section
-    if ($sectionId > 0) {
-        $pdo->prepare('UPDATE sections SET adviser_id = ? WHERE section_id = ?')->execute([$userId, $sectionId]);
+        // 2. If a section was chosen, set them as adviser of that section
+        if ($sectionId > 0) {
+            $pdo->prepare('UPDATE sections SET adviser_id = ? WHERE section_id = ?')->execute([$userId, $sectionId]);
+        }
     }
 
     return ['success' => true, 'message' => 'Staff member updated successfully.'];
@@ -128,7 +143,9 @@ function deleteStaff(PDO $pdo, int $userId): array {
     if ($userId <= 0) return ['success' => false, 'errors' => ['Invalid staff ID.']];
 
     // Unset adviser before deleting
-    $pdo->prepare('UPDATE sections SET adviser_id = NULL WHERE adviser_id = ?')->execute([$userId]);
+    if (supportsSectionAdviser($pdo)) {
+        $pdo->prepare('UPDATE sections SET adviser_id = NULL WHERE adviser_id = ?')->execute([$userId]);
+    }
     $pdo->prepare("DELETE FROM users WHERE user_id = ? AND role = 'staff'")->execute([$userId]);
 
     return ['success' => true, 'message' => 'Staff member deleted successfully.'];
