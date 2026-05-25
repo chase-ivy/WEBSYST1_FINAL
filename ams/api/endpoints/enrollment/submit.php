@@ -80,7 +80,7 @@ function insertGuardian(PDO $pdo, int $studentId, int $typeId, array $data, stri
     $occupation  = strOrNull($data["{$prefix}_occupation"]              ?? null);
     $relStatus   = strOrNull($data["{$prefix}_relationship_status"]     ?? null);
     $fb          = strOrNull($data["{$prefix}_facebook_messenger"]      ?? null);
-    $isEmergency = normalizeCheckbox($data["{$prefix}_is_emergency_contact"] ?? 0);
+    $isEmergency = (strOrNull($data['emergency_contact'] ?? null) === $prefix) ? 1 : 0;
     $priority    = isset($data["{$prefix}_contact_priority"]) ? intval($data["{$prefix}_contact_priority"]) : null;
     $isVisible   = isset($data["{$prefix}_is_contact_visible"]) ? normalizeCheckbox($data["{$prefix}_is_contact_visible"]) : 1;
 

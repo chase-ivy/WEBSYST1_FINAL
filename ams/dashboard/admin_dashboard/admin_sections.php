@@ -15,15 +15,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'create') {
         $school_year = trim($_POST['school_year'] ?? '');
         $grade_level = trim($_POST['grade_level'] ?? '');
-        $name = trim($_POST['name'] ?? '');
-        $is_active = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
+        $name        = trim($_POST['name'] ?? '');
+        $is_active   = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
+        $adviser_id  = isset($_POST['adviser_id']) && $_POST['adviser_id'] !== '' ? intval($_POST['adviser_id']) : null;
 
         if ($school_year === '') $errors[] = 'School year is required.';
         if ($grade_level === '') $errors[] = 'Grade level is required.';
-        if ($name === '') $errors[] = 'Section name is required.';
+        if ($name === '')        $errors[] = 'Section name is required.';
 
         if (empty($errors)) {
-            $result = createSection($pdo, $school_year, $grade_level, $name, $is_active);
+            $result = createSection($pdo, $school_year, $grade_level, $name, $is_active, [], $adviser_id);
             if ($result['success']) {
                 $success = 'Section created successfully.';
             } else {
@@ -33,24 +34,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'update') {
-        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        $id          = isset($_POST['id']) ? intval($_POST['id']) : 0;
         $school_year = trim($_POST['school_year'] ?? '');
         $grade_level = trim($_POST['grade_level'] ?? '');
-        $name = trim($_POST['name'] ?? '');
-        $is_active = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
+        $name        = trim($_POST['name'] ?? '');
+        $is_active   = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
+        $adviser_id  = isset($_POST['adviser_id']) && $_POST['adviser_id'] !== '' ? intval($_POST['adviser_id']) : null;
 
-        if ($id <= 0) $errors[] = 'Valid section ID is required.';
+        if ($id <= 0)            $errors[] = 'Valid section ID is required.';
         if ($school_year === '') $errors[] = 'School year is required.';
         if ($grade_level === '') $errors[] = 'Grade level is required.';
-        if ($name === '') $errors[] = 'Section name is required.';
+        if ($name === '')        $errors[] = 'Section name is required.';
 
         if (empty($errors)) {
-            try {
-                $stmt = $pdo->prepare('UPDATE sections SET school_year = ?, grade_level = ?, name = ?, is_active = ? WHERE section_id = ?');
-                $stmt->execute([$school_year, $grade_level, $name, $is_active, $id]);
+            $result = updateSection($pdo, $id, [
+                'school_year' => $school_year,
+                'grade_level' => $grade_level,
+                'name'        => $name,
+                'is_active'   => $is_active,
+                'adviser_id'  => $adviser_id,
+            ]);
+            if ($result['success']) {
                 $success = 'Section updated successfully.';
-            } catch (PDOException $e) {
-                $errors[] = 'Failed to update section: ' . $e->getMessage();
+            } else {
+                $errors[] = $result['error'];
             }
         }
     }
@@ -95,8 +102,12 @@ if (!empty($_GET['edit_id'])) {
     }
 }
 
-// Load all sections and derive dropdown options for school years and grade levels
-$stmt = $pdo->query('SELECT * FROM sections ORDER BY school_year DESC, grade_level, name');
+// Load staff list for adviser dropdown
+$staffStmt = $pdo->query("SELECT user_id, username FROM users WHERE role = 'staff' AND is_active = 1 ORDER BY username");
+$staffList = $staffStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Load all sections including adviser name
+$stmt = $pdo->query('SELECT s.*, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id ORDER BY s.school_year DESC, s.grade_level, s.name');
 $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $schoolYears = array_values(array_unique(array_map(fn($s) => $s['school_year'], $sections)));
@@ -179,6 +190,15 @@ if (empty($schoolYears)) {
                                 </select>
                             </div>
 
+                            <div>
+                                <select name="adviser_id">
+                                    <option value="">No adviser</option>
+                                    <?php foreach ($staffList as $staff): ?>
+                                        <option value="<?php echo intval($staff['user_id']); ?>"><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
                             <button type="submit" class="btn-primary">Add Section</button>
                         </div>
                     </form>
@@ -217,22 +237,24 @@ if (empty($schoolYears)) {
                         </div>
 
                         <div class="form-group"><label>Section Name</label><input name="name" value="<?php echo htmlspecialchars($editSection['name'], ENT_QUOTES, 'UTF-8'); ?>" required></div>
+                        <div class="form-group"><label>Adviser</label><select name="adviser_id"><option value="">No adviser</option><?php foreach ($staffList as $staff): ?><option value="<?php echo intval($staff['user_id']); ?>" <?php echo (isset($editSection['adviser_id']) && intval($editSection['adviser_id']) === intval($staff['user_id'])) ? 'selected' : ''; ?>><?php echo htmlspecialchars($staff['username'], ENT_QUOTES, 'UTF-8'); ?></option><?php endforeach; ?></select></div>
                         <div class="form-group"><label>Status</label><select name="is_active"><option value="1" <?php echo $editSection['is_active'] ? 'selected' : ''; ?>>Active</option><option value="0" <?php echo !$editSection['is_active'] ? 'selected' : ''; ?>>Inactive</option></select></div>
                         <div class="form-actions full"><button class="btn-primary" type="submit">Save</button> <a href="admin_sections.php" class="btn-secondary">Cancel</a></div>
                     </form>
                 <?php else: ?>
                     <div class="table-wrap">
                         <table class="data-table">
-                            <thead><tr><th>School Year</th><th>Grade Level</th><th>Section Name</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>School Year</th><th>Grade Level</th><th>Section Name</th><th>Adviser</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody>
                                 <?php if (empty($sections)): ?>
-                                    <tr class="empty-row"><td colspan="5">No sections found.</td></tr>
+                                    <tr class="empty-row"><td colspan="6">No sections found.</td></tr>
                                 <?php else: ?>
                                     <?php foreach ($sections as $s): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($s['school_year'], ENT_QUOTES, 'UTF-8'); ?></td>
                                             <td><?php echo htmlspecialchars($s['grade_level'], ENT_QUOTES, 'UTF-8'); ?></td>
                                             <td><?php echo htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                            <td><?php echo $s['adviser_name'] ? htmlspecialchars($s['adviser_name'], ENT_QUOTES, 'UTF-8') : '<span style="opacity:0.4">—</span>'; ?></td>
                                             <td><?php echo $s['is_active'] ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'; ?></td>
                                             <td class="td-actions">
                                                 <a class="btn-small btn-primary" href="admin_sections.php?edit_id=<?php echo intval($s['section_id']); ?>">Edit</a>

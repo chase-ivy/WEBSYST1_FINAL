@@ -2,7 +2,7 @@
 // ============================================================
 // endpoints/sections/get.php
 // Fetches sections for admin/staff consumption.
-// Supports optional filtering by school year, grade level, and active status.
+// Includes adviser username via LEFT JOIN on users.
 //
 // GET ?id=<section_id>
 // GET ?school_year=<year>&grade_level=<level>&is_active=<0|1>
@@ -13,13 +13,15 @@ require_once __DIR__ . '/../../endpoint_base.php';
 require_role(['staff', 'admin']);
 requireMethod('GET');
 
-$id = isset($_GET['id']) ? intval($_GET['id']) : null;
-$schoolYear = trim($_GET['school_year'] ?? '');
-$gradeLevel = trim($_GET['grade_level'] ?? '');
-$isActive = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
+$id          = isset($_GET['id']) ? intval($_GET['id']) : null;
+$schoolYear  = trim($_GET['school_year'] ?? '');
+$gradeLevel  = trim($_GET['grade_level'] ?? '');
+$isActive    = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
+
+$baseSelect = 'SELECT s.*, u.username AS adviser_name FROM sections s LEFT JOIN users u ON u.user_id = s.adviser_id';
 
 if ($id !== null && $id > 0) {
-    $stmt = $pdo->prepare('SELECT * FROM sections WHERE section_id = ? LIMIT 1');
+    $stmt = $pdo->prepare($baseSelect . ' WHERE s.section_id = ? LIMIT 1');
     $stmt->execute([$id]);
     $section = $stmt->fetch();
     if (!$section) {
@@ -28,21 +30,22 @@ if ($id !== null && $id > 0) {
     sendJson(['success' => true, 'data' => $section]);
 }
 
-$sql = 'SELECT * FROM sections WHERE 1=1';
+$sql    = $baseSelect . ' WHERE 1=1';
 $params = [];
+
 if ($schoolYear !== '') {
-    $sql .= ' AND school_year = ?';
+    $sql     .= ' AND s.school_year = ?';
     $params[] = $schoolYear;
 }
 if ($gradeLevel !== '') {
-    $sql .= ' AND grade_level = ?';
+    $sql     .= ' AND s.grade_level = ?';
     $params[] = $gradeLevel;
 }
 if ($isActive !== '') {
-    $sql .= ' AND is_active = ?';
+    $sql     .= ' AND s.is_active = ?';
     $params[] = intval($isActive);
 }
-$sql .= ' ORDER BY school_year DESC, grade_level, name';
+$sql .= ' ORDER BY s.school_year DESC, s.grade_level, s.name';
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);

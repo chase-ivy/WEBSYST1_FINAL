@@ -42,6 +42,16 @@
                     <label>Zip Code</label>
                     <input type="number" name="Current_Zip_Code" placeholder="2600">
                 </div>
+                <div class="field">
+                    <label>Address Status</label>
+                    <select name="Current_Address_Status">
+                        <option value="">Select status</option>
+                        <option value="Rental">Rental</option>
+                        <option value="Owned">Owned</option>
+                        <option value="Living with Relatives">Living with Relatives</option>
+                        <option value="Inherited">Inherited</option>
+                    </select>
+                </div>
             </div>
 
             <div class="sec-divider"><span>Permanent Address</span></div>
@@ -59,7 +69,7 @@
                 </div>
             </div>
 
-            <div id="permBox">
+            <div class="collapse open" id="permBox">
                 <div class="grid-2">
                     <div class="field">
                         <label>House No.</label>
@@ -88,6 +98,16 @@
                     <div class="field">
                         <label>Zip Code</label>
                         <input type="number" name="Permanent_Zip_Code" placeholder="2600">
+                    </div>
+                    <div class="field">
+                        <label>Address Status</label>
+                        <select name="Permanent_Address_Status">
+                            <option value="">Select status</option>
+                            <option value="Rental">Rental</option>
+                            <option value="Owned">Owned</option>
+                            <option value="Living with Relatives">Living with Relatives</option>
+                            <option value="Inherited">Inherited</option>
+                        </select>
                     </div>
                 </div>
             </div><!-- /#permBox -->
