@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../login/auth.php';
-require_role(['teacher']);
+require_role(['staff']);
 $currentUserId = $_SESSION['user_id'];
 require_once __DIR__ . '/../../../config/config.php';
 
@@ -42,7 +42,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Re-enroll Students · Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="../enrollment.css" rel="stylesheet">
+    <link href="reenroll.css" rel="stylesheet">
     <script>
         window.CURRENT_USER_ID = <?php echo intval($currentUserId); ?>;
     </script>
@@ -131,7 +131,7 @@ try {
     </footer>
 
     <script src='../../../api/client.js'></script>
-    <script src="../enrollment.js"></script>
+    <script src="../../../forms/enrollment_form/enrollment.js"></script>
     <script src="verify_enrollment.js"></script>
 </body>
 </html>
