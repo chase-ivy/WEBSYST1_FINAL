@@ -12,11 +12,22 @@ require_role(['staff']);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Activities · Gibraltar AMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../mobile-nav.css">
     <link rel="stylesheet" href="teacher.css">
 </head>
 <body>
 
 <header class="topbar">
+    <button class="mob-menu-btn"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="main-sidebar">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
     <div class="topbar-brand">Gibraltar <span>AMS</span></div>
     <span class="topbar-label">Teacher Portal</span>
 </header>
@@ -319,6 +330,8 @@ function escapeHtml(text) {
 
 window.addEventListener('DOMContentLoaded', loadClasses);
 </script>
+<div class="mob-overlay" id="mob-overlay" aria-hidden="true"></div>
+<script src="../mobile-nav.js"></script>
 
 </body>
 </html>

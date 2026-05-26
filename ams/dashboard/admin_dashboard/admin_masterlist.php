@@ -30,6 +30,7 @@ try {
     <title>Student Masterlist | Admin Dashboard</title>
     <link rel="stylesheet" type="text/css" href="admin.css">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../mobile-nav.css">
     <style>
         body {
             font-family: 'DM Sans', sans-serif;
@@ -158,7 +159,20 @@ try {
     </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-brand">Gibraltar <span>AMS</span> Admin</div></header>
+<header class="topbar">
+    <button class="mob-menu-btn"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="main-sidebar">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
+    <div class="topbar-brand">Gibraltar <span>AMES</span></div>
+    <span class="topbar-label">Admin Panel</span>
+</header>
 <div class="shell">
     <?php renderAdminSidebar('masterlist'); ?>
     <main class="main">
@@ -336,6 +350,9 @@ document.getElementById('sexFilter').addEventListener('change', loadMasterlist);
 
 // Initial load
 document.addEventListener('DOMContentLoaded', loadMasterlist);
+
 </script>
+<div class="mob-overlay" id="mob-overlay" aria-hidden="true"></div>
+<script src="../mobile-nav.js"></script>
 </body>
 </html>

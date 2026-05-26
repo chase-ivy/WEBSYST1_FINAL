@@ -12,13 +12,24 @@ require_once __DIR__ . '/student_nav.php';
     <title>Grades · Gibraltar AMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="student.css">
+    <link rel="stylesheet" href="../mobile-nav.css">
 </head>
 <body>
-
 <header class="topbar">
-    <div class="topbar-brand">Gibraltar <span>AMS</span></div>
+    <button class="mob-menu-btn"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="main-sidebar">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
+    <div class="topbar-brand">Gibraltar <span>AMES</span></div>
     <span class="topbar-label">Student Portal</span>
 </header>
+
 
 <div class="shell">
     <?php renderStudentSidebar('grades'); ?>
@@ -131,6 +142,8 @@ function escapeHtml(text) {
 
 document.addEventListener('DOMContentLoaded', loadGrades);
 </script>
+<div class="mob-overlay" id="mob-overlay" aria-hidden="true"></div>
+<script src="../mobile-nav.js"></script>
 
 </body>
 </html>

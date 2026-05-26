@@ -1,215 +1,123 @@
-/* =====================================================
-   mobile-nav.css  —  Gibraltar AMS
-   Shared responsive layer for Admin, Teacher, Student
-   portals. Drop-in addition; does NOT override desktop
-   styles above 860px.
-   ===================================================== */
-
-/* ── HAMBURGER BUTTON (hidden on desktop) ─────────────── */
+/* ── HAMBURGER BUTTON ─────────────────────────────────── */
 .mob-menu-btn {
-    display: none;                  /* shown only in mobile MQ below */
+    display: none;
     align-items: center;
     justify-content: center;
-    width: 44px;                    /* WCAG 2.5.5 minimum touch target */
+    width: 44px;
     height: 44px;
     background: transparent;
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     color: #fff;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background var(--transition);
-    /* placed inside .topbar via PHP nav files */
+    transition: background 180ms ease;
 }
-
-.mob-menu-btn:hover {
-    background: rgba(255,255,255,.12);
-}
-
-.mob-menu-btn:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-}
-
+.mob-menu-btn:hover       { background: rgba(255,255,255,.15); }
+.mob-menu-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .mob-menu-btn svg {
-    width: 22px;
-    height: 22px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    width: 22px; height: 22px;
+    stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
     pointer-events: none;
 }
 
-/* ── DRAWER OVERLAY ───────────────────────────────────── */
-/*
-   Semi-transparent backdrop that sits behind the open
-   drawer. Clicking it closes the menu.
-*/
+/* ── OVERLAY ──────────────────────────────────────────── */
 .mob-overlay {
     display: none;
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,.45);
-    z-index: 149;                   /* below drawer (150), above content */
+    z-index: 149;
     cursor: pointer;
 }
+.mob-overlay.is-open { display: block; }
 
-.mob-overlay.is-open {
-    display: block;
-}
-
-/* ── DRAWER (off-canvas sidebar) ──────────────────────── */
-/*
-   On mobile the .sidebar slides in from the left as a
-   drawer instead of being a fixed column.
-*/
+/* ── MOBILE DRAWER ────────────────────────────────────── */
 @media (max-width: 860px) {
 
-    /* --- topbar: show hamburger, tighten padding --- */
-    .topbar {
-        padding: 0 16px 0 12px;
-        gap: 8px;
-    }
+    .topbar { padding: 0 16px 0 12px; gap: 8px; }
 
-    .mob-menu-btn {
-        display: flex;              /* visible on mobile */
-    }
+    .mob-menu-btn { display: flex; }
 
-    /* --- sidebar becomes a drawer --- */
     .sidebar {
-        display: flex !important;  /* override the display:none in existing CSS */
+        display: flex !important;
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
         transform: translateX(-100%);
-        transition: transform 240ms cubic-bezier(.4,0,.2,1),
-                    box-shadow 240ms ease;
-        z-index: 150;
-        width: min(280px, 80vw);   /* never wider than 80vw on tiny screens */
+        transition: transform 240ms cubic-bezier(.4,0,.2,1), box-shadow 240ms ease;
+        z-index: 200;               /* high enough to beat everything */
+        width: min(280px, 80vw);
         box-shadow: none;
-        /* top / left / bottom already correct from base styles */
+        overflow-y: auto;
     }
 
     .sidebar.is-open {
         transform: translateX(0);
-        box-shadow: 4px 0 24px rgba(0,0,0,.18);
+        box-shadow: 4px 0 24px rgba(0,0,0,.25);
     }
 
-    /* --- close (×) button inside the drawer header --- */
+    /* Close button — always white text so it's visible on dark sidebar */
     .sidebar-close-btn {
-        display: flex;              /* shown only inside mobile drawer */
+        display: flex !important;   /* force visible on mobile */
         align-items: center;
         justify-content: center;
         width: 44px;
         height: 44px;
         background: transparent;
         border: none;
-        border-radius: var(--radius-md);
-        color: var(--muted);
+        border-radius: 8px;
+        color: #fff;                /* hardcoded white — works on any dark sidebar */
         cursor: pointer;
         flex-shrink: 0;
-        transition: background var(--transition), color var(--transition);
-        margin-left: auto;          /* push to right of brand area */
+        transition: background 180ms ease;
+        margin-left: auto;
     }
-
-    .sidebar-close-btn:hover {
-        background: var(--overlay);
-        color: var(--brand);
-    }
-
-    .sidebar-close-btn:focus-visible {
-        outline: 2px solid var(--brand);
-        outline-offset: 2px;
-    }
-
+    .sidebar-close-btn:hover       { background: rgba(255,255,255,.15); }
+    .sidebar-close-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
     .sidebar-close-btn svg {
-        width: 20px;
-        height: 20px;
-        stroke: currentColor;
-        fill: none;
-        stroke-width: 2.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
+        width: 20px; height: 20px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
         pointer-events: none;
     }
 
-    /* brand row in drawer: flex so close btn can sit beside it */
     .sidebar .sidebar-brand {
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
 
-    /* --- main content: full width, no left margin --- */
     .main {
         margin-left: 0 !important;
         padding: 20px 16px;
     }
 
-    /* --- grids: single column on small screens --- */
-    .stat-grid {
-        grid-template-columns: 1fr 1fr;  /* 2-up on mobile is comfortable */
-    }
+    /* The overlay sits at z-index 149, sidebar at 200.
+       The main content is never dimmed by CSS — only the overlay
+       paints over it, which is the intended behaviour. */
+    body.mob-nav-open { overflow: hidden; }
+    body.mob-nav-open .main { pointer-events: none; }
 
-    .action-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .form-grid .form-group.full {
-        grid-column: 1;
-    }
-
-    /* --- tables: horizontal scroll wrapper already present via
-           .table-wrap { overflow-x: auto } in base CSS — no change needed */
-
-    /* --- page header typography scaling --- */
-    .page-header h1 {
-        font-size: clamp(18px, 5vw, 22px);
-    }
-
-    /* --- prevent body scroll while drawer is open --- */
-    body.mob-nav-open {
-        overflow: hidden;
-    }
+    .stat-grid   { grid-template-columns: 1fr 1fr; }
+    .action-grid { grid-template-columns: 1fr; }
+    .form-grid   { grid-template-columns: 1fr; }
+    .form-grid .form-group.full { grid-column: 1; }
+    .page-header h1 { font-size: clamp(18px, 5vw, 22px); }
 }
 
-/* ── VERY SMALL SCREENS (< 400px) ─────────────────────── */
 @media (max-width: 400px) {
-    .stat-grid {
-        grid-template-columns: 1fr;  /* stack to 1 column on tiny phones */
-    }
-
-    .topbar-brand {
-        font-size: 15px;
-    }
-
-    .main {
-        padding: 16px 12px;
-    }
+    .stat-grid    { grid-template-columns: 1fr; }
+    .topbar-brand { font-size: 15px; }
+    .main         { padding: 16px 12px; }
 }
 
-/* ── TABLET (861px – 1024px): show sidebar, but narrower ─ */
 @media (min-width: 861px) and (max-width: 1024px) {
-    :root {
-        --sidebar-w: 200px;         /* slightly narrower on tablet */
-    }
-
-    .main {
-        padding: 24px 24px;
-    }
-
-    /* close button not needed on tablet — sidebar is always visible */
-    .sidebar-close-btn {
-        display: none;
-    }
+    :root { --sidebar-w: 200px; }
+    .main { padding: 24px; }
+    .sidebar-close-btn { display: none !important; }
 }
 
-/* ── DESKTOP (> 1024px): close button always hidden ──────── */
 @media (min-width: 1025px) {
-    .sidebar-close-btn {
-        display: none;
-    }
+    .sidebar-close-btn { display: none !important; }
 }

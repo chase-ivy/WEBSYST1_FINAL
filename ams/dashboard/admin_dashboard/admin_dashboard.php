@@ -17,25 +17,22 @@ $staffList = getStaffList($pdo);
     <link rel="stylesheet" href="../mobile-nav.css">
     <style>
         body {
-        font-family: 'DM Sans', sans-serif;
-        background-image: url('hallway.png');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        background-color: #2a1a1a; /* fallback if image fails to load */
-        color: var(--text);
-        min-height: 100vh;
-        font-size: 14px;
-        line-height: 1.5;
+            font-family: 'DM Sans', sans-serif;
+            background-image: url('hallway.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #2a1a1a;
+            color: var(--text);
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.5;
         }
     </style>
 </head>
-
 <body>
 
 <header class="topbar">
-
-    <!-- Mobile Menu Button -->
     <button class="mob-menu-btn"
             aria-label="Open menu"
             aria-expanded="false"
@@ -46,28 +43,19 @@ $staffList = getStaffList($pdo);
             <line x1="3" y1="18" x2="21" y2="18"/>
         </svg>
     </button>
-
     <div class="topbar-brand">Gibraltar <span>AMES</span></div>
-
     <span class="topbar-label">Admin Panel</span>
 </header>
 
-<!-- ── LAYOUT SHELL ────────────────────────────────────────── -->
 <div class="shell">
-
-    <!-- SIDEBAR — rendered by renderAdminSidebar() -->
     <?php renderAdminSidebar('dashboard'); ?>
 
-    <!-- MAIN CONTENT -->
     <main class="main">
-
-        <!-- Page Header -->
         <div class="page-header">
             <h1>Dashboard</h1>
             <p>Welcome back. Here's an overview of your system.</p>
         </div>
 
-        <!-- Stat Cards -->
         <div class="stat-grid">
             <div class="stat-card">
                 <div class="stat-icon">
@@ -78,21 +66,21 @@ $staffList = getStaffList($pdo);
                     <div class="stat-label">Active Staff Accounts</div>
                 </div>
             </div>
-            <?php 
-                $studentStmt = $pdo->query("SELECT COUNT(*) as total FROM students");
+            <?php
+                $studentStmt  = $pdo->query("SELECT COUNT(*) as total FROM students");
                 $studentCount = $studentStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
             ?>
             <div class="stat-card">
                 <div class="stat-icon">
-                    <svg viewBox="0 0 24 24"><path d="M18 21H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/><path d="M10 13.5h4"/><path d="M9 9h0"/><path d="M15 9h0"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M18 21H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/><path d="M10 13.5h4"/></svg>
                 </div>
                 <div>
                     <div class="stat-value" id="student-count"><?php echo $studentCount; ?></div>
                     <div class="stat-label">Total Student Accounts</div>
                 </div>
             </div>
-            <?php 
-                $pendingStmt = $pdo->query("SELECT COUNT(*) as total FROM enrollments WHERE enrollment_status = 'pending'");
+            <?php
+                $pendingStmt  = $pdo->query("SELECT COUNT(*) as total FROM enrollments WHERE enrollment_status = 'pending'");
                 $pendingCount = $pendingStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
             ?>
             <div class="stat-card">
@@ -106,7 +94,6 @@ $staffList = getStaffList($pdo);
             </div>
         </div>
 
-        <!-- Action Cards -->
         <div class="action-grid">
             <div class="action-card">
                 <div class="action-card-icon">
@@ -114,32 +101,27 @@ $staffList = getStaffList($pdo);
                 </div>
                 <h3>Create Staff</h3>
                 <p>Add new staff accounts to the system.</p>
-                <a class="btn-action" href="admin_users.php">
-                    Go to Create
+                <a class="btn-action" href="admin_users.php">Go to Create
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
             </div>
-
             <div class="action-card">
                 <div class="action-card-icon">
                     <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </div>
                 <h3>Update Staff</h3>
                 <p>Review and edit existing staff records and permissions.</p>
-                <a class="btn-action" href="admin_users.php">
-                    Go to Update
+                <a class="btn-action" href="admin_users.php">Go to Update
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
             </div>
-
             <div class="action-card">
                 <div class="action-card-icon">
-                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
                 </div>
                 <h3>Delete Staff</h3>
                 <p>Remove staff accounts that should no longer have access.</p>
-                <a class="btn-action" href="admin_users.php">
-                    Go to Delete
+                <a class="btn-action" href="admin_users.php">Go to Delete
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
             </div>
@@ -152,8 +134,7 @@ $staffList = getStaffList($pdo);
                 </div>
                 <h3>Enrollment Queue</h3>
                 <p>View pending enrollment submissions and take action.</p>
-                <a class="btn-action" href="admin_enrollment_queue.php">
-                    Open Queue
+                <a class="btn-action" href="admin_enrollment_queue.php">Open Queue
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
             </div>
@@ -163,8 +144,7 @@ $staffList = getStaffList($pdo);
                 </div>
                 <h3>Lookup Tables</h3>
                 <p>Edit lookup data used by enrollment and student records.</p>
-                <a class="btn-action" href="admin_lookups.php">
-                    Manage Lookups
+                <a class="btn-action" href="admin_lookups.php">Manage Lookups
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
             </div>
@@ -174,42 +154,30 @@ $staffList = getStaffList($pdo);
                 </div>
                 <h3>Subject Master List</h3>
                 <p>Maintain canonical subjects available for class assignment.</p>
-                <a class="btn-action" href="admin_subjects.php">
-                    Manage Subjects
+                <a class="btn-action" href="admin_subjects.php">Manage Subjects
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </a>
             </div>
         </div>
 
-        <!-- Staff Table -->
         <div class="section">
             <div class="section-header">
                 <h2>Recent Staff Accounts</h2>
                 <p>All registered staff and their roles</p>
             </div>
-
             <div id="staff-error" class="alert-error" style="display:none;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
                 <span id="staff-error-msg"></span>
             </div>
-
             <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Created At</th>
+                            <th>Username</th><th>Email</th><th>Role</th><th>Created At</th>
                         </tr>
                     </thead>
                     <tbody id="staff-tbody">
                         <?php if (empty($staffList)): ?>
-                            <tr class="empty-row">
-                                <td colspan="4">No staff accounts found.</td>
-                            </tr>
+                            <tr class="empty-row"><td colspan="4">No staff accounts found.</td></tr>
                         <?php else: ?>
                             <?php foreach ($staffList as $staff): ?>
                                 <?php
@@ -233,17 +201,14 @@ $staffList = getStaffList($pdo);
                 </table>
             </div>
         </div>
-
     </main>
 </div>
+
+<div class="mob-overlay" id="mob-overlay" aria-hidden="true"></div>
+
 <script>
     document.addEventListener('DOMContentLoaded', adminDashboardInit);
 </script>
-
-<!-- Mobile Overlay -->
-<div class="mob-overlay" id="mob-overlay" aria-hidden="true"></div>
-
-<!-- Mobile Navigation Script -->
 <script src="../mobile-nav.js"></script>
 
 </body>

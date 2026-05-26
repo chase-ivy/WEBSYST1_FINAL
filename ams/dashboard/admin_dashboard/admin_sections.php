@@ -177,6 +177,7 @@ if (empty($schoolYears)) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="admin.css">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../mobile-nav.css">
     <title>Manage Sections | Admin Dashboard</title>
     <style>
         body {
@@ -194,7 +195,20 @@ if (empty($schoolYears)) {
     </style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-brand">Gibraltar <span>AMS</span> Admin</div></header>
+<header class="topbar">
+    <button class="mob-menu-btn"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="main-sidebar">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
+    <div class="topbar-brand">Gibraltar <span>AMS</span> Admin</div>
+    <span class="topbar-label">Admin Panel</span>
+</header>
 <div class="shell">
     <?php renderAdminSidebar('sections'); ?>
     <main class="main">
@@ -426,5 +440,7 @@ if (empty($schoolYears)) {
 <script>
 document.addEventListener('DOMContentLoaded', adminSectionsInit);
 </script>
+<div class="mob-overlay" id="mob-overlay" aria-hidden="true"></div>
+<script src="../mobile-nav.js"></script>
 </body>
 </html>
