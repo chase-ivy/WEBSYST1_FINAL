@@ -1,4 +1,4 @@
-/* ── HAMBURGER BUTTON ─────────────────────────────────── */
+/* ── HAMBURGER BUTTON ───────────────────────────────────── */
 .mob-menu-btn {
     display: none;
     align-items: center;
@@ -11,10 +11,12 @@
     color: #fff;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 180ms ease;
+    transition: background 160ms ease;
 }
-.mob-menu-btn:hover       { background: rgba(255,255,255,.15); }
+
+.mob-menu-btn:hover       { background: rgba(255,255,255,0.15); }
 .mob-menu-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
 .mob-menu-btn svg {
     width: 22px; height: 22px;
     stroke: currentColor; fill: none;
@@ -22,18 +24,19 @@
     pointer-events: none;
 }
 
-/* ── OVERLAY ──────────────────────────────────────────── */
+/* ── OVERLAY ────────────────────────────────────────────── */
 .mob-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.45);
+    background: rgba(0,0,0,0.45);
     z-index: 149;
     cursor: pointer;
 }
+
 .mob-overlay.is-open { display: block; }
 
-/* ── MOBILE DRAWER ────────────────────────────────────── */
+/* ── MOBILE DRAWER ──────────────────────────────────────── */
 @media (max-width: 860px) {
 
     .topbar { padding: 0 16px 0 12px; gap: 8px; }
@@ -46,35 +49,48 @@
         top: 0; left: 0; bottom: 0;
         transform: translateX(-100%);
         transition: transform 240ms cubic-bezier(.4,0,.2,1), box-shadow 240ms ease;
-        z-index: 200;               /* high enough to beat everything */
+        z-index: 200;
         width: min(280px, 80vw);
         box-shadow: none;
         overflow-y: auto;
+        /* KEY: solid white — no transparency on mobile drawer */
+        background: #ffffff !important;
+        backdrop-filter: none !important;
     }
 
     .sidebar.is-open {
         transform: translateX(0);
-        box-shadow: 4px 0 24px rgba(0,0,0,.25);
+        box-shadow: 4px 0 32px rgba(0,0,0,0.18);
     }
 
-    /* Close button — always white text so it's visible on dark sidebar */
+    /* Sidebar brand text must be dark on white background */
+    .sidebar .sidebar-brand h3 { color: #111827 !important; }
+    .sidebar .sidebar-brand p  { color: #9ca3af !important; }
+    .sidebar nav a             { color: #4b5563 !important; }
+    .sidebar nav a:hover       { background: #f3f4f6 !important; color: #111827 !important; }
+    .sidebar nav a.active      { background: #fdf2f2 !important; color: #4e0303 !important; }
+
+    /* ── CLOSE BUTTON ── */
     .sidebar-close-btn {
-        display: flex !important;   /* force visible on mobile */
+        display: flex !important;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
         background: transparent;
         border: none;
         border-radius: 8px;
-        color: #fff;                /* hardcoded white — works on any dark sidebar */
+        /* Dark icon on white sidebar */
+        color: #6b7280;
         cursor: pointer;
         flex-shrink: 0;
-        transition: background 180ms ease;
+        transition: background 160ms ease, color 160ms ease;
         margin-left: auto;
     }
-    .sidebar-close-btn:hover       { background: rgba(255,255,255,.15); }
-    .sidebar-close-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+    .sidebar-close-btn:hover       { background: #f3f4f6; color: #111827; }
+    .sidebar-close-btn:focus-visible { outline: 2px solid #4e0303; outline-offset: 2px; }
+
     .sidebar-close-btn svg {
         width: 20px; height: 20px;
         stroke: currentColor; fill: none;
@@ -93,9 +109,6 @@
         padding: 20px 16px;
     }
 
-    /* The overlay sits at z-index 149, sidebar at 200.
-       The main content is never dimmed by CSS — only the overlay
-       paints over it, which is the intended behaviour. */
     body.mob-nav-open { overflow: hidden; }
     body.mob-nav-open .main { pointer-events: none; }
 
