@@ -14,11 +14,20 @@ function renderTeacherSidebar(string $active = 'dashboard'): void {
         'attendance' => ['Attendance', 'teacher_attendance.php'],
     ];
 
-    echo '<aside class="sidebar">';
-    
+    echo '<aside class="sidebar" id="main-sidebar">';
     echo '<div class="sidebar-brand">';
-    echo '<h3>Teacher Panel</h3>';
-    echo '<p>Gibraltar AMS</p>';
+    echo '    <div>';
+    echo '        <h3>Teacher Panel</h3>';
+    echo '        <p>Gibraltar AMS</p>';
+    echo '    </div>';
+
+    echo '    <button class="sidebar-close-btn" aria-label="Close menu">';
+    echo '        <svg viewBox="0 0 24 24" aria-hidden="true">';
+    echo '            <line x1="18" y1="6" x2="6" y2="18"/>';
+    echo '            <line x1="6" y1="6" x2="18" y2="18"/>';
+    echo '        </svg>';
+    echo '    </button>';
+
     echo '</div>';
 
     echo '<nav>';
