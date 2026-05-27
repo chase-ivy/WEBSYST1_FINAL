@@ -1,0 +1,527 @@
+/*
+ * ═══════════════════════════════════════════════════════════════════
+ *  GIBRALTAR AMES — Professional Dashboard Theme
+ *  Replaces dashboard-dark-bg.css (discard the old file)
+ *
+ *  LIGHT MODE  — default, warm off-white institutional feel
+ *  DARK MODE   — deep slate/charcoal, school-professional, not gaming
+ *
+ *  Toggle is driven by:  <html data-theme="dark">
+ *  The JS in dashboard-theme.js handles the toggle + localStorage.
+ *
+ *  HOW TO ADD:
+ *    1. <link rel="stylesheet" href="../dashboard-theme.css"> after admin.css
+ *    2. <script src="../dashboard-theme.js"></script> before </body>
+ *    3. Remove the old inline <style> block in admin_dashboard.php
+ *       that sets background-image: url('hallway.png')
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+/* ══════════════════════════════════════════════════════════════
+   LIGHT MODE TOKENS  (default — no attribute needed)
+══════════════════════════════════════════════════════════════ */
+:root {
+    /* Brand — unchanged */
+    --brand:          #4e0303;
+    --brand-dark:     #7a0505;
+    --brand-light:    #fdf2f2;
+    --brand-muted:    rgba(78, 3, 3, 0.07);
+
+    /* Surfaces */
+    --surface:        #ffffff;
+    --canvas:         #f5f4f2;          /* Warm off-white — institutional, not cold */
+    --overlay:        #f0eeec;
+
+    /* Borders */
+    --border:         #e2dedd;
+    --border-strong:  #c9c4c2;
+
+    /* Text */
+    --text:           #1a1614;
+    --text-secondary: #4a4240;
+    --muted:          #8c8480;
+
+    /* Semantic */
+    --success-bg:     #f0fdf4;
+    --success-border: #bbf7d0;
+    --success-text:   #15803d;
+
+    /* Shadows — light, warm-tinted */
+    --shadow-sm:  0 1px 3px rgba(26, 10, 8, 0.06), 0 1px 2px rgba(26, 10, 8, 0.04);
+    --shadow-md:  0 4px 12px rgba(26, 10, 8, 0.08), 0 2px 4px rgba(26, 10, 8, 0.04);
+    --shadow-lg:  0 8px 24px rgba(26, 10, 8, 0.10), 0 4px 8px rgba(26, 10, 8, 0.05);
+
+    /* Background pattern opacity */
+    --bg-pattern-opacity: 1;
+
+    /* Toggle button colours */
+    --toggle-bg:      #e8e4e2;
+    --toggle-color:   #4a4240;
+    --toggle-hover:   #ddd8d5;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DARK MODE TOKENS  — [data-theme="dark"] on <html>
+   Tone: deep slate-charcoal, warm neutrals, NOT pitch black / gaming
+══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+    /* Brand — same hue, adjusted for dark */
+    --brand:          #6b0000;          /* Softer crimson reads better on dark */
+    --brand-dark:     #000000;
+    --brand-light:    rgba(78, 3, 3, 0.18);
+    --brand-muted:    rgba(224, 85, 85, 0.10);
+
+    /* Surfaces — deep slate, not pure black */
+    --surface:        #1e1c1b;
+    --canvas:         #161413;
+    --overlay:        #252220;
+
+    /* Borders */
+    --border:         rgba(255, 255, 255, 0.08);
+    --border-strong:  rgba(255, 255, 255, 0.14);
+
+    /* Text */
+    --text:           #f0ede8;
+    --text-secondary: rgba(240, 237, 232, 0.60);
+    --muted:          rgba(240, 237, 232, 0.35);
+
+    /* Semantic — darkened */
+    --success-bg:     rgba(21, 128, 61, 0.14);
+    --success-border: rgba(21, 128, 61, 0.30);
+    --success-text:   #86efac;
+
+    /* Shadows — deeper on dark */
+    --shadow-sm:  0 1px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.18);
+    --shadow-md:  0 4px 14px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.20);
+    --shadow-lg:  0 8px 28px rgba(0, 0, 0, 0.45), 0 4px 8px rgba(0, 0, 0, 0.25);
+
+    /* Toggle */
+    --toggle-bg:      rgba(255, 255, 255, 0.08);
+    --toggle-color:   rgba(240, 237, 232, 0.65);
+    --toggle-hover:   rgba(255, 255, 255, 0.12);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BODY & BACKGROUND
+══════════════════════════════════════════════════════════════ */
+
+/* Light mode body */
+body {
+    background-color: var(--canvas);
+    background-image:
+        /* Subtle diamond/dot pattern — institutional, like graph paper */
+        radial-gradient(circle, rgba(78, 3, 3, 0.055) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-attachment: fixed;
+    color: var(--text);
+    transition:
+        background-color 280ms ease,
+        color            280ms ease;
+}
+
+/* Dark mode body — same dot pattern, adjusted */
+[data-theme="dark"] body {
+    background-color: var(--canvas);
+    background-image:
+        radial-gradient(circle, rgba(255, 255, 255, 0.030) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+/* Smooth token transitions when toggling */
+body,
+.topbar,
+.sidebar,
+.stat-card,
+.action-card,
+.section,
+.section-header,
+.modal-box,
+.btn-primary,
+.btn-secondary,
+.btn-edit,
+.btn-danger,
+.badge,
+table,
+thead th,
+tbody td,
+.form-group input,
+.form-group select,
+.page-header {
+    transition:
+        background-color 260ms ease,
+        border-color     260ms ease,
+        color            260ms ease,
+        box-shadow       260ms ease;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════════════════════════ */
+.topbar {
+    background: var(--brand) !important;            /* Stays crimson in both modes */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   THEME TOGGLE BUTTON  — sits inside topbar via JS injection
+══════════════════════════════════════════════════════════════ */
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        transform 160ms ease;
+    /* Touch target */
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.20);
+    border-color: rgba(255, 255, 255, 0.30);
+    transform: scale(1.05);
+}
+
+.theme-toggle-btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.70);
+    outline-offset: 2px;
+}
+
+.theme-toggle-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+    transition: opacity 160ms ease, transform 200ms ease;
+}
+
+/* Sun icon shown in light mode, moon in dark */
+.theme-toggle-btn .icon-moon { display: none; }
+.theme-toggle-btn .icon-sun  { display: block; }
+
+[data-theme="dark"] .theme-toggle-btn .icon-moon { display: block; }
+[data-theme="dark"] .theme-toggle-btn .icon-sun  { display: none; }
+
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════════════════════ */
+.sidebar {
+    background: var(--surface) !important;
+    border-right-color: var(--border) !important;
+}
+
+.sidebar-brand           { border-bottom-color: var(--border) !important; }
+.sidebar-brand h3        { color: var(--text) !important; }
+.sidebar-brand p         { color: var(--muted) !important; }
+.sidebar-label           { color: var(--muted) !important; }
+
+.sidebar nav a {
+    color: var(--text-secondary) !important;
+}
+.sidebar nav a:hover {
+    background: var(--overlay) !important;
+    color: var(--text) !important;
+}
+.sidebar nav a.active {
+    background: var(--brand-light) !important;
+    color: var(--brand) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.sidebar nav a.active::before {
+    background: var(--brand) !important;
+    box-shadow: none !important;
+}
+
+.sidebar > a[href*="logout"] {
+    color: var(--muted) !important;
+    border-top-color: var(--border) !important;
+}
+.sidebar > a[href*="logout"]:hover {
+    background: var(--brand-light) !important;
+    color: var(--brand) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STAT CARDS
+══════════════════════════════════════════════════════════════ */
+.stat-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+.stat-card:hover {
+    box-shadow: var(--shadow-md) !important;
+}
+.stat-icon {
+    background: var(--brand-light) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.stat-icon svg  { stroke: var(--brand) !important; }
+.stat-value     { color: var(--text) !important; }
+.stat-label     { color: var(--muted) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   ACTION CARDS
+══════════════════════════════════════════════════════════════ */
+.action-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+.action-card::after { display: none !important; }    /* Remove gaming-era glow line */
+.action-card:hover {
+    background: var(--surface) !important;
+    border-color: var(--border-strong) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+.action-card h3 { color: var(--text) !important; }
+.action-card p  { color: var(--muted) !important; }
+
+.action-card-icon {
+    background: var(--brand-light) !important;
+    border: none !important;
+}
+.action-card-icon svg { stroke: var(--brand) !important; }
+
+.btn-action {
+    background: var(--brand) !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+.btn-action:hover {
+    background: var(--brand-dark) !important;
+    box-shadow: 0 3px 10px rgba(78, 3, 3, 0.25) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SECTION PANELS
+══════════════════════════════════════════════════════════════ */
+.section {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+.section-header {
+    background: var(--surface) !important;
+    border-bottom-color: var(--border) !important;
+}
+.section-header h2 { color: var(--text) !important; }
+.section-header p  { color: var(--muted) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE HEADER
+══════════════════════════════════════════════════════════════ */
+.page-header            { border-bottom-color: var(--border) !important; }
+.page-header h1         { color: var(--text) !important; }
+.page-header p          { color: var(--muted) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   TABLE
+══════════════════════════════════════════════════════════════ */
+thead th {
+    background: var(--canvas) !important;
+    color: var(--muted) !important;
+    border-bottom-color: var(--border) !important;
+}
+tbody tr         { border-bottom-color: var(--border) !important; }
+tbody tr:hover   { background: var(--canvas) !important; }
+tbody td         { color: var(--text-secondary) !important; }
+.td-primary      { color: var(--text) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   FORM FIELDS
+══════════════════════════════════════════════════════════════ */
+.form-group label { color: var(--text-secondary) !important; }
+
+.form-group input,
+.form-group select {
+    background: var(--canvas) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--brand) !important;
+    background: var(--surface) !important;
+    box-shadow: 0 0 0 3px rgba(78, 3, 3, 0.09) !important;
+}
+.form-group input[readonly] {
+    background: var(--overlay) !important;
+    color: var(--text-secondary) !important;
+}
+.select-wrap::after { border-top-color: var(--muted) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════════════ */
+.btn-primary {
+    background: var(--brand) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.btn-primary:hover {
+    background: var(--brand-dark) !important;
+    box-shadow: 0 3px 10px rgba(78, 3, 3, 0.22) !important;
+}
+
+.btn-secondary {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-secondary) !important;
+}
+.btn-secondary:hover {
+    background: var(--overlay) !important;
+    border-color: var(--border-strong) !important;
+    color: var(--text) !important;
+}
+
+.btn-danger {
+    background: transparent !important;
+    border-color: rgba(220, 38, 38, 0.30) !important;
+    color: #dc2626 !important;
+}
+.btn-danger:hover {
+    background: rgba(220, 38, 38, 0.06) !important;
+    border-color: rgba(220, 38, 38, 0.50) !important;
+}
+
+[data-theme="dark"] .btn-danger {
+    color: #f87171 !important;
+    border-color: rgba(248, 113, 113, 0.28) !important;
+}
+[data-theme="dark"] .btn-danger:hover {
+    background: rgba(248, 113, 113, 0.08) !important;
+    border-color: rgba(248, 113, 113, 0.45) !important;
+}
+
+.btn-edit {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-secondary) !important;
+}
+.btn-edit:hover {
+    background: var(--overlay) !important;
+    border-color: var(--border-strong) !important;
+    color: var(--text) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BADGES
+══════════════════════════════════════════════════════════════ */
+/* Light mode — keep original tokens */
+.badge-admin   { background: var(--brand-light)  !important; color: var(--brand) !important; border-color: rgba(78, 3, 3, 0.20) !important; }
+.badge-teacher { background: #eff6ff !important;  color: #1d4ed8 !important; border-color: #bfdbfe !important; }
+.badge-staff   { background: #f0fdf4 !important;  color: #15803d !important; border-color: #bbf7d0 !important; }
+.badge-default { background: var(--overlay) !important; color: var(--muted) !important; border-color: var(--border) !important; }
+.badge-success { background: #f0fdf4 !important;  color: #15803d !important; border-color: #bbf7d0 !important; }
+.badge-danger  { background: #fff1f1 !important;  color: #dc2626 !important; border-color: #fecaca !important; }
+
+/* Dark mode badge overrides */
+[data-theme="dark"] .badge-admin   { background: rgba(224,85,85,0.14) !important;  color: #f87171 !important;  border-color: rgba(224,85,85,0.30) !important; }
+[data-theme="dark"] .badge-teacher { background: rgba(29,78,216,0.15) !important;  color: #93c5fd !important;  border-color: rgba(29,78,216,0.32) !important; }
+[data-theme="dark"] .badge-staff   { background: rgba(21,128,61,0.15) !important;  color: #86efac !important;  border-color: rgba(21,128,61,0.30) !important; }
+[data-theme="dark"] .badge-default { background: rgba(255,255,255,0.05) !important; color: rgba(240,237,232,0.45) !important; border-color: rgba(255,255,255,0.09) !important; }
+[data-theme="dark"] .badge-success { background: rgba(21,128,61,0.15) !important;  color: #86efac !important;  border-color: rgba(21,128,61,0.30) !important; }
+[data-theme="dark"] .badge-danger  { background: rgba(220,38,38,0.14) !important;  color: #f87171 !important;  border-color: rgba(220,38,38,0.28) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   ALERTS
+══════════════════════════════════════════════════════════════ */
+.alert-error {
+    background: var(--brand-light) !important;
+    border-color: rgba(78, 3, 3, 0.20) !important;
+    color: var(--brand) !important;
+}
+.alert-success {
+    background: var(--success-bg) !important;
+    border-color: var(--success-border) !important;
+    color: var(--success-text) !important;
+}
+.alert-info {
+    background: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #1d4ed8 !important;
+}
+
+[data-theme="dark"] .alert-error {
+    background: rgba(224, 85, 85, 0.10) !important;
+    border-color: rgba(224, 85, 85, 0.28) !important;
+    color: #f87171 !important;
+}
+[data-theme="dark"] .alert-info {
+    background: rgba(29,78,216,0.12) !important;
+    border-color: rgba(29,78,216,0.28) !important;
+    color: #93c5fd !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════════════════ */
+.modal-overlay { background: rgba(0, 0, 0, 0.40) !important; }
+
+.modal-box {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+.modal-box h3 { color: var(--text) !important; }
+.modal-box p  { color: var(--muted) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE SIDEBAR DRAWER  — stays solid, no glass on mobile
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 860px) {
+    .sidebar {
+        background: var(--surface) !important;
+    }
+    .sidebar .sidebar-brand h3 { color: var(--text) !important; }
+    .sidebar .sidebar-brand p  { color: var(--muted) !important; }
+    .sidebar nav a             { color: var(--text-secondary) !important; }
+    .sidebar nav a:hover       { background: var(--overlay) !important; color: var(--text) !important; }
+    .sidebar nav a.active      { background: var(--brand-light) !important; color: var(--brand) !important; }
+    .sidebar-close-btn         { color: var(--text-secondary) !important; }
+    .sidebar-close-btn:hover   { background: var(--overlay) !important; color: var(--text) !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SCROLLBAR — subtle, theme-aware
+══════════════════════════════════════════════════════════════ */
+:root {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ══════════════════════════════════════════════════════════════
+   FOCUS RING — WCAG 2.1 AA compliant
+══════════════════════════════════════════════════════════════ */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--brand) !important;
+    outline-offset: 2px !important;
+}
