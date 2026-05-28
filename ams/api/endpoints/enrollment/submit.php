@@ -150,6 +150,22 @@ $fourPsId    = $isFourPs ? strOrNull($data['FourPs_Specify'] ?? null) : null;
 $isDisabled  = (!empty($data['disabilityDetails']) || !empty($data['disability_sub'])) ? 1 : 0;
 $isReturning = trim((string)($data['Returning_Grade_Level'] ?? '')) !== '' ? 1 : 0;
 
+// Religion
+$religionRaw    = trim((string)($data['Religion'] ?? ''));
+$religionId     = null;
+if ($religionRaw !== '') {
+    $religionId = intval($religionRaw) ?: null;
+}
+
+// Learning classification
+$learningClassification = in_array(strtolower($data['learning_classification'] ?? ''), ['graded', 'non-graded'], true) 
+    ? strtolower($data['learning_classification']) 
+    : 'graded';
+
+// Early learning program
+$attendedELP        = normalizeCheckbox($data['attended_early_learning_program'] ?? 0);
+$elpName            = $attendedELP ? strOrNull($data['early_learning_program_name'] ?? null) : null;
+
 // Queue number per school year
 $queueStmt = $pdo->prepare('SELECT COUNT(*) FROM enrollments WHERE school_year = ?');
 $queueStmt->execute([$schoolYear]);
@@ -161,14 +177,16 @@ try {
     // 1. enrollments
     $pdo->prepare('
         INSERT INTO enrollments
-            (student_id, school_year, grade_level, enrollment_status, queue_number,
-             mother_tongue_id, is_indigenous, indigenous_group_id,
+            (student_id, school_year, learning_classification, attended_early_learning_program, 
+             early_learning_program_name, grade_level, enrollment_status, queue_number,
+             mother_tongue_id, religion_id, is_indigenous, indigenous_group_id,
              is_four_ps_beneficiary, four_ps_household_id,
              is_learner_with_disability, is_returning_learner)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ')->execute([
-        $studentId, $schoolYear, $gradeLevel, 'pending', $queueNumber,
-        $motherTongueId, $isIp, $indigenousGroupId,
+        $studentId, $schoolYear, $learningClassification, $attendedELP,
+        $elpName, $gradeLevel, 'pending', $queueNumber,
+        $motherTongueId, $religionId, $isIp, $indigenousGroupId,
         $isFourPs, $fourPsId,
         $isDisabled, $isReturning,
     ]);
@@ -333,6 +351,40 @@ try {
             strOrNull($data['Last_School_Year_Completed'] ?? null),
             strOrNull($data['school_ID']                  ?? null),
         ]);
+    }
+
+    // 13. distance learning modalities preferences
+    $distanceModalityIds = parseIds($data['distance_learning_modalities'] ?? []);
+    if (!empty($distanceModalityIds)) {
+        $stmt = $pdo->prepare('INSERT INTO enrollment_distance_learning_preferences (enrollment_id, modality_id) VALUES (?, ?)');
+        foreach ($distanceModalityIds as $modalityId) {
+            $stmt->execute([$enrollmentId, $modalityId]);
+        }
+    }
+
+    // 14. special needs
+    $hasSpecialNeeds = normalizeCheckbox($data['has_special_needs'] ?? 0);
+    $hasPwdId        = normalizeCheckbox($data['has_pwd_id'] ?? 0);
+    $pwdIdNumber     = $hasPwdId ? strOrNull($data['pwd_id_number'] ?? null) : null;
+    
+    if ($hasSpecialNeeds || $hasPwdId || !empty($data['special_needs_types'])) {
+        $pdo->prepare('
+            INSERT INTO enrollment_special_needs
+                (enrollment_id, has_special_needs, has_pwd_id, pwd_id_number)
+            VALUES (?, ?, ?, ?)
+        ')->execute([
+            $enrollmentId, $hasSpecialNeeds, $hasPwdId, $pwdIdNumber,
+        ]);
+        $specialNeedsId = intval($pdo->lastInsertId());
+        
+        // Insert special needs types (diagnoses)
+        $specialNeedTypeIds = parseIds($data['special_needs_types'] ?? []);
+        if (!empty($specialNeedTypeIds)) {
+            $stmt = $pdo->prepare('INSERT INTO enrollment_special_needs_details (special_needs_id, special_needs_type_id) VALUES (?, ?)');
+            foreach ($specialNeedTypeIds as $typeId) {
+                $stmt->execute([$specialNeedsId, $typeId]);
+            }
+        }
     }
 
     $pdo->commit();

@@ -81,6 +81,19 @@ const API = {
         }
     },
 
+    // ── Lookup tables (convenience properties) ─────────────────
+    mother_tongues:              { list: () => API.crud.list('mother_tongues') },
+    indigenous_groups:           { list: () => API.crud.list('indigenous_groups') },
+    religions:                   { list: () => API.crud.list('religions') },
+    distance_learning_modalities:{ list: () => API.crud.list('distance_learning_modalities') },
+    special_needs_types:         { list: () => API.crud.list('special_needs_types') },
+    disability_types:            { list: () => API.crud.list('disability_types') },
+    disability_subtypes:         { list: () => API.crud.list('disability_subtypes') },
+    medical_allergy_types:       { list: () => API.crud.list('medical_allergy_types') },
+    medical_condition_types:     { list: () => API.crud.list('medical_condition_types') },
+    family_medical_history_types:{ list: () => API.crud.list('family_medical_history_types') },
+    parent_guardian_types:       { list: () => API.crud.list('parent_guardian_types') },
+
     // ── Enrollment endpoints ──────────────────────────────────
     enrollment: {
         // Submit the full enrollment form (pending)

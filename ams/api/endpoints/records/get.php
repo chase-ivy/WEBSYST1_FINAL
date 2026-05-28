@@ -67,6 +67,32 @@ function attachMedical(PDO $pdo, array $record): array {
     return $record;
 }
 
+// ── Helper: attach special needs record to a school record row ─
+
+function attachSpecialNeeds(PDO $pdo, array $record): array {
+    $stmt = $pdo->prepare('
+        SELECT *
+        FROM student_special_needs_records
+        WHERE school_record_id = ?
+        LIMIT 1
+    ');
+    $stmt->execute([$record['school_record_id']]);
+    $special = $stmt->fetch();
+
+    // Decode stored JSON columns so the client gets arrays, not strings
+    if ($special) {
+        foreach (['diagnoses', 'manifestations'] as $col) {
+            if (!empty($special[$col])) {
+                $decoded = json_decode($special[$col], true);
+                $special[$col] = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $special[$col];
+            }
+        }
+    }
+
+    $record['special_needs_record'] = $special ?: null;
+    return $record;
+}
+
 // ── Mode 1: single school record ─────────────────────────────
 
 if ($schoolRecordId !== null) {
@@ -87,7 +113,9 @@ if ($schoolRecordId !== null) {
         sendJson(['success' => false, 'error' => 'Record not found'], 404);
     }
 
-    sendJson(['success' => true, 'data' => attachMedical($pdo, $record)]);
+    $record = attachMedical($pdo, $record);
+    $record = attachSpecialNeeds($pdo, $record);
+    sendJson(['success' => true, 'data' => $record]);
 }
 
 // ── Mode 2: all records for a student ────────────────────────
@@ -106,7 +134,7 @@ if ($studentId !== null) {
     $stmt->execute([$studentId]);
     $rows = $stmt->fetchAll();
 
-    $data = array_map(fn($r) => attachMedical($pdo, $r), $rows);
+    $data = array_map(fn($r) => attachSpecialNeeds($pdo, attachMedical($pdo, $r)), $rows);
     sendJson(['success' => true, 'data' => $data]);
 }
 
@@ -136,7 +164,7 @@ if ($sectionId !== null) {
     $stmt->execute($params);
     $rows = $stmt->fetchAll();
 
-    $data = array_map(fn($r) => attachMedical($pdo, $r), $rows);
+    $data = array_map(fn($r) => attachSpecialNeeds($pdo, attachMedical($pdo, $r)), $rows);
     sendJson(['success' => true, 'data' => $data]);
 }
 

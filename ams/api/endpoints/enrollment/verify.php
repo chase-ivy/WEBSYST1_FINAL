@@ -70,6 +70,13 @@ if ($enrollment['indigenous_group_id']) {
     $indigenousGroupName = $ig->fetchColumn() ?: null;
 }
 
+$religionName = null;
+if ($enrollment['religion_id']) {
+    $r = $pdo->prepare('SELECT name FROM religions WHERE religion_id = ? LIMIT 1');
+    $r->execute([$enrollment['religion_id']]);
+    $religionName = $r->fetchColumn() ?: null;
+}
+
 // ── Resolve disabilities to JSON ──────────────────────────────
 
 $disStmt = $pdo->prepare('
@@ -82,6 +89,49 @@ $disStmt = $pdo->prepare('
 $disStmt->execute([$enrollmentId]);
 $disabilityRows = $disStmt->fetchAll();
 $disabilityJson = !empty($disabilityRows) ? json_encode($disabilityRows) : null;
+
+// ── Resolve special needs to JSON ─────────────────────────────
+
+$specialNeedsId     = null;
+$hasSpecialNeeds    = 0;
+$hasPwdId           = 0;
+$pwdIdNumber        = null;
+$diagnosesJson      = null;
+$manifestationsJson = null;
+
+$specNeedStmt = $pdo->prepare('SELECT * FROM enrollment_special_needs WHERE enrollment_id = ? LIMIT 1');
+$specNeedStmt->execute([$enrollmentId]);
+$specNeedRow = $specNeedStmt->fetch();
+
+if ($specNeedRow) {
+    $specialNeedsId  = intval($specNeedRow['special_needs_id']);
+    $hasSpecialNeeds = intval($specNeedRow['has_special_needs']);
+    $hasPwdId        = intval($specNeedRow['has_pwd_id']);
+    $pwdIdNumber     = $specNeedRow['pwd_id_number'];
+    
+    // Fetch special needs types and categorize them
+    $specTypeStmt = $pdo->prepare('
+        SELECT snt.name, snt.category
+        FROM enrollment_special_needs_details esnd
+        JOIN special_needs_types snt ON esnd.special_needs_type_id = snt.special_needs_type_id
+        WHERE esnd.special_needs_id = ?
+    ');
+    $specTypeStmt->execute([$specialNeedsId]);
+    $specTypeRows = $specTypeStmt->fetchAll();
+    
+    $diagnoses      = [];
+    $manifestations = [];
+    foreach ($specTypeRows as $row) {
+        if ($row['category'] === 'diagnosis') {
+            $diagnoses[] = $row['name'];
+        } else {
+            $manifestations[] = $row['name'];
+        }
+    }
+    
+    if (!empty($diagnoses)) $diagnosesJson = json_encode($diagnoses);
+    if (!empty($manifestations)) $manifestationsJson = json_encode($manifestations);
+}
 
 // ── Resolve medical data to JSON ──────────────────────────────
 
@@ -200,10 +250,10 @@ try {
             (enrollment_id, student_id, school_year, grade_level, academic_status,
              lrn, psa_bcn, last_name, first_name, middle_name, extension_name,
              birth_date, sex, place_of_birth,
-             mother_tongue, indigenous_group, four_ps_household_id,
-             is_learner_with_disability, is_returning_learner,
+             mother_tongue, religion, indigenous_group, four_ps_household_id,
+             is_learner_with_disability, is_returning_learner, has_special_needs, has_pwd_id,
              disabilities, verified_by, verified_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ')->execute([
         $enrollmentId,
         $enrollment['student_id'],
@@ -220,10 +270,13 @@ try {
         $enrollment['sex'],
         $enrollment['place_of_birth'],
         $motherTongueName,
+        $religionName,
         $indigenousGroupName,
         $enrollment['four_ps_household_id'],
         $enrollment['is_learner_with_disability'],
         $enrollment['is_returning_learner'],
+        $hasSpecialNeeds,
+        $hasPwdId,
         $disabilityJson,
         $verifiedBy,
     ]);
@@ -246,7 +299,24 @@ try {
         $familyHistoryJson,
     ]);
 
-    // 3. Update enrollment status
+    // 3. student_special_needs_records — fresh INSERT
+    if ($hasSpecialNeeds || $hasPwdId) {
+        $pdo->prepare('
+            INSERT INTO student_special_needs_records
+                (school_record_id, has_special_needs, has_pwd_id, pwd_id_number,
+                 diagnoses, manifestations)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ')->execute([
+            $schoolRecordId,
+            $hasSpecialNeeds,
+            $hasPwdId,
+            $pwdIdNumber,
+            $diagnosesJson,
+            $manifestationsJson,
+        ]);
+    }
+
+    // 4. Update enrollment status
     $pdo->prepare('
         UPDATE enrollments
         SET enrollment_status = ?, verified_by = ?, verified_at = NOW()

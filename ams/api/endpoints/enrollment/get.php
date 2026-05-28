@@ -96,19 +96,48 @@ $s->execute([$enrollment['student_id'], $enrollmentId]); $addresses = $s->fetchA
 $s = $pdo->prepare('SELECT * FROM student_parent_guardians WHERE student_id = ?');
 $s->execute([$enrollment['student_id']]); $guardians = $s->fetchAll();
 
+// Fetch distance learning modalities
+$s = $pdo->prepare('
+    SELECT edlp.*, dlm.name as modality_name
+    FROM enrollment_distance_learning_preferences edlp
+    JOIN distance_learning_modalities dlm ON edlp.modality_id = dlm.modality_id
+    WHERE edlp.enrollment_id = ?
+');
+$s->execute([$enrollmentId]); $distanceLearningModalities = $s->fetchAll();
+
+// Fetch special needs
+$specialNeeds = null;
+$s = $pdo->prepare('SELECT * FROM enrollment_special_needs WHERE enrollment_id = ? LIMIT 1');
+$s->execute([$enrollmentId]);
+$specialNeedsRow = $s->fetch();
+if ($specialNeedsRow) {
+    $specialNeeds = $specialNeedsRow;
+    // Fetch special needs types details
+    $s = $pdo->prepare('
+        SELECT esnd.*, snt.name as special_needs_name, snt.category
+        FROM enrollment_special_needs_details esnd
+        JOIN special_needs_types snt ON esnd.special_needs_type_id = snt.special_needs_type_id
+        WHERE esnd.special_needs_id = ?
+    ');
+    $s->execute([$specialNeedsRow['special_needs_id']]);
+    $specialNeeds['types'] = $s->fetchAll();
+}
+
 sendJson([
     'success'    => true,
     'data'       => [
-        'enrollment'       => $enrollment,
-        'medical_info'     => $medInfo,
-        'allergies'        => $allergies,
-        'conditions'       => $conditions,
-        'surgeries'        => $surgeries,
-        'treatments'       => $treatments,
-        'family_history'   => $familyHistory,
-        'disabilities'     => $disabilities,
-        'returning_learner'=> $returningLearner,
-        'addresses'        => $addresses,
-        'guardians'        => $guardians,
+        'enrollment'                   => $enrollment,
+        'medical_info'                 => $medInfo,
+        'allergies'                    => $allergies,
+        'conditions'                   => $conditions,
+        'surgeries'                    => $surgeries,
+        'treatments'                   => $treatments,
+        'family_history'               => $familyHistory,
+        'disabilities'                 => $disabilities,
+        'returning_learner'            => $returningLearner,
+        'addresses'                    => $addresses,
+        'guardians'                    => $guardians,
+        'distance_learning_modalities' => $distanceLearningModalities,
+        'special_needs'                => $specialNeeds,
     ],
 ]);
