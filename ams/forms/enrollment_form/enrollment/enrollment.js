@@ -389,14 +389,90 @@ function setAutoSchoolYear() {
     }
 }
 
+function shouldUppercaseField(field) {
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) {
+        return false;
+    }
+
+    const skipTypes = new Set([
+        'button',
+        'checkbox',
+        'color',
+        'date',
+        'datetime-local',
+        'file',
+        'hidden',
+        'image',
+        'month',
+        'password',
+        'radio',
+        'range',
+        'reset',
+        'submit',
+        'time',
+        'week'
+    ]);
+
+    return !skipTypes.has(field.type);
+}
+
+function uppercaseFieldValue(field) {
+    if (!shouldUppercaseField(field) || field.value === '') {
+        return;
+    }
+
+    const value = field.value;
+    const uppercased = value.toUpperCase();
+    if (uppercased === value) {
+        return;
+    }
+
+    const selectionStart = field.selectionStart;
+    const selectionEnd = field.selectionEnd;
+    field.value = uppercased;
+
+    if (typeof selectionStart === 'number' && typeof selectionEnd === 'number') {
+        field.setSelectionRange(selectionStart, selectionEnd);
+    }
+}
+
+function attachUppercaseTransform() {
+    const form = document.getElementById('enrollmentForm');
+    const handler = function (event) {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) {
+            return;
+        }
+        uppercaseFieldValue(target);
+    };
+
+    if (form) {
+        form.addEventListener('input', handler, true);
+        form.addEventListener('change', handler, true);
+    }
+}
+
+function uppercaseAllFormFields() {
+    const form = document.getElementById('enrollmentForm');
+    if (!form) {
+        return;
+    }
+    const fields = form.querySelectorAll('input, textarea');
+    fields.forEach(uppercaseFieldValue);
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
         loadEnrollmentLookups();
         setAutoSchoolYear();
+        attachUppercaseTransform();
+        uppercaseAllFormFields();
     });
 } else {
     loadEnrollmentLookups();
     setAutoSchoolYear();
+    attachUppercaseTransform();
+    uppercaseAllFormFields();
 }
 
 function sameAddr(yes) {
@@ -635,6 +711,8 @@ async function confirmSubmission() {
     const modal = document.getElementById('confirmationModal');
     modal.style.display = 'none';
     
+    uppercaseAllFormFields();
+
     const form = document.getElementById('enrollmentForm');
     const submitButton = form.querySelector('button[type="submit"]');
     submitButton.disabled = true;
