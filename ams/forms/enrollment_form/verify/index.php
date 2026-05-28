@@ -15,9 +15,10 @@ try {
     $sections = [];
 }
 
-// Load lookup tables for mother tongue and IP groups
+// Load lookup tables for mother tongue, IP groups, and religions
 $motherTongues = [];
 $indigenousGroups = [];
+$religions = [];
 try {
     $stmt = $pdo->prepare('SELECT mother_tongue_id AS id, name FROM mother_tongues ORDER BY name');
     $stmt->execute();
@@ -26,6 +27,10 @@ try {
     $stmt = $pdo->prepare('SELECT indigenous_group_id AS id, name FROM indigenous_groups ORDER BY name');
     $stmt->execute();
     $indigenousGroups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $stmt = $pdo->prepare('SELECT religion_id AS id, name FROM religions WHERE is_active = 1 ORDER BY name');
+    $stmt->execute();
+    $religions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     // fallback to empty lists
 }
@@ -35,6 +40,7 @@ try {
     window.SECTIONS = <?php echo json_encode($sections); ?>;
     window.MOTHER_TONGUES = <?php echo json_encode($motherTongues); ?>;
     window.INDIGENOUS_GROUPS = <?php echo json_encode($indigenousGroups); ?>;
+    window.RELIGIONS = <?php echo json_encode($religions); ?>;
 </script>
 <!DOCTYPE html>
 <html lang="en">
@@ -109,6 +115,10 @@ try {
                     </div>
                     <div class="step" id="s5">
                         <div class="step-dot">5</div>
+                        <span class="step-label">Special Needs</span>
+                    </div>
+                    <div class="step" id="s6">
+                        <div class="step-dot">6</div>
                         <span class="step-label">Review</span>
                     </div>
                 </div>
@@ -121,6 +131,7 @@ try {
                 <?php include 'parts/step3.php'; ?>
                 <?php include 'parts/step4.php'; ?>
                 <?php include 'parts/step5.php'; ?>
+                <?php include 'parts/step6.php'; ?>
                 </form>
             </div>
         </div>

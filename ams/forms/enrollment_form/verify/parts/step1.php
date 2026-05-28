@@ -138,17 +138,48 @@
                     <label>Birth Date</label>
                     <input type="date" name="Birth_Date" id="birthDate">
                 </div>
+            </div>
 
+            <!-- Religion / Learning Classification -->
+            <div class="grid-2" style="margin-top:16px;">
                 <div class="field">
                     <label>Religion</label>
-                    <select name="Religion" id="Religion">
-                    <option value="" hidden>Select Religion</option>
-                    <select>
+                    <select name="religion_id" id="religion_id">
+                        <option value="" hidden>Select religion</option>
+                    </select>
                 </div>
-                <!-- <div class="field">
-                    <label>Age</label>
-                    <input type="number" name="Age" min="3" max="20" placeholder="6" id="ageField" readonly>
-                </div> -->
+                <div class="field">
+                    <label>Learning Classification</label>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input type="radio" name="learning_classification" value="graded"> Graded
+                        </label>
+                        <label class="radio-pill">
+                            <input type="radio" name="learning_classification" value="non-graded"> Non-Graded
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Early Learning Program -->
+            <div class="field" style="margin-top:16px;">
+                <label>Attended Early Learning Program?</label>
+                <div class="radio-group">
+                    <label class="radio-pill">
+                        <input type="radio" name="attended_early_learning_program" value="1" onchange="toggle('earlyLearningBox', true)"> Yes
+                    </label>
+                    <label class="radio-pill">
+                        <input type="radio" name="attended_early_learning_program" value="0" onchange="toggle('earlyLearningBox', false)"> No
+                    </label>
+                </div>
+            </div>
+
+            <!-- Early Learning Program Name (collapsible) -->
+            <div class="collapse" id="earlyLearningBox">
+                <div class="field">
+                    <label>Early Learning Program Name</label>
+                    <input type="text" name="early_learning_program_name" placeholder="e.g., Kinder Prep, Preschool XYZ, etc.">
+                </div>
             </div>
 
             <!-- Sex / Place of Birth -->

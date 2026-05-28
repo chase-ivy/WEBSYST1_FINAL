@@ -118,7 +118,71 @@ function getAddressByType(addresses, type) {
 
 function goToAndReview(n) {
     goTo(n);
-    if (n === 5) buildReviewSummary();
+    if (n === 5) loadSpecialNeedsTypesForVerify(currentEnrollmentData?.special_needs || []);
+    if (n === 6) buildReviewSummary();
+}
+
+// ── Load special needs types ──────────────────────────────────
+
+async function loadSpecialNeedsTypesForVerify(enrollmentSpecialNeeds = []) {
+    try {
+        // Fetch all special needs types
+        const response = await API.special_needs_types.list();
+        if (!response.success || !response.data) {
+            console.warn('Failed to load special needs types for verify form');
+            return;
+        }
+
+        const types = response.data;
+        const diagnoses = types.filter(t => !t.category || t.category.toLowerCase() === 'diagnosis');
+        const manifestations = types.filter(t => t.category && t.category.toLowerCase() === 'manifestation');
+
+        // Populate diagnosis checkboxes
+        const diagnosisDiv = document.getElementById('diagnosisTypes');
+        if (diagnosisDiv) {
+            diagnosisDiv.innerHTML = '';
+            diagnoses.forEach(d => {
+                const label = document.createElement('label');
+                label.style.cssText = 'display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text); cursor:pointer; padding:6px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); transition:background .15s ease, border-color .15s ease;';
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.name = 'special_needs_diagnosis[]';
+                input.value = d.id;
+                input.style.cssText = 'width:14px; height:14px; accent-color:var(--brand); flex-shrink:0;';
+                // Check if this special need is in enrollment data
+                if (enrollmentSpecialNeeds.some(sn => String(sn.special_needs_type_id) === String(d.id))) {
+                    input.checked = true;
+                }
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(d.name));
+                diagnosisDiv.appendChild(label);
+            });
+        }
+
+        // Populate manifestation checkboxes
+        const manifestationDiv = document.getElementById('manifestationTypes');
+        if (manifestationDiv) {
+            manifestationDiv.innerHTML = '';
+            manifestations.forEach(m => {
+                const label = document.createElement('label');
+                label.style.cssText = 'display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text); cursor:pointer; padding:6px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); transition:background .15s ease, border-color .15s ease;';
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.name = 'special_needs_manifestation[]';
+                input.value = m.id;
+                input.style.cssText = 'width:14px; height:14px; accent-color:var(--brand); flex-shrink:0;';
+                // Check if this special need is in enrollment data
+                if (enrollmentSpecialNeeds.some(sn => String(sn.special_needs_type_id) === String(m.id))) {
+                    input.checked = true;
+                }
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(m.name));
+                manifestationDiv.appendChild(label);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading special needs types for verify form:', error);
+    }
 }
 
 // ── Dirty-tracking ────────────────────────────────────────────
@@ -344,6 +408,30 @@ function applyEnrollmentToForm(data) {
     }
     setValue('Mother_Tongue', enrollment.mother_tongue_id);
 
+    // Religion dropdown
+    if (window.RELIGIONS && Array.isArray(window.RELIGIONS)) {
+        const relSelect = document.getElementById('religion_id');
+        if (relSelect) {
+            relSelect.innerHTML = '<option value="">Select...</option>';
+            window.RELIGIONS.forEach(item => {
+                const option       = document.createElement('option');
+                option.value       = item.id;
+                option.textContent = item.name;
+                if (String(item.id) === String(enrollment.religion_id)) option.selected = true;
+                relSelect.appendChild(option);
+            });
+        }
+    }
+    setValue('religion_id', enrollment.religion_id);
+
+    // Learning Classification
+    setValue('learning_classification', enrollment.learning_classification || 'graded');
+
+    // Early Learning Program
+    setValue('attended_early_learning_program', enrollment.attended_early_learning_program ? '1' : '0');
+    setValue('early_learning_program_name', enrollment.early_learning_program_name || '');
+    toggle('earlyLearningBox', !!enrollment.attended_early_learning_program);
+
     setValue('ip', enrollment.is_indigenous ? 'Yes' : 'No');
 
     // IP group dropdown
@@ -513,6 +601,18 @@ function applyEnrollmentToForm(data) {
     }
 
     if (enrollment.grade_level) filterSectionsByGradeLevel(enrollment.grade_level);
+
+    // Special needs
+    setValue('has_special_needs', enrollment.has_special_needs ? '1' : '0');
+    setValue('has_pwd_id', enrollment.has_pwd_id ? '1' : '0');
+    setValue('pwd_id_number', enrollment.pwd_id_number || '');
+    toggle('specialNeedsDetails', !!enrollment.has_special_needs);
+    toggle('pwdIdBox', !!enrollment.has_pwd_id);
+
+    // Load special needs types and populate checkboxes
+    if (enrollment.has_special_needs && (data.special_needs || []).length > 0) {
+        loadSpecialNeedsTypesForVerify(data.special_needs);
+    }
 
     // After populating, clear the dirty flag (populating the form fires change
     // events that would otherwise mark it dirty immediately)
