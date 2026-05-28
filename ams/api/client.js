@@ -118,6 +118,12 @@ const API = {
             if (schoolYear) params.school_year = schoolYear;
             return API.call('endpoints/enrollment/get', params, 'GET');
         },
+        // Get all enrollments for a student (for reenroll feature)
+        getAllByStudent: function(studentId, schoolYear = null) {
+            const params = { student_id: studentId, all: 1 };
+            if (schoolYear) params.school_year = schoolYear;
+            return API.call('endpoints/enrollment/get', params, 'GET');
+        },
         // Get queue list (pending enrollments for a school year)
         queue: function(schoolYear, status = 'pending') {
             return API.call('endpoints/enrollment/get', { school_year: schoolYear, status }, 'GET');

@@ -674,8 +674,8 @@ async function fetchStudentsForRenroll() {
         let enrollmentsByStudent = {};
         for (const student of allStudentsForRenroll) {
             try {
-                const enrollments = await API.enrollment.getByStudent(student.student_id);
-                if (enrollments && enrollments.data) {
+                const enrollments = await API.enrollment.getAllByStudent(student.student_id);
+                if (enrollments && enrollments.data && Array.isArray(enrollments.data)) {
                     enrollmentsByStudent[student.student_id] = enrollments.data;
                 } else if (Array.isArray(enrollments)) {
                     enrollmentsByStudent[student.student_id] = enrollments;

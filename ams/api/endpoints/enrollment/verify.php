@@ -122,9 +122,9 @@ if ($specNeedRow) {
     $diagnoses      = [];
     $manifestations = [];
     foreach ($specTypeRows as $row) {
-        if ($row['category'] === 'diagnosis') {
+        if (strtolower($row['category']) === 'diagnosis') {
             $diagnoses[] = $row['name'];
-        } else {
+        } elseif (strtolower($row['category']) === 'manifestation') {
             $manifestations[] = $row['name'];
         }
     }

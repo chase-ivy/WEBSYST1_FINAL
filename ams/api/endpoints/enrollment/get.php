@@ -20,6 +20,7 @@ $enrollmentId = isset($_GET['id']) ? intval($_GET['id']) : null;
 $studentId    = isset($_GET['student_id']) ? intval($_GET['student_id']) : null;
 $schoolYear   = trim($_GET['school_year'] ?? '');
 $status       = trim($_GET['status'] ?? '');
+$getAll       = isset($_GET['all']) && in_array($_GET['all'], ['1', 'true', 'yes'], true);
 
 // ── Queue list mode ───────────────────────────────────────────
 
@@ -32,6 +33,44 @@ if ($enrollmentId === null && $studentId === null) {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     sendJson(['success' => true, 'data' => $stmt->fetchAll()]);
+}
+
+// ── All enrollments for a student (for reenroll) ──────────────
+
+if ($getAll && $studentId !== null && $enrollmentId === null) {
+    $sql    = 'SELECT enrollment_id FROM enrollments WHERE student_id = ?';
+    $params = [$studentId];
+    if ($schoolYear !== '') { $sql .= ' AND school_year = ?'; $params[] = $schoolYear; }
+    $sql .= ' ORDER BY created_at DESC';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $enrollmentIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    if (empty($enrollmentIds)) {
+        sendJson(['success' => true, 'data' => []]);
+    }
+    
+    // Return full data for each enrollment
+    $allEnrollments = [];
+    foreach ($enrollmentIds as $eid) {
+        $enrollmentId = intval($eid);
+        // Fetch core enrollment (reuse logic below)
+        $stmt = $pdo->prepare('
+            SELECT e.*, s.lrn, s.psa_bcn, s.last_name, s.first_name, s.middle_name,
+                   s.extension_name, s.birth_date, s.sex, s.place_of_birth
+            FROM enrollments e
+            JOIN students s ON e.student_id = s.student_id
+            WHERE e.enrollment_id = ? LIMIT 1
+        ');
+        $stmt->execute([$enrollmentId]);
+        $enrollment = $stmt->fetch();
+        if (!$enrollment) continue;
+        
+        // For list view, just return minimal enrollment data
+        $allEnrollments[] = $enrollment;
+    }
+    
+    sendJson(['success' => true, 'data' => $allEnrollments]);
 }
 
 // ── Single enrollment lookup ──────────────────────────────────

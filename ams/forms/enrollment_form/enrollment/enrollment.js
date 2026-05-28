@@ -710,9 +710,9 @@ function loadSpecialNeedsTypes() {
         const data = response.data || response || [];
         const types = Array.isArray(data) ? data : [];
         
-        // Separate diagnoses and manifestations by category
-        const diagnoses = types.filter(t => !t.category || t.category === 'Diagnosis');
-        const manifestations = types.filter(t => t.category === 'Manifestation');
+        // Separate diagnoses and manifestations by category (case-insensitive comparison)
+        const diagnoses = types.filter(t => !t.category || t.category.toLowerCase() === 'diagnosis');
+        const manifestations = types.filter(t => t.category && t.category.toLowerCase() === 'manifestation');
 
         // Render diagnoses
         if (diagnoses.length === 0) {

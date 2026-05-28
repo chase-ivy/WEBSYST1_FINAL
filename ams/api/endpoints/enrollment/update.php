@@ -99,11 +99,15 @@ try {
         'grade_level'                => 'Grade_Level',
         'is_returning_learner'       => 'returning',
         'mother_tongue_id'           => 'mother_tongue_id',
+        'religion_id'                => 'Religion',
         'is_indigenous'              => 'ip',
         'indigenous_group_id'        => 'indigenous_group_id',
         'is_four_ps_beneficiary'     => 'fourps',
         'four_ps_household_id'       => 'FourPs_Specify',
         'is_learner_with_disability' => 'disability',
+        'learning_classification'    => 'learning_classification',
+        'attended_early_learning_program' => 'attended_early_learning_program',
+        'early_learning_program_name' => 'early_learning_program_name',
     ];
 
     // school_year is composed from two separate form fields
@@ -116,7 +120,7 @@ try {
         }
     }
 
-    $boolEnrollmentFields = ['is_returning_learner', 'is_indigenous', 'is_four_ps_beneficiary', 'is_learner_with_disability'];
+    $boolEnrollmentFields = ['is_returning_learner', 'is_indigenous', 'is_four_ps_beneficiary', 'is_learner_with_disability', 'attended_early_learning_program'];
     foreach ($enrollmentFieldMap as $dbField => $formField) {
         if (array_key_exists($formField, $data)) {
             $enrollmentUpdates[] = "$dbField = ?";
@@ -360,6 +364,62 @@ try {
                 $stmt = $pdo->prepare('INSERT INTO enrollment_family_medical_history (medical_information_id, family_history_type_id, description) VALUES (?, ?, ?)');
                 foreach ($familyTypeIds as $typeId) {
                     $stmt->execute([$medicalInformationId, $typeId, $familyDesc]);
+                }
+            }
+        }
+    }
+
+    // 6. Update distance learning modalities (delete old, insert new)
+    if (isset($data['distance_learning_modalities'])) {
+        $pdo->prepare('DELETE FROM enrollment_distance_learning_preferences WHERE enrollment_id = ?')->execute([$enrollmentId]);
+        
+        $distanceModalityIds = parseIds($data['distance_learning_modalities'] ?? []);
+        if (!empty($distanceModalityIds)) {
+            $distanceModalityIds = validateLookupIds($pdo, 'distance_learning_modalities', $distanceModalityIds, 'distance_learning_modality_id', 'distance learning modality');
+            
+            if (!empty($distanceModalityIds)) {
+                $stmt = $pdo->prepare('INSERT INTO enrollment_distance_learning_preferences (enrollment_id, modality_id) VALUES (?, ?)');
+                foreach ($distanceModalityIds as $modalityId) {
+                    $stmt->execute([$enrollmentId, $modalityId]);
+                }
+            }
+        }
+    }
+
+    // 7. Update special needs (delete old, insert new)
+    if (isset($data['has_special_needs']) || isset($data['has_pwd_id']) || isset($data['special_needs_types'])) {
+        $hasSpecialNeeds = normalizeCheckbox($data['has_special_needs'] ?? 0);
+        $hasPwdId = normalizeCheckbox($data['has_pwd_id'] ?? 0);
+        $pwdIdNumber = $hasPwdId ? strOrNull($data['pwd_id_number'] ?? null) : null;
+        
+        $specNeedStmt = $pdo->prepare('SELECT special_needs_id FROM enrollment_special_needs WHERE enrollment_id = ? LIMIT 1');
+        $specNeedStmt->execute([$enrollmentId]);
+        $specialNeedsId = $specNeedStmt->fetchColumn();
+        
+        if ($specialNeedsId) {
+            $pdo->prepare('UPDATE enrollment_special_needs SET has_special_needs = ?, has_pwd_id = ?, pwd_id_number = ? WHERE special_needs_id = ?')
+                ->execute([$hasSpecialNeeds, $hasPwdId, $pwdIdNumber, $specialNeedsId]);
+            
+            // Delete old special needs types details
+            $pdo->prepare('DELETE FROM enrollment_special_needs_details WHERE special_needs_id = ?')->execute([$specialNeedsId]);
+        } else {
+            // Create new special needs record
+            $pdo->prepare('INSERT INTO enrollment_special_needs (enrollment_id, has_special_needs, has_pwd_id, pwd_id_number) VALUES (?, ?, ?, ?)')
+                ->execute([$enrollmentId, $hasSpecialNeeds, $hasPwdId, $pwdIdNumber]);
+            $specialNeedsId = intval($pdo->lastInsertId());
+        }
+        
+        // Insert special needs types
+        if ($specialNeedsId > 0) {
+            $specialNeedTypeIds = parseIds($data['special_needs_types'] ?? []);
+            if (!empty($specialNeedTypeIds)) {
+                $specialNeedTypeIds = validateLookupIds($pdo, 'special_needs_types', $specialNeedTypeIds, 'special_needs_type_id', 'special needs type');
+                
+                if (!empty($specialNeedTypeIds)) {
+                    $stmt = $pdo->prepare('INSERT INTO enrollment_special_needs_details (special_needs_id, special_needs_type_id) VALUES (?, ?)');
+                    foreach ($specialNeedTypeIds as $typeId) {
+                        $stmt->execute([$specialNeedsId, $typeId]);
+                    }
                 }
             }
         }
