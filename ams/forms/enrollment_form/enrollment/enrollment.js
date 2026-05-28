@@ -738,7 +738,7 @@ async function confirmSubmission() {
         showMessage('success', successText);
 
         setTimeout(() => {
-            window.location.href = '../../../dashboard/student_dashboard/student_dashboard.php';
+            window.location.href = 'enrollment.php';
         }, 5000);
 
         form.reset();
