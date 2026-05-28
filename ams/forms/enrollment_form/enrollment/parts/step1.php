@@ -261,7 +261,7 @@
             <div class="collapse" id="fourpsBox" style="margin-top:10px;">
                 <div class="field">
                     <label>4Ps Household ID Number</label>
-                    <input type="number" name="FourPs_Specify" placeholder="Household ID">
+                    <input type="text" name="FourPs_Specify" placeholder="Household ID">
                 </div>
             </div>
 

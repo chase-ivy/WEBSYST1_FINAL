@@ -4,7 +4,34 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../login/auth.php';
 
-if (!is_logged_in()) {
+$publicLookupTables = [
+    'mother_tongues',
+    'indigenous_groups',
+    'religions',
+    'special_needs_types',
+    'disability_types',
+    'disability_subtypes',
+    'distance_learning_modalities',
+    'medical_allergy_types',
+    'medical_condition_types',
+    'family_medical_history_types',
+    'parent_guardian_types',
+];
+
+function getCrudEndpointInfo(): array {
+    $scriptName = basename($_SERVER['SCRIPT_NAME'] ?? '');
+    if (preg_match('/^([crud])_([a-z0-9_]+)\.php$/', $scriptName, $matches)) {
+        return ['operation' => $matches[1], 'table' => $matches[2]];
+    }
+    return ['operation' => null, 'table' => null];
+}
+
+$crudInfo = getCrudEndpointInfo();
+$isPublicLookupRead = $crudInfo['operation'] === 'r'
+    && in_array($crudInfo['table'], $publicLookupTables, true)
+    && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
+
+if (!is_logged_in() && !$isPublicLookupRead) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
