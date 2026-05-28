@@ -68,6 +68,10 @@ try {
         </div>
         <div class="step" id="s6">
             <div class="step-dot">6</div>
+            <span class="step-label">Special Needs</span>
+        </div>
+        <div class="step" id="s7">
+            <div class="step-dot">7</div>
             <span class="step-label">Review</span>
         </div>
     </div>
@@ -82,6 +86,7 @@ try {
         <?php require __DIR__ . '/parts/step3.php'; ?>
         <?php require __DIR__ . '/parts/step4.php'; ?>
         <?php require __DIR__ . '/parts/step5.php'; ?>
+        <?php require __DIR__ . '/parts/step6.php'; ?>
         
     </form>
     

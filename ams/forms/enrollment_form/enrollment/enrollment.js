@@ -277,6 +277,11 @@ function goTo(n) {
         if (i + 1 >  n) { s.classList.remove('done', 'active'); }
     });
 
+    // Load special needs types when navigating to step 6
+    if (n === 6) {
+        loadSpecialNeedsTypes();
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -691,6 +696,54 @@ function cancelConfirmation() {
     modal.style.display = 'none';
 }
 
+function loadSpecialNeedsTypes() {
+    const diagnosisContainer = document.getElementById('diagnosisTypes');
+    const manifestationContainer = document.getElementById('manifestationTypes');
+    
+    if (!diagnosisContainer || !manifestationContainer) return;
+
+    // Only load if not already loaded
+    if (diagnosisContainer.hasAttribute('data-loaded')) return;
+    diagnosisContainer.setAttribute('data-loaded', 'true');
+
+    API.special_needs_types.list().then(response => {
+        const data = response.data || response || [];
+        const types = Array.isArray(data) ? data : [];
+        
+        // Separate diagnoses and manifestations by category
+        const diagnoses = types.filter(t => !t.category || t.category === 'Diagnosis');
+        const manifestations = types.filter(t => t.category === 'Manifestation');
+
+        // Render diagnoses
+        if (diagnoses.length === 0) {
+            diagnosisContainer.innerHTML = '<p style="color:var(--muted); font-size:13px;">No diagnoses available</p>';
+        } else {
+            diagnosisContainer.innerHTML = diagnoses.map(type => `
+                <label style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:white; cursor:pointer; transition:all .2s ease;">
+                    <input type="checkbox" name="special_needs_diagnosis" value="${type.special_needs_type_id}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
+                    <span style="font-size:13px; color:var(--text);">${escapeHtml(type.name)}</span>
+                </label>
+            `).join('');
+        }
+
+        // Render manifestations
+        if (manifestations.length === 0) {
+            manifestationContainer.innerHTML = '<p style="color:var(--muted); font-size:13px;">No manifestations available</p>';
+        } else {
+            manifestationContainer.innerHTML = manifestations.map(type => `
+                <label style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:white; cursor:pointer; transition:all .2s ease;">
+                    <input type="checkbox" name="special_needs_manifestation" value="${type.special_needs_type_id}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
+                    <span style="font-size:13px; color:var(--text);">${escapeHtml(type.name)}</span>
+                </label>
+            `).join('');
+        }
+    }).catch(err => {
+        console.error('Failed to load special needs types:', err);
+        diagnosisContainer.innerHTML = '<p style="color:var(--muted); font-size:13px;">Unable to load special needs types</p>';
+        manifestationContainer.innerHTML = '<p style="color:var(--muted); font-size:13px;">Unable to load special needs types</p>';
+    });
+}
+
 async function confirmSubmission() {
     const modal = document.getElementById('confirmationModal');
     modal.style.display = 'none';
@@ -704,6 +757,13 @@ async function confirmSubmission() {
 
     try {
         const payload = serializeForm(form);
+        
+        // Merge diagnosis and manifestation arrays into special_needs_types
+        const diagnosisIds = Array.isArray(payload.special_needs_diagnosis) ? payload.special_needs_diagnosis : (payload.special_needs_diagnosis ? [payload.special_needs_diagnosis] : []);
+        const manifestationIds = Array.isArray(payload.special_needs_manifestation) ? payload.special_needs_manifestation : (payload.special_needs_manifestation ? [payload.special_needs_manifestation] : []);
+        payload.special_needs_types = [...diagnosisIds, ...manifestationIds];
+        delete payload.special_needs_diagnosis;
+        delete payload.special_needs_manifestation;
         
         // Validate required fields
         if (!payload.Learner_First_Name || !payload.Learner_Last_Name || !payload.Birth_Date) {

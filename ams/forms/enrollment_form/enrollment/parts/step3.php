@@ -144,7 +144,7 @@
 
         <div class="card-foot">
             <button type="button" class="btn btn-ghost"   onclick="goTo(3)">← Back</button>
-            <span class="step-count">Step 4 of 6</span>
+            <span class="step-count">Step 4 of 7</span>
             <button type="button" class="btn btn-primary" onclick="goTo(5)"> Next: Medical →</button>
         </div>
 

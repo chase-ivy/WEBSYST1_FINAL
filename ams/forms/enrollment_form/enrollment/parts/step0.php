@@ -26,7 +26,7 @@
         </div>
 
         <div class="card-foot">
-            <span class="step-count">Step 1 of 6</span>
+            <span class="step-count">Step 1 of 7</span>
             <button type="button" class="btn btn-primary" onclick="goTo(2)">Next: Learner Info →</button>
         </div>
 
