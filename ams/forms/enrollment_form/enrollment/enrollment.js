@@ -404,23 +404,7 @@ function sameAddr(yes) {
     toggle('permBox', !yes);
 }
 
-// Auto-calculate Age when Birth Date changes — replaces enroll.js birthDate listener
-const birthDateEl = document.getElementById('birthDate');
-if (birthDateEl) {
-    birthDateEl.addEventListener('change', function () {
-        const birthDate = new Date(this.value);
-        const today     = new Date();
-
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-
-        document.getElementById('ageField').value = age;
-    });
-}
+// Birth date -> age auto-calculation removed; age field is not present in this form.
 
 function addNestedValue(target, name, value) {
     const parts = name.split('[').map(part => part.replace(/\]$/, ''));
@@ -658,10 +642,12 @@ async function confirmSubmission() {
         if (!studentId) {
             showMessage('', 'Creating student record...');
             
-            // Map enrollment form fields to the public student register endpoint
+            // Map enrollment form fields to the public student register endpoint.
+            // Username is intentionally omitted — the server derives a unique one
+            // from the email prefix or first+last name (with up to 10 collision retries).
+            // Sending a client-derived username caused 409s when the same email was
+            // reused across enrollments.
             const studentPayload = {
-                // allow server to auto-generate username if not provided
-                username: payload.user_email ? (payload.user_email.split('@')[0]) : '',
                 password: payload.user_password || '',
                 email: payload.user_email || '',
                 lrn: payload.Learner_Reference_No || '',
@@ -675,11 +661,11 @@ async function confirmSubmission() {
                 place_of_birth: payload.Place_of_Birth || ''
             };
 
-            // Use the public register endpoint for open enrollment (creates account + student)
+            // Single call — server handles uniqueness internally, no client retry needed
             const studentResp = await API.students.register(studentPayload);
-            
-            generatedPassword = studentResp.generated_password || studentResp.data?.generated_password || '';
-            registeredUsername = studentResp.username || studentResp.data?.username || studentPayload.username || '';
+
+            generatedPassword = studentResp?.generated_password || studentResp?.data?.generated_password || '';
+            registeredUsername = studentResp?.username || studentResp?.data?.username || studentPayload.username || '';
             registrationEmail = studentPayload.email || '';
             registrationPassword = studentPayload.password || '';
 
@@ -743,7 +729,6 @@ async function confirmSubmission() {
 
         form.reset();
         goTo(1);
-        document.getElementById('ageField').value = '';
         toggle('permBox', true); // Reset permanent address box to visible on form reset
     } catch (error) {
         showMessage('error', error.message || 'Enrollment submission failed. Please review the form and try again.');

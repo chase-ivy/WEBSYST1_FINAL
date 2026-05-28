@@ -12,14 +12,15 @@
         <div class="card-body">
 
             <!-- School Year -->
-            <div class="grid-2">
-                <div class="field">
-                    <label>School Year Start</label>
-                    <input type="number" name="year_start" placeholder="2025" min="2000" max="2099">
+            <!-- Displays current year and +1 instead --> 
+            <div class="grid-2" hidden>
+                <div class="field" hidden>
+                    <label hidden>School Year Start</label>
+                    <input type="number" name="year_start" placeholder="2025" value="<?php echo date('Y'); ?>" min="2000" max="2099" hidden>
                 </div>
                 <div class="field">
-                    <label>School Year End</label>
-                    <input type="number" name="year_end" placeholder="2026" min="2000" max="2099">
+                    <label hidden>School Year End</label>
+                    <input type="number" name="year_end" placeholder="2026" value="<?php echo intval(date('Y')) + 1; ?>" min="2000" max="2099" hidden>
                 </div>
             </div>
 

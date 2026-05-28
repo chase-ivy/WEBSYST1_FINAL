@@ -84,11 +84,24 @@ if ($isPublic && $role !== 'student') {
     sendJson(['success' => false, 'error' => 'Unauthorized role'], 403);
 }
 
-// Check username uniqueness
+// Ensure username uniqueness — auto-suffix on collision instead of hard-rejecting.
+// This prevents 409s when a client-provided username (e.g. from an email prefix) is already taken.
 $check = $pdo->prepare('SELECT user_id FROM users WHERE username = ? LIMIT 1');
 $check->execute([$username]);
 if ($check->fetch()) {
-    sendJson(['success' => false, 'error' => 'Username already taken'], 409);
+    $usernameBase = $username;
+    $usernameAttempt = 0;
+    do {
+        $username = $usernameBase . '_' . str_pad((string)rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        $check->execute([$username]);
+        $usernameExists = (bool)$check->fetch();
+        $usernameAttempt++;
+    } while ($usernameExists && $usernameAttempt < 10);
+
+    if ($usernameExists) {
+        // Astronomically unlikely: 10 random 4-digit suffixes all taken
+        sendJson(['success' => false, 'error' => 'Could not generate a unique username. Please try a different email.'], 409);
+    }
 }
 
 // Guest accounts (public form) start inactive until verified
