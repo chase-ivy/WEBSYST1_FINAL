@@ -117,14 +117,22 @@ if ($medInfoId) {
     $s = $q('SELECT * FROM enrollment_family_medical_history WHERE medical_information_id = ?'); $s->execute([$medInfoId]); $familyHistory = $s->fetchAll();
 }
 
-$s = $pdo->prepare('
-    SELECT ed.*, dt.name AS type_name, ds.name AS subtype_name
-    FROM enrollment_disabilities ed
-    LEFT JOIN disability_types dt ON ed.disability_type_id = dt.disability_type_id
-    LEFT JOIN disability_subtypes ds ON ed.disability_subtype_id = ds.disability_subtype_id
-    WHERE ed.enrollment_id = ?
-');
-$s->execute([$enrollmentId]); $disabilities = $s->fetchAll();
+// Legacy disability support (if enrollment_disabilities table exists)
+$disabilities = [];
+try {
+    $s = $pdo->prepare('
+        SELECT ed.*, dt.name AS type_name, ds.name AS subtype_name
+        FROM enrollment_disabilities ed
+        LEFT JOIN disability_types dt ON ed.disability_type_id = dt.disability_type_id
+        LEFT JOIN disability_subtypes ds ON ed.disability_subtype_id = ds.disability_subtype_id
+        WHERE ed.enrollment_id = ?
+    ');
+    $s->execute([$enrollmentId]);
+    $disabilities = $s->fetchAll();
+} catch (PDOException $e) {
+    // Table doesn't exist, skip
+    $disabilities = [];
+}
 
 $s = $pdo->prepare('SELECT * FROM enrollment_returning_learners WHERE enrollment_id = ? LIMIT 1');
 $s->execute([$enrollmentId]); $returningLearner = $s->fetch() ?: null;
