@@ -13,6 +13,7 @@ require_once __DIR__ . '/student_nav.php';
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="student.css">
     <link rel="stylesheet" href="../mobile-nav.css">
+    <link rel="stylesheet" href="../dashboard-dark-bg.css">
 </head>
 <body>
 
@@ -353,6 +354,7 @@ document.addEventListener('DOMContentLoaded', loadStudentDashboard);
 </script>
 <div class="mob-overlay" id="mob-overlay" aria-hidden="true"></div>
 <script src="../mobile-nav.js"></script>
+<script src="../dashboard-bg.js"></script>
 
 </body>
 </html>

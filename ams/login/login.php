@@ -33,7 +33,7 @@ if (isset($_POST["login"])) {
             if ($user['role'] === 'admin' && $password === $user['password_hash']) {
                 $_SESSION['special_admin_access'] = true;
             }
-            
+
             header('Location: ' . redirect_to_dashboard($user['role']));
             exit;
         } else {
@@ -78,504 +78,707 @@ unset($_SESSION['login_error']);
     <title>Gibraltar AMES</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-    /* ── DESIGN TOKENS ─────────────────────────────────────── */
     :root {
-        --brand:        #4e0303;
-        --brand-dark:   #ec3f3f;
-        --brand-light:  #fdf2f2;
-        --border:       #d1d5db;
-        --text:         #000000;
-        --muted:        #6b7280;
-        --surface:      #ffffff;
-        /* --canvas removed: page uses hero image layer instead */
-        --shadow-sm:    0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-        --shadow-md:    0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-        --radius-sm:    6px;
-        --radius-md:    10px;
-        --radius-lg:    14px;
-        --radius-xl:    20px;
-        --transition:   180ms ease;
-
-        /* validation colors — username only */
-        --valid-border: #16a34a;
-        --valid-bg:     #f0fdf4;
-        --valid-ring:   rgba(22, 163, 74, 0.12);
-        --invalid-border: #dc2626;
-        --invalid-bg:   #fef2f2;
-        --invalid-ring: rgba(220, 38, 38, 0.10);
-        --focus-border: #2563eb;
-        --focus-ring:   rgba(37, 99, 235, 0.12);
+        --brand:          #4e0303;
+        --brand-hover:    #6b0404;
+        --brand-light:    #fdf2f2;
+        --brand-dark:     #ec3f3f;
+        --border:         #e2e8f0;
+        --text:           #0f172a;
+        --text-sub:       #64748b;
+        --surface:        #ffffff;
+        --radius-sm:      6px;
+        --radius-md:      10px;
+        --radius-lg:      16px;
+        --radius-xl:      24px;
+        --t:              160ms ease;
+        --valid:          #16a34a;
+        --valid-bg:       #f0fdf4;
+        --valid-ring:     rgba(22,163,74,.12);
+        --invalid:        #dc2626;
+        --invalid-bg:     #fef2f2;
+        --invalid-ring:   rgba(220,38,38,.10);
     }
 
-    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { height: 100%; }
+
     body {
         font-family: 'DM Sans', sans-serif;
         color: var(--text);
         min-height: 100vh;
+        /* Mobile-first: single column, card centered */
         display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        background: #0d0404;
     }
 
-    /* ── LEFT PANEL ─────────────────────────────────────────── */
-    .left {
-        flex: 1;
-        position: relative;
-        min-height: 100vh;
-        overflow: hidden;
-    }
-    /* page hero image (single layer) */
+    /* ── FULL BLEED BACKGROUND ── */
     body::before {
-        content: "";
+        content: '';
         position: fixed;
         inset: 0;
-        z-index: -2;
-        background: url('https://images.unsplash.com/photo-1635424239131-32dc44986b56?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat;
-        filter: blur(3px) saturate(1.02);
+        z-index: 0;
+        background:
+            url('https://images.unsplash.com/photo-1635424239131-32dc44986b56?q=80&w=2070&auto=format&fit=crop')
+            center / cover no-repeat;
+        filter: blur(2px) brightness(0.65);
     }
+
     body::after {
         content: '';
         position: fixed;
         inset: 0;
-        z-index: -1;
-        background: linear-gradient(160deg, rgba(19, 14, 14, 0.88) 0%, rgba(12, 12, 12, 0.68) 100%);
-    }
-    .left-copy {
-        position: absolute;
-        bottom: 52px;
-        left: 52px;
-        z-index: 2;
-        color: #fff;
-        max-width: 380px;
-    }
-    .left-logo {
-        font-family: 'Syne', sans-serif;
-        font-size: 28px;
-        font-weight: 800;
-        letter-spacing: 1px;
-        margin-bottom: 10px;
-        line-height: 1;
-    }
-    .left-logo span { color: var(--brand-dark); }
-    .left-tagline {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.82);
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        margin-bottom: 18px;
-    }
-    .left-lead {
-        font-size: 15px;
-        color: rgba(255,255,255,0.92);
-        line-height: 1.7;
-        margin-bottom: 28px;
-        max-width: 340px;
-    }
-    .brand-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255,255,255,0.16);
-        border: 1px solid rgba(255,255,255,0.20);
-        color: #f8fafc;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: .4px;
-        text-transform: uppercase;
-        padding: 6px 14px;
-        border-radius: 9999px;
-        margin-bottom: 24px;
-    }
-    .brand-pill i {
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        background: var(--brand);
-        display: inline-block;
-        flex-shrink: 0;
-    }
-    .left-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 12px;
-    }
-    .left-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 12px;
-        border-radius: 9999px;
-        background: rgba(255,255,255,0.12);
-        color: #f8fafc;
-        font-size: 12px;
-        letter-spacing: .04em;
-    }
-    .left-copy h2 {
-        font-family: 'Syne', sans-serif;
-        font-size: 34px;
-        font-weight: 800;
-        line-height: 1.15;
-        margin-bottom: 10px;
+        z-index: 1;
+        background: linear-gradient(
+            130deg,
+            rgba(6,2,2,0.92) 0%,
+            rgba(6,2,2,0.80) 45%,
+            rgba(6,2,2,0.55) 100%
+        );
     }
 
-    /* ── RIGHT PANEL ────────────────────────────────────────── */
-    .right {
-        flex: 1;
+    /* ── DESKTOP LAYOUT WRAPPER ── */
+    .page {
         position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 44px 24px;
-        overflow: hidden;
-    }
-    /* right panel uses the page background (no separate layer) */
-    .box {
-        position: relative;
+        z-index: 2;
         width: 100%;
-        max-width: 520px;
-        background: rgba(253, 252, 252, 0.62);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    /* ── LEFT PANEL — hidden on mobile/tablet, shown on desktop ── */
+    .left {
+        display: none; /* mobile-first: hidden */
+        color: #fff;
+    }
+
+    /* ── RIGHT: the card — always visible ── */
+    .right {
+        width: 100%;
+        max-width: 440px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ── CARD ── */
+    .box {
+        width: 100%;
+        background: var(--surface);
         border-radius: var(--radius-xl);
-        border: 1px solid rgba(255,255,255,0.14);
-        padding: 44px 38px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), background var(--transition);
-        animation: up .45s both;
-        backdrop-filter: blur(2px) saturate(120%);
+        padding: 40px 36px 36px;
+        box-shadow:
+            0 0 0 1px rgba(0,0,0,0.06),
+            0 20px 60px rgba(0,0,0,0.30),
+            0 4px 16px rgba(0,0,0,0.12);
+        position: relative;
+        overflow: hidden;
+        animation: rise .44s cubic-bezier(.22,1,.36,1) both;
     }
-    .box:hover {
-        transform: translateY(-2px);
-        border-color: rgba(236, 63, 63, 0.28);
-        box-shadow: 0 55px 60px rgba(247, 248, 246, 0.28);
+
+    /* brand-red top stripe */
+    .box::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--brand) 0%, var(--brand-dark) 100%);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     }
-    @keyframes up {
-        from { opacity:0; transform:translateY(14px); }
+
+    @keyframes rise {
+        from { opacity:0; transform:translateY(20px) scale(0.97); }
         to   { opacity:1; transform:none; }
     }
+
+    /* card brand row */
+    .box-brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        margin-bottom: 26px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .box-brand-icon {
+        width: 38px; height: 38px;
+        background: var(--brand);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 10px rgba(78,3,3,.30);
+    }
+
+    .box-brand-icon svg {
+        width: 19px; height: 19px;
+        stroke: #fff; fill: none;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .box-brand-text { line-height: 1.25; }
+
+    .box-brand-name {
+        font-family: 'Syne', sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: 0.2px;
+    }
+
+    .box-brand-name span { color: var(--brand); }
+
+    .box-brand-sub {
+        font-size: 10px;
+        color: var(--text-sub);
+        margin-top: 2px;
+        letter-spacing: 0.2px;
+    }
+
+    /* heading */
     .box h2 {
         font-family: 'Syne', sans-serif;
         font-size: 26px;
         font-weight: 800;
-        margin-bottom: 8px;
+        color: var(--text);
+        margin-bottom: 5px;
+        line-height: 1.15;
     }
-    .box .sub { font-size: 13px; color: #475569; margin-bottom: 24px; }
-    .divider { height: 1px; background: var(--border); opacity: .55; margin-bottom: 24px; }
 
-    /* ── USERNAME FIELD — floating label + validation (NEW) ─── */
+    .box .sub {
+        font-size: 13px;
+        color: var(--text-sub);
+        margin-bottom: 26px;
+    }
+
+    .divider {
+        height: 1px;
+        background: var(--border);
+        margin-bottom: 26px;
+    }
+
+    /* ── ERROR ── */
+    .error-message {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 14px;
+        background: var(--brand-light);
+        border: 1px solid rgba(78,3,3,.18);
+        border-radius: var(--radius-md);
+        color: var(--brand);
+        font-size: 13px;
+        margin-bottom: 20px;
+        line-height: 1.5;
+        animation: shake .38s ease;
+    }
+
+    @keyframes shake {
+        0%,100% { transform:translateX(0); }
+        20%      { transform:translateX(-5px); }
+        40%      { transform:translateX(5px); }
+        60%      { transform:translateX(-3px); }
+        80%      { transform:translateX(3px); }
+    }
+
+    .error-message svg { width:15px; height:15px; flex-shrink:0; }
+
+    /* ── FLOATING LABEL FIELD (email/LRN) ── */
     .username-field {
         position: relative;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
     }
+
     .username-field input {
         width: 100%;
-        padding: 18px 35px 10px 15px;
+        height: 54px;
+        padding: 20px 38px 8px 14px;
         border: 1.5px solid var(--border);
         border-radius: var(--radius-md);
         font-family: 'DM Sans', sans-serif;
         font-size: 14px;
-        outline: none;
-        background: #fafaf8;
         color: var(--text);
-        height: 47px;
-        transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+        background: #f8fafc;
+        outline: none;
+        -webkit-appearance: none;
+        transition: border-color var(--t), box-shadow var(--t), background var(--t);
     }
+
     .username-field label {
         position: absolute;
-        left: 13px;
-        top: 50%;
+        left: 14px; top: 50%;
         transform: translateY(-50%);
         font-size: 14px;
-        color: var(--muted);
+        color: var(--text-sub);
         font-weight: 500;
         pointer-events: none;
-        transition: top 160ms ease, transform 160ms ease, font-size 160ms ease,
-                    color 160ms ease, letter-spacing 160ms ease;
+        transition: top 140ms ease, transform 140ms ease, font-size 140ms ease,
+                    color 140ms ease, letter-spacing 140ms ease;
     }
-    /* float up when focused or filled */
+
     .username-field input:focus ~ label,
     .username-field input:not(:placeholder-shown) ~ label {
-        top: 10px;
+        top: 11px;
         transform: translateY(0);
         font-size: 10px;
         font-weight: 700;
         letter-spacing: .5px;
         text-transform: uppercase;
     }
-    /* focus — blue */
-   .username-field input:focus {
-    border-color: var(--border);   /* keep default border */
-    background: #fafaf8;           /* same as normal */
-    box-shadow: none;              /* remove glow */
-}
-    .username-field input:focus ~ label { color: var(--focus-border); }
-    /* valid — green */
-    .username-field.is-valid input {
-        border-color: var(--valid-border);
-        background: var(--valid-bg);
-        box-shadow: 0 0 0 3px var(--valid-ring);
-    }
-    .username-field.is-valid label { color: var(--valid-border); }
-    /* invalid — red */
-    .username-field.is-invalid input {
-        border-color: var(--invalid-border);
-        background: var(--invalid-bg);
-        box-shadow: 0 0 0 3px var(--invalid-ring);
-    }
-    .username-field.is-invalid label { color: var(--invalid-border); }
 
-    /* status icons */
+    .username-field input:focus {
+        border-color: var(--brand);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(78,3,3,.09);
+    }
+
+    .username-field input:focus ~ label { color: var(--brand); }
+
+    .username-field.is-valid input   { border-color:var(--valid);   background:var(--valid-bg);   box-shadow:0 0 0 3px var(--valid-ring); }
+    .username-field.is-valid label   { color:var(--valid); }
+    .username-field.is-invalid input { border-color:var(--invalid); background:var(--invalid-bg); box-shadow:0 0 0 3px var(--invalid-ring); }
+    .username-field.is-invalid label { color:var(--invalid); }
+
     .username-field .field-icon {
         position: absolute;
-        right: 13px;
-        top: 50%;
-        transform: translateY(-50%) scale(0.6);
+        right: 13px; top: 50%;
+        transform: translateY(-50%) scale(.6);
         width: 16px; height: 16px;
         pointer-events: none;
-        opacity: 0;
-        fill: none;
-        stroke-width: 2.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        transition: opacity 200ms ease, transform 200ms ease;
-    }
-    .username-field.is-valid   .icon-valid   { opacity:1; transform: translateY(-50%) scale(1); stroke: var(--valid-border);   }
-    .username-field.is-invalid .icon-invalid { opacity:1; transform: translateY(-50%) scale(1); stroke: var(--invalid-border); }
-
-    /* Email / LRN type badge */
-    .type-badge {
-        position: absolute;
-        right: 13px;
-        top: 8px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .4px;
-        text-transform: uppercase;
-        padding: 2px 7px;
-        border-radius: 9999px;
-        opacity: 0;
-        transform: scale(0.85);
-        pointer-events: none;
+        opacity: 0; fill: none;
+        stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
         transition: opacity 180ms ease, transform 180ms ease;
     }
-    .type-badge.show       { opacity: 1; transform: scale(1); }
-    .type-badge.email-type { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-    .type-badge.lrn-type   { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
 
-    /* hint below username */
+    .username-field.is-valid   .icon-valid   { opacity:1; transform:translateY(-50%) scale(1); stroke:var(--valid); }
+    .username-field.is-invalid .icon-invalid { opacity:1; transform:translateY(-50%) scale(1); stroke:var(--invalid); }
+
+    .type-badge {
+        position: absolute;
+        right: 13px; top: 9px;
+        font-size: 9px; font-weight: 700;
+        letter-spacing: .5px; text-transform: uppercase;
+        padding: 2px 7px; border-radius: 9999px;
+        opacity: 0; transform: scale(.8);
+        pointer-events: none;
+        transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .type-badge.show       { opacity:1; transform:scale(1); }
+    .type-badge.email-type { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .type-badge.lrn-type   { background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; }
+
     .username-hint {
         font-size: 11px;
         margin-top: 5px;
         padding-left: 2px;
         min-height: 16px;
         opacity: 0;
-        transition: color 180ms ease, opacity 180ms ease;
+        transition: color 160ms ease, opacity 160ms ease;
     }
-    .username-field.is-valid   .username-hint { color: var(--valid-border);   opacity: 1; }
-    .username-field.is-invalid .username-hint { color: var(--invalid-border); opacity: 1; }
 
-    /* ── PASSWORD FIELD — original, untouched ───────────────── */
-    .form-group { margin-bottom: 16px; }
+    .username-field.is-valid   .username-hint { color:var(--valid);   opacity:1; }
+    .username-field.is-invalid .username-hint { color:var(--invalid); opacity:1; }
+
+    /* ── PASSWORD ── */
+    .form-group { margin-bottom: 0; margin-top: 16px; }
+
     .form-group label {
         display: block;
         font-size: 11px;
-        font-weight: 600;
-        color: var(--muted);
+        font-weight: 700;
+        color: var(--text-sub);
         text-transform: uppercase;
-        letter-spacing: .4px;
-        margin-bottom: 5px;
+        letter-spacing: .5px;
+        margin-bottom: 6px;
     }
-    .form-group input {
+
+    .password-input { position: relative; }
+
+    .password-input input {
         width: 100%;
-        padding: 11px 13px;
+        padding: 12px 44px 12px 14px;
         border: 1.5px solid var(--border);
         border-radius: var(--radius-md);
         font-family: 'DM Sans', sans-serif;
         font-size: 14px;
         outline: none;
-        background: #fafaf8;
+        background: #f8fafc;
         color: var(--text);
-        transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+        -webkit-appearance: none;
+        transition: border-color var(--t), box-shadow var(--t), background var(--t);
     }
-    .form-group input:focus {
+
+    .password-input input:focus {
         border-color: var(--brand);
         background: var(--surface);
-        box-shadow: 0 0 0 3px rgba(78,3,3,.10);
+        box-shadow: 0 0 0 3px rgba(78,3,3,.09);
     }
-    .password-input { position: relative; }
-    .password-input input { padding-right: 42px; }
+
     .toggle-password {
         position: absolute;
-        right: 10px;
-        top: 50%;
+        right: 10px; top: 50%;
         transform: translateY(-50%);
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--muted);
-        display: flex;
-        align-items: center;
-        padding: 0;
-        transition: color var(--transition);
+        background: none; border: none;
+        cursor: pointer; color: #94a3b8;
+        display: flex; align-items: center;
+        padding: 6px; border-radius: 6px;
+        transition: color var(--t), background var(--t);
     }
-    .toggle-password:hover { color: var(--brand); }
+
+    .toggle-password:hover { color: var(--brand); background: var(--brand-light); }
     .toggle-password svg { width: 16px; height: 16px; }
 
-    /* ── LOGIN BUTTON ───────────────────────────────────────── */
+    /* ── SUBMIT ── */
     .login-btn {
         width: 100%;
-        padding: 12px;
+        height: 50px;
         border: none;
         border-radius: var(--radius-md);
         background: var(--brand);
         color: #fff;
         font-family: 'DM Sans', sans-serif;
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 600;
+        letter-spacing: .2px;
         cursor: pointer;
-        margin-top: 6px;
-        transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+        margin-top: 24px;
+        position: relative;
+        overflow: hidden;
+        transition: background var(--t), transform var(--t), box-shadow var(--t);
     }
-    /* lights up bright red when username is valid */
-    .login-btn.ready {
-        background: var(--brand-dark);
-        box-shadow: 0 4px 14px rgba(236,63,63,.35);
-    }
-    .login-btn:hover {
-        background: var(--brand-dark);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(78,3,3,.28);
-    }
-    .login-btn:active { transform: none; }
 
-    /* ── ERROR MSG ──────────────────────────────────────────── */
-    .error-message {
-        background: var(--brand-light);
-        border: 1px solid rgba(78,3,3,.2);
-        color: var(--brand);
-        font-size: 13px;
-        padding: 10px 13px;
-        border-radius: var(--radius-md);
+    .login-btn::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 60%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+        transition: left .45s ease;
+        pointer-events: none;
+    }
+
+    .login-btn:hover {
+        background: var(--brand-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(78,3,3,.30);
+    }
+
+    .login-btn:hover::after { left: 150%; }
+    .login-btn:active { transform: none; box-shadow: none; }
+
+    .login-btn.ready {
+        box-shadow: 0 2px 10px rgba(78,3,3,.22);
+    }
+
+    /* card footnote */
+    .box-note {
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        font-size: 11.5px;
+        color: var(--text-sub);
+        line-height: 1.65;
+    }
+
+    /* ── LEFT PANEL CONTENT STYLES ── */
+    .left-copy {
+        max-width: 420px;
+    }
+
+    .left-logo {
+        font-family: 'Syne', sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        line-height: 1;
+    }
+
+    .left-logo span { color: var(--brand-dark); }
+
+    .left-tagline {
+        font-size: 10px;
+        color: rgba(255,255,255,0.52);
+        font-weight: 700;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin-bottom: 36px;
+    }
+
+    .left-copy h2 {
+        font-family: 'Syne', sans-serif;
+        font-size: clamp(32px, 3.5vw, 48px);
+        font-weight: 800;
+        line-height: 1.10;
         margin-bottom: 16px;
-        display: flex;
+        text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+    }
+
+    .left-lead {
+        font-size: 14px;
+        color: rgba(255,255,255,0.70);
+        line-height: 1.80;
+        margin-bottom: 36px;
+        max-width: 360px;
+    }
+
+    .brand-pill {
+        display: inline-flex;
         align-items: center;
         gap: 8px;
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.16);
+        color: rgba(255,255,255,0.85);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        padding: 8px 18px;
+        border-radius: 9999px;
+        backdrop-filter: blur(6px);
     }
-    .error-message svg { width: 15px; height: 15px; flex-shrink: 0; }
 
-    @media(max-width:820px) {
-        .left { display: none; }
+    .brand-pill i {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--brand-dark);
+        display: inline-block;
+        flex-shrink: 0;
+        animation: blink 2s ease infinite;
+    }
+
+    @keyframes blink {
+        0%,100% { opacity:1; }
+        50%      { opacity:0.4; }
+    }
+
+    /* feature badges row */
+    .left-badges {
+        display: flex;
+        gap: 10px;
+        margin-top: 28px;
+        flex-wrap: wrap;
+    }
+
+    .left-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        color: rgba(255,255,255,0.75);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        backdrop-filter: blur(4px);
+    }
+
+    .left-badge svg {
+        width: 12px; height: 12px;
+        stroke: rgba(255,255,255,0.60);
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+    }
+
+    /* ── BREAKPOINTS ── */
+
+    /* Tablet and up: show left panel, side-by-side layout */
+    @media (min-width: 1025px) {
+        body {
+            padding: 0;
+            justify-content: stretch;
+            flex-direction: row;
+        }
+
+        .page {
+            display: grid;
+            grid-template-columns: 1fr 520px;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* left: full height, flex column, content at bottom */
+        .left {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 56px 60px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* right: frosted panel */
         .right {
-            padding: 28px 16px;
+            max-width: none;
+            position: relative;
+            z-index: 2;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 44px;
+            min-height: 100vh;
         }
-        .box {
-            max-width: 100%;
-            padding: 32px 24px;
-            box-shadow: var(--shadow-md);
-        }
+
+        .box { max-width: 420px; }
     }
 
-    @media(max-width:540px) {
-        .box {
-            padding: 24px 18px;
-        }
-        .box h2 {
-            font-size: 22px;
-        }
-        .box .sub {
-            font-size: 12px;
-        }
+    /* Mobile adjustments */
+    @media (max-width: 480px) {
+        body { padding: 20px 14px; }
+        .box { padding: 32px 22px 28px; border-radius: 20px; }
+        .box h2 { font-size: 22px; }
+        .box-brand-name { font-size: 14px; }
     }
     </style>
 </head>
 <body>
 
-<!-- LEFT PANEL -->
-<div class="left">
+<div class="page">
+
+    <!-- LEFT PANEL — visible on desktop only (display:none on mobile via CSS) -->
+    <div class="left">
         <div class="left-copy">
-                <div class="left-logo">Gibraltar <span>AMES</span></div>
-                <div class="left-tagline">Attendance Monitoring and Enrollment System</div>
-                <h2>Welcome back!</h2>
-                <p class="left-lead">Access student records, attendance, and grades in a secure portal built for educators and learners.</p>
-                
-                <div class="brand-pill"><i></i>Staff &amp; Student Portal</div>
+            <div class="left-logo">Gibraltar <span>AMES</span></div>
+            <div class="left-tagline">Attendance Monitoring and Enrollment System</div>
+            <h2>Welcome back!</h2>
+            <p class="left-lead">Access student records, attendance, and grades in a secure portal built for educators and learners.</p>
+            <div class="brand-pill"><i></i>Staff &amp; Student Portal</div>
+
+            <div class="left-badges">
+                <div class="left-badge">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    Student Records
+                </div>
+                <div class="left-badge">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    Attendance
+                </div>
+                <div class="left-badge">
+                    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    Grades
+                </div>
+                <div class="left-badge">
+                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Secure Access
+                </div>
             </div>
         </div>
+    </div>
 
-<!-- RIGHT PANEL -->
-<div class="right">
-    <div class="box">
-        <h2>Sign In</h2>
-        <p class="sub">Enter your credentials to continue</p>
-        <div class="divider"></div>
+    <!-- RIGHT PANEL — always visible -->
+    <div class="right">
+        <div class="box">
 
-        <?php if ($error): ?>
-        <div class="error-message">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <?= htmlspecialchars($error) ?>
-        </div>
-        <?php endif; ?>
-
-        <form method="POST">
-
-            <!-- USERNAME — floating label + real-time validation (NEW) -->
-            <div class="username-field" id="field-username">
-                <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    placeholder=" "
-                    autocomplete="username"
-                    required
-                >
-                <label for="username">Email / LRN</label>
-
-                <span class="type-badge" id="type-badge"></span>
-
-                <svg class="field-icon icon-valid" viewBox="0 0 24 24">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <svg class="field-icon icon-invalid" viewBox="0 0 24 24">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-
-                <p class="username-hint" id="username-hint"></p>
-            </div>
-
-            <!-- PASSWORD — 100% original -->
-            <div class="form-group">
-                <label for="password">Password</label>
-                <div class="password-input">
-                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
-                    <button type="button" class="toggle-password" onclick="togglePassword()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </button>
+            <div class="box-brand">
+                <div class="box-brand-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="box-brand-text">
+                    <div class="box-brand-name">Gibraltar <span>AMES</span></div>
+                    <div class="box-brand-sub">Attendance Monitoring &amp; Enrollment System</div>
                 </div>
             </div>
 
-            <button type="submit" name="login" class="login-btn" id="login-btn">Log In</button>
-        </form>
+            <h2>Sign In</h2>
+            <p class="sub">Enter your credentials to continue</p>
+            <div class="divider"></div>
+
+            <?php if ($error): ?>
+            <div class="error-message">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <?= htmlspecialchars($error) ?>
+            </div>
+            <?php endif; ?>
+
+            <form method="POST" novalidate>
+
+                <!-- USERNAME — floating label + real-time validation -->
+                <div class="username-field" id="field-username">
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder=" "
+                        autocomplete="username"
+                        autocapitalize="none"
+                        required
+                    >
+                    <label for="username">Email / LRN</label>
+
+                    <span class="type-badge" id="type-badge"></span>
+
+                    <svg class="field-icon icon-valid" viewBox="0 0 24 24">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <svg class="field-icon icon-invalid" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+
+                    <p class="username-hint" id="username-hint"></p>
+                </div>
+
+                <!-- PASSWORD -->
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-input">
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        <button type="button" class="toggle-password" onclick="togglePassword()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" name="login" class="login-btn" id="login-btn">Log In</button>
+            </form>
+
+            <p class="box-note">
+                Use your staff email address or your 12-digit LRN as a student.
+            </p>
+
+        </div>
     </div>
+
 </div>
 
 <script>
-    /* ── PASSWORD TOGGLE — original, untouched ── */
     function togglePassword() {
-        const input = document.getElementById("password");
+        const input  = document.getElementById("password");
         const button = document.querySelector(".toggle-password");
-        const isHidden = input.type === "password";
-        input.type = isHidden ? "text" : "password";
-        button.innerHTML = isHidden
+        const hidden = input.type === "password";
+        input.type   = hidden ? "text" : "password";
+        button.innerHTML = hidden
             ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>'
             : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
     }
 
-    /* ── USERNAME VALIDATION — new ── */
     (function () {
         const input    = document.getElementById('username');
         const fieldEl  = document.getElementById('field-username');
@@ -591,11 +794,7 @@ unset($_SESSION['login_error']);
         }
 
         function validate(val) {
-            if (!val) {
-                setState('', '');
-                badgeEl.className = 'type-badge';
-                return;
-            }
+            if (!val) { setState('', ''); badgeEl.className = 'type-badge'; return; }
 
             const hasAt   = val.includes('@');
             const allNums = /^\d+$/.test(val);
@@ -605,19 +804,14 @@ unset($_SESSION['login_error']);
                 badgeEl.className   = 'type-badge email-type show';
                 const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
                 setState(ok ? 'is-valid' : 'is-invalid', ok ? 'Looks good!' : 'Enter a valid email address');
-
             } else if (allNums) {
                 badgeEl.textContent = 'LRN';
                 badgeEl.className   = 'type-badge lrn-type show';
-                if (val.length === 12) {
-                    setState('is-valid', '12-digit LRN verified');
-                } else {
-                    const left = 12 - val.length;
-                    setState('is-invalid', left > 0
-                        ? `${left} more digit${left === 1 ? '' : 's'} needed`
-                        : 'LRN must be exactly 12 digits');
-                }
-
+                const left = 12 - val.length;
+                if (val.length === 12) setState('is-valid', '12-digit LRN verified');
+                else setState('is-invalid', left > 0
+                    ? `${left} more digit${left === 1 ? '' : 's'} needed`
+                    : 'LRN must be exactly 12 digits');
             } else {
                 badgeEl.className = 'type-badge';
                 setState('is-invalid', 'Enter a valid email or 12-digit LRN');

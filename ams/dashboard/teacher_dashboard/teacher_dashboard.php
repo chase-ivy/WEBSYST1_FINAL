@@ -19,6 +19,7 @@ $staff = $stmt->fetch();
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="teacher.css">
     <link rel="stylesheet" href="../mobile-nav.css">
+    <link rel="stylesheet" href="../dashboard-dark-bg.css">
 </head>
 <body>
 <header class="topbar">
@@ -196,6 +197,7 @@ $staff = $stmt->fetch();
 
 <!-- Mobile Navigation Script -->
 <script src="../mobile-nav.js"></script>
+<script src="../dashboard-bg.js"></script>
 
 </body>
 </html>
