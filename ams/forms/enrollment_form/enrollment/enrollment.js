@@ -316,10 +316,12 @@ function toggleIpOther() {
 async function loadEnrollmentLookups() {
     const motherTongueSelect = document.getElementById('Mother_Tongue');
     const ipGroupSelect = document.getElementById('IP_Group');
+    const religionSelect = document.getElementById('religion_id');
     if (!motherTongueSelect || !ipGroupSelect) return;
 
     const injectedMotherTongues   = Array.isArray(window.MOTHER_TONGUES) ? window.MOTHER_TONGUES : [];
     const injectedIndigenousGroups = Array.isArray(window.INDIGENOUS_GROUPS) ? window.INDIGENOUS_GROUPS : [];
+    const injectedReligions = Array.isArray(window.RELIGIONS) ? window.RELIGIONS : [];
 
     if (injectedMotherTongues.length) {
         populateLookupSelect(motherTongueSelect, injectedMotherTongues, 'id', 'name');
@@ -327,26 +329,39 @@ async function loadEnrollmentLookups() {
     if (injectedIndigenousGroups.length) {
         populateLookupSelect(ipGroupSelect, injectedIndigenousGroups, 'id', 'name');
     }
+    if (religionSelect && injectedReligions.length) {
+        populateLookupSelect(religionSelect, injectedReligions, 'id', 'name');
+    }
 
-    if (injectedMotherTongues.length && injectedIndigenousGroups.length) {
+    if (injectedMotherTongues.length && injectedIndigenousGroups.length && (!religionSelect || injectedReligions.length)) {
         return;
     }
 
-    if (!API?.mother_tongues || !API?.indigenous_groups) {
+    if (!API?.mother_tongues || !API?.indigenous_groups || (religionSelect && !API?.religions)) {
         return;
     }
 
     try {
-        const [motherTonguesResponse, indigenousGroupsResponse] = await Promise.all([
+        const promises = [
             API.mother_tongues.list(),
             API.indigenous_groups.list()
-        ]);
+        ];
+        if (religionSelect) {
+            promises.push(API.religions.list());
+        }
+
+        const responses = await Promise.all(promises);
+        const motherTonguesResponse = responses[0];
+        const indigenousGroupsResponse = responses[1];
+        const religionsResponse = responses[2];
 
         const motherTongues = Array.isArray(motherTonguesResponse.data) ? motherTonguesResponse.data : [];
         const indigenousGroups = Array.isArray(indigenousGroupsResponse.data) ? indigenousGroupsResponse.data : [];
+        const religions = religionsResponse && Array.isArray(religionsResponse.data) ? religionsResponse.data : [];
 
         if (motherTongues.length) populateLookupSelect(motherTongueSelect, motherTongues, 'mother_tongue_id', 'name');
         if (indigenousGroups.length) populateLookupSelect(ipGroupSelect, indigenousGroups, 'indigenous_group_id', 'name');
+        if (religions.length) populateLookupSelect(religionSelect, religions, 'religion_id', 'name');
     } catch (error) {
         console.error('Failed to load lookup values:', error);
     }
@@ -700,19 +715,32 @@ function loadSpecialNeedsTypes() {
     const diagnosisContainer = document.getElementById('diagnosisTypes');
     const manifestationContainer = document.getElementById('manifestationTypes');
     
-    if (!diagnosisContainer || !manifestationContainer) return;
+    if (!diagnosisContainer || !manifestationContainer) {
+        console.warn('Special needs containers not found');
+        return;
+    }
 
     // Only load if not already loaded
-    if (diagnosisContainer.hasAttribute('data-loaded')) return;
+    if (diagnosisContainer.hasAttribute('data-loaded')) {
+        console.log('Special needs types already loaded');
+        return;
+    }
     diagnosisContainer.setAttribute('data-loaded', 'true');
 
     API.special_needs_types.list().then(response => {
         const data = response.data || response || [];
         const types = Array.isArray(data) ? data : [];
         
+        console.log('Special needs types fetched:', types.length, 'items');
+        console.log('Sample items:', types.slice(0, 3));
+        
         // Separate diagnoses and manifestations by category (case-insensitive comparison)
         const diagnoses = types.filter(t => !t.category || t.category.toLowerCase() === 'diagnosis');
         const manifestations = types.filter(t => t.category && t.category.toLowerCase() === 'manifestation');
+
+        console.log('Diagnoses found:', diagnoses.length);
+        console.log('Manifestations found:', manifestations.length);
+        console.log('Manifestation items:', manifestations);
 
         // Render diagnoses
         if (diagnoses.length === 0) {

@@ -173,7 +173,47 @@
                         <option value="Cebuano[5][]">Cebuano</option>
                         <option value="English[6][]">English</option>
                     </select>
-                    <input type="text" id="Mother_Tongue" name="Mother_Tongue" placeholder="Please specify" style="display:none; margin-top:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif;">
+                    <input type="text" id="Mother_Tongue_Other" name="Mother_Tongue" placeholder="Please specify" style="display:none; margin-top:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif;">
+                </div>
+                <div class="field">
+                    <label>Religion</label>
+                    <select name="religion_id" id="religion_id">
+                        <option value="" hidden>Select religion</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Early Learning Program -->
+            <div class="field" style="margin-top:16px;">
+                <label>Attended Early Learning Program?</label>
+                <div class="radio-group">
+                    <label class="radio-pill">
+                        <input type="radio" name="attended_early_learning_program" value="1" onchange="toggle('earlyLearningBox', true)"> Yes
+                    </label>
+                    <label class="radio-pill">
+                        <input type="radio" name="attended_early_learning_program" value="0" onchange="toggle('earlyLearningBox', false)"> No
+                    </label>
+                </div>
+            </div>
+
+            <!-- Early Learning Program Name (collapsible) -->
+            <div class="collapse" id="earlyLearningBox">
+                <div class="field">
+                    <label>Early Learning Program Name</label>
+                    <input type="text" name="early_learning_program_name" placeholder="e.g., Kinder Prep, Preschool XYZ, etc.">
+                </div>
+            </div>
+
+            <!-- Learning Classification (Graded / Non-Graded) -->
+            <div class="field" style="margin-top:16px;">
+                <label>Learning Classification</label>
+                <div class="radio-group">
+                    <label class="radio-pill">
+                        <input type="radio" name="learning_classification" value="graded" required> Graded
+                    </label>
+                    <label class="radio-pill">
+                        <input type="radio" name="learning_classification" value="non-graded"> Non-Graded
+                    </label>
                 </div>
             </div>
 
