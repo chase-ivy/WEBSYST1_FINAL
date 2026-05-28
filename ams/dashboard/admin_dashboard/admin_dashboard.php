@@ -174,7 +174,6 @@ $staffList = getStaffList($pdo);
                                     $role = htmlspecialchars($staff['role'] ?? 'unassigned', ENT_QUOTES, 'UTF-8');
                                     $badgeClass = match(strtolower($role)) {
                                         'admin'   => 'badge-admin',
-                                        'teacher' => 'badge-teacher',
                                         'staff'   => 'badge-staff',
                                         default   => 'badge-default',
                                     };

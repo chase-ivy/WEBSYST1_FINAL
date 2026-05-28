@@ -90,7 +90,7 @@
     };
 
     window.getRoleBadgeClass = function (role) {
-        const map = { admin: 'badge-admin', teacher: 'badge-teacher', staff: 'badge-staff' };
+        const map = { admin: 'badge-admin', staff: 'badge-staff' };
         return map[(role || '').toLowerCase()] || 'badge-default';
     };
 

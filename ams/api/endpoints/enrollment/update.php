@@ -308,18 +308,28 @@ try {
             $allergyDescs = ['default' => trim((string)$allergyDescs)];
         }
         if (!empty($allergyTypeIds)) {
-            $stmt = $pdo->prepare('INSERT INTO enrollment_medical_allergies (medical_information_id, allergy_type_id, description) VALUES (?, ?, ?)');
-            foreach ($allergyTypeIds as $typeId) {
-                $stmt->execute([$medicalInformationId, $typeId, strOrNull($allergyDescs[$typeId] ?? $allergyDescs['default'] ?? null)]);
+            // Validate that all allergy type IDs exist
+            $allergyTypeIds = validateLookupIds($pdo, 'medical_allergy_types', $allergyTypeIds, 'medical_allergy_type_id', 'allergy type');
+            
+            if (!empty($allergyTypeIds)) {
+                $stmt = $pdo->prepare('INSERT INTO enrollment_medical_allergies (medical_information_id, allergy_type_id, description) VALUES (?, ?, ?)');
+                foreach ($allergyTypeIds as $typeId) {
+                    $stmt->execute([$medicalInformationId, $typeId, strOrNull($allergyDescs[$typeId] ?? $allergyDescs['default'] ?? null)]);
+                }
             }
         }
 
         $conditionTypeIds = parseIds($data['condition_type_id'] ?? []);
         $conditionDesc = strOrNull($data['condition_description'] ?? null);
         if (!empty($conditionTypeIds)) {
-            $stmt = $pdo->prepare('INSERT INTO enrollment_medical_conditions (medical_information_id, condition_type_id, description) VALUES (?, ?, ?)');
-            foreach ($conditionTypeIds as $typeId) {
-                $stmt->execute([$medicalInformationId, $typeId, $conditionDesc]);
+            // Validate that all condition type IDs exist
+            $conditionTypeIds = validateLookupIds($pdo, 'medical_condition_types', $conditionTypeIds, 'medical_condition_type_id', 'medical condition type');
+            
+            if (!empty($conditionTypeIds)) {
+                $stmt = $pdo->prepare('INSERT INTO enrollment_medical_conditions (medical_information_id, condition_type_id, description) VALUES (?, ?, ?)');
+                foreach ($conditionTypeIds as $typeId) {
+                    $stmt->execute([$medicalInformationId, $typeId, $conditionDesc]);
+                }
             }
         }
 
@@ -343,9 +353,14 @@ try {
         $familyTypeIds = parseIds($data['family_condition_type_id'] ?? []);
         $familyDesc = strOrNull($data['family_condition_description'] ?? null);
         if (!empty($familyTypeIds)) {
-            $stmt = $pdo->prepare('INSERT INTO enrollment_family_medical_history (medical_information_id, family_history_type_id, description) VALUES (?, ?, ?)');
-            foreach ($familyTypeIds as $typeId) {
-                $stmt->execute([$medicalInformationId, $typeId, $familyDesc]);
+            // Validate that all family history type IDs exist
+            $familyTypeIds = validateLookupIds($pdo, 'family_medical_history_types', $familyTypeIds, 'family_medical_history_type_id', 'family medical history type');
+            
+            if (!empty($familyTypeIds)) {
+                $stmt = $pdo->prepare('INSERT INTO enrollment_family_medical_history (medical_information_id, family_history_type_id, description) VALUES (?, ?, ?)');
+                foreach ($familyTypeIds as $typeId) {
+                    $stmt->execute([$medicalInformationId, $typeId, $familyDesc]);
+                }
             }
         }
     }

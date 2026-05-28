@@ -80,8 +80,22 @@ try {
 
     // 3. Create enrollment (verified)
     $queueNumber = 0;
-    $pdo->prepare('INSERT INTO enrollments (student_id, school_year, grade_level, enrollment_status, queue_number, verified_by, verified_at) VALUES (?, ?, ?, ?, ?, ?, NOW())')
-        ->execute([$studentId, $schoolYear, $gradeLevel, 'verified', $queueNumber, $verifiedBy]);
+    
+    // Extract optional enrollment fields from request (similar to enrollment form)
+    $motherTongueId         = intval($data['mother_tongue_id'] ?? 0) ?: null;
+    $religionId             = intval($data['religion_id'] ?? 0) ?: null;
+    $isIndigenous           = $data['is_indigenous'] ? 1 : 0;
+    $indigenousGroupId      = intval($data['indigenous_group_id'] ?? 0) ?: null;
+    $isFourPsBeneficiary    = $data['is_four_ps_beneficiary'] ? 1 : 0;
+    $fourPsHouseholdId      = $isFourPsBeneficiary ? strval($data['four_ps_household_id'] ?? null) : null;
+    $isDisabled             = $data['is_learner_with_disability'] ? 1 : 0;
+    $isReturning            = $data['is_returning_learner'] ? 1 : 0;
+    $learningClassification = in_array(strtolower($data['learning_classification'] ?? ''), ['graded', 'non-graded'], true) ? strtolower($data['learning_classification']) : 'graded';
+    $attendedELP            = $data['attended_early_learning_program'] ? 1 : 0;
+    $elpName                = $attendedELP ? (trim($data['early_learning_program_name'] ?? '') ?: null) : null;
+    
+    $pdo->prepare('INSERT INTO enrollments (student_id, school_year, grade_level, enrollment_status, queue_number, verified_by, verified_at, mother_tongue_id, religion_id, is_indigenous, indigenous_group_id, is_four_ps_beneficiary, four_ps_household_id, is_learner_with_disability, is_returning_learner, learning_classification, attended_early_learning_program, early_learning_program_name) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$studentId, $schoolYear, $gradeLevel, 'verified', $queueNumber, $verifiedBy, $motherTongueId, $religionId, $isIndigenous, $indigenousGroupId, $isFourPsBeneficiary, $fourPsHouseholdId, $isDisabled, $isReturning, $learningClassification, $attendedELP, $elpName]);
     $enrollmentId = intval($pdo->lastInsertId());
 
     // 4. Create student_school_records (snapshot)

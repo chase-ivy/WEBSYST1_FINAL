@@ -255,12 +255,17 @@ try {
         $allergyDescs = ['default' => trim((string)$allergyDescs)];
     }
     if (!empty($allergyTypeIds)) {
-        $stmt = $pdo->prepare('INSERT INTO enrollment_medical_allergies (medical_information_id, allergy_type_id, description) VALUES (?, ?, ?)');
-        foreach ($allergyTypeIds as $typeId) {
-            $stmt->execute([
-                $medicalInfoId, $typeId,
-                strOrNull($allergyDescs[$typeId] ?? $allergyDescs['default'] ?? null),
-            ]);
+        // Validate that all allergy type IDs exist
+        $allergyTypeIds = validateLookupIds($pdo, 'medical_allergy_types', $allergyTypeIds, 'medical_allergy_type_id', 'allergy type');
+        
+        if (!empty($allergyTypeIds)) {
+            $stmt = $pdo->prepare('INSERT INTO enrollment_medical_allergies (medical_information_id, allergy_type_id, description) VALUES (?, ?, ?)');
+            foreach ($allergyTypeIds as $typeId) {
+                $stmt->execute([
+                    $medicalInfoId, $typeId,
+                    strOrNull($allergyDescs[$typeId] ?? $allergyDescs['default'] ?? null),
+                ]);
+            }
         }
     }
 
@@ -268,9 +273,14 @@ try {
     $conditionTypeIds = parseIds($data['condition_type_id'] ?? []);
     $conditionDesc    = strOrNull($data['condition_description'] ?? null);
     if (!empty($conditionTypeIds)) {
-        $stmt = $pdo->prepare('INSERT INTO enrollment_medical_conditions (medical_information_id, condition_type_id, description) VALUES (?, ?, ?)');
-        foreach ($conditionTypeIds as $typeId) {
-            $stmt->execute([$medicalInfoId, $typeId, $conditionDesc]);
+        // Validate that all condition type IDs exist
+        $conditionTypeIds = validateLookupIds($pdo, 'medical_condition_types', $conditionTypeIds, 'medical_condition_type_id', 'medical condition type');
+        
+        if (!empty($conditionTypeIds)) {
+            $stmt = $pdo->prepare('INSERT INTO enrollment_medical_conditions (medical_information_id, condition_type_id, description) VALUES (?, ?, ?)');
+            foreach ($conditionTypeIds as $typeId) {
+                $stmt->execute([$medicalInfoId, $typeId, $conditionDesc]);
+            }
         }
     }
 
@@ -297,9 +307,14 @@ try {
     $familyTypeIds = parseIds($data['family_condition_type_id'] ?? []);
     $familyDesc    = strOrNull($data['family_condition_description'] ?? null);
     if (!empty($familyTypeIds)) {
-        $stmt = $pdo->prepare('INSERT INTO enrollment_family_medical_history (medical_information_id, family_history_type_id, description) VALUES (?, ?, ?)');
-        foreach ($familyTypeIds as $typeId) {
-            $stmt->execute([$medicalInfoId, $typeId, $familyDesc]);
+        // Validate that all family history type IDs exist
+        $familyTypeIds = validateLookupIds($pdo, 'family_medical_history_types', $familyTypeIds, 'family_medical_history_type_id', 'family medical history type');
+        
+        if (!empty($familyTypeIds)) {
+            $stmt = $pdo->prepare('INSERT INTO enrollment_family_medical_history (medical_information_id, family_history_type_id, description) VALUES (?, ?, ?)');
+            foreach ($familyTypeIds as $typeId) {
+                $stmt->execute([$medicalInfoId, $typeId, $familyDesc]);
+            }
         }
     }
 
@@ -311,12 +326,18 @@ try {
         foreach ($data['disability_sub'] as $typeId => $values) {
             $typeId = intval($typeId);
             if ($typeId === 0 || !is_array($values)) continue;
+            
+            // Validate disability type exists
+            validateDisabilityIds($pdo, $typeId);
+            
             $processedTypes[$typeId] = true;
             $subtypeIds = array_unique(array_map('intval', array_filter($values, fn($v) => $v !== '')));
             if (empty($subtypeIds)) {
                 $disabilityRows[] = ['type_id' => $typeId, 'subtype_id' => null];
             } else {
                 foreach ($subtypeIds as $subtypeId) {
+                    // Validate disability subtype exists and matches type
+                    validateDisabilityIds($pdo, $typeId, $subtypeId);
                     $disabilityRows[] = ['type_id' => $typeId, 'subtype_id' => $subtypeId];
                 }
             }
@@ -327,6 +348,10 @@ try {
         foreach ($data['disabilityDetails'] as $typeId => $values) {
             $typeId = intval($typeId);
             if ($typeId === 0 || !is_array($values) || isset($processedTypes[$typeId])) continue;
+            
+            // Validate disability type exists
+            validateDisabilityIds($pdo, $typeId);
+            
             $disabilityRows[] = ['type_id' => $typeId, 'subtype_id' => null];
         }
     }
@@ -356,9 +381,14 @@ try {
     // 13. distance learning modalities preferences
     $distanceModalityIds = parseIds($data['distance_learning_modalities'] ?? []);
     if (!empty($distanceModalityIds)) {
-        $stmt = $pdo->prepare('INSERT INTO enrollment_distance_learning_preferences (enrollment_id, modality_id) VALUES (?, ?)');
-        foreach ($distanceModalityIds as $modalityId) {
-            $stmt->execute([$enrollmentId, $modalityId]);
+        // Validate that all modality IDs exist
+        $distanceModalityIds = validateLookupIds($pdo, 'distance_learning_modalities', $distanceModalityIds, 'distance_learning_modality_id', 'distance learning modality');
+        
+        if (!empty($distanceModalityIds)) {
+            $stmt = $pdo->prepare('INSERT INTO enrollment_distance_learning_preferences (enrollment_id, modality_id) VALUES (?, ?)');
+            foreach ($distanceModalityIds as $modalityId) {
+                $stmt->execute([$enrollmentId, $modalityId]);
+            }
         }
     }
 
@@ -380,9 +410,14 @@ try {
         // Insert special needs types (diagnoses)
         $specialNeedTypeIds = parseIds($data['special_needs_types'] ?? []);
         if (!empty($specialNeedTypeIds)) {
-            $stmt = $pdo->prepare('INSERT INTO enrollment_special_needs_details (special_needs_id, special_needs_type_id) VALUES (?, ?)');
-            foreach ($specialNeedTypeIds as $typeId) {
-                $stmt->execute([$specialNeedsId, $typeId]);
+            // Validate that all special needs type IDs exist
+            $specialNeedTypeIds = validateLookupIds($pdo, 'special_needs_types', $specialNeedTypeIds, 'special_needs_type_id', 'special needs type');
+            
+            if (!empty($specialNeedTypeIds)) {
+                $stmt = $pdo->prepare('INSERT INTO enrollment_special_needs_details (special_needs_id, special_needs_type_id) VALUES (?, ?)');
+                foreach ($specialNeedTypeIds as $typeId) {
+                    $stmt->execute([$specialNeedsId, $typeId]);
+                }
             }
         }
     }
