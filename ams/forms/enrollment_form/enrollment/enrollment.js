@@ -732,15 +732,25 @@ function loadSpecialNeedsTypes() {
         const types = Array.isArray(data) ? data : [];
         
         console.log('Special needs types fetched:', types.length, 'items');
-        console.log('Sample items:', types.slice(0, 3));
+        console.log('Full response:', response);
+        console.log('Sample item:', types[0]);
+        
+        // Get the primary key field name (could be 'id' or 'special_needs_type_id')
+        const pkField = types.length > 0 ? (types[0].id ? 'id' : 'special_needs_type_id') : 'special_needs_type_id';
+        console.log('Using primary key field:', pkField);
         
         // Separate diagnoses and manifestations by category (case-insensitive comparison)
-        const diagnoses = types.filter(t => !t.category || t.category.toLowerCase() === 'diagnosis');
-        const manifestations = types.filter(t => t.category && t.category.toLowerCase() === 'manifestation');
+        const diagnoses = types.filter(t => {
+            const category = t.category ? String(t.category).toLowerCase() : '';
+            return category === 'diagnosis' || category === '';
+        });
+        const manifestations = types.filter(t => {
+            const category = t.category ? String(t.category).toLowerCase() : '';
+            return category === 'manifestation';
+        });
 
-        console.log('Diagnoses found:', diagnoses.length);
-        console.log('Manifestations found:', manifestations.length);
-        console.log('Manifestation items:', manifestations);
+        console.log('Diagnoses found:', diagnoses.length, diagnoses);
+        console.log('Manifestations found:', manifestations.length, manifestations);
 
         // Render diagnoses
         if (diagnoses.length === 0) {
@@ -748,10 +758,21 @@ function loadSpecialNeedsTypes() {
         } else {
             diagnosisContainer.innerHTML = diagnoses.map(type => `
                 <label style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:white; cursor:pointer; transition:all .2s ease;">
-                    <input type="checkbox" name="special_needs_diagnosis" value="${type.special_needs_type_id}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
+                    <input type="checkbox" name="special_needs_diagnosis" value="${type[pkField]}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
                     <span style="font-size:13px; color:var(--text);">${escapeHtml(type.name)}</span>
                 </label>
             `).join('');
+
+            // Attach change listeners to diagnosis checkboxes
+            diagnosisContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const diagnosisChecked = diagnosisContainer.querySelector('input[type="checkbox"]:checked');
+                    const manifestationDiv = manifestationContainer.closest('div');
+                    if (manifestationDiv) {
+                        manifestationDiv.style.display = diagnosisChecked ? 'none' : '';
+                    }
+                });
+            });
         }
 
         // Render manifestations
@@ -760,10 +781,21 @@ function loadSpecialNeedsTypes() {
         } else {
             manifestationContainer.innerHTML = manifestations.map(type => `
                 <label style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:white; cursor:pointer; transition:all .2s ease;">
-                    <input type="checkbox" name="special_needs_manifestation" value="${type.special_needs_type_id}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
+                    <input type="checkbox" name="special_needs_manifestation" value="${type[pkField]}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
                     <span style="font-size:13px; color:var(--text);">${escapeHtml(type.name)}</span>
                 </label>
             `).join('');
+
+            // Attach change listeners to manifestation checkboxes
+            manifestationContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const manifestationChecked = manifestationContainer.querySelector('input[type="checkbox"]:checked');
+                    const diagnosisDiv = diagnosisContainer.closest('div');
+                    if (diagnosisDiv) {
+                        diagnosisDiv.style.display = manifestationChecked ? 'none' : '';
+                    }
+                });
+            });
         }
     }).catch(err => {
         console.error('Failed to load special needs types:', err);

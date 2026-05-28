@@ -62,6 +62,80 @@ function getFields(name) {
 
 function getInput(id) { return getField(id); }
 
+// ── Uppercase standardization ────────────────────────────────
+
+function shouldUppercaseField(field) {
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) {
+        return false;
+    }
+
+    const skipTypes = new Set([
+        'button',
+        'checkbox',
+        'color',
+        'date',
+        'datetime-local',
+        'file',
+        'hidden',
+        'image',
+        'month',
+        'password',
+        'radio',
+        'range',
+        'reset',
+        'submit',
+        'time',
+        'week'
+    ]);
+
+    return !skipTypes.has(field.type);
+}
+
+function uppercaseFieldValue(field) {
+    if (!shouldUppercaseField(field) || field.value === '') {
+        return;
+    }
+
+    const value = field.value;
+    const uppercased = value.toUpperCase();
+    if (uppercased === value) {
+        return;
+    }
+
+    const selectionStart = field.selectionStart;
+    const selectionEnd = field.selectionEnd;
+    field.value = uppercased;
+
+    if (typeof selectionStart === 'number' && typeof selectionEnd === 'number') {
+        field.setSelectionRange(selectionStart, selectionEnd);
+    }
+}
+
+function attachUppercaseTransform() {
+    const form = document.getElementById('enrollmentForm');
+    const handler = function (event) {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) {
+            return;
+        }
+        uppercaseFieldValue(target);
+    };
+
+    if (form) {
+        form.addEventListener('input', handler, true);
+        form.addEventListener('change', handler, true);
+    }
+}
+
+function uppercaseAllFormFields() {
+    const form = document.getElementById('enrollmentForm');
+    if (!form) {
+        return;
+    }
+    const fields = form.querySelectorAll('input, textarea');
+    fields.forEach(uppercaseFieldValue);
+}
+
 function sameAddr(yes) {
     // Collapse permanent address box when "Same as Current" = Yes
     toggle('permBox', !yes);
@@ -134,8 +208,23 @@ async function loadSpecialNeedsTypesForVerify(enrollmentSpecialNeeds = []) {
         }
 
         const types = response.data;
-        const diagnoses = types.filter(t => !t.category || t.category.toLowerCase() === 'diagnosis');
-        const manifestations = types.filter(t => t.category && t.category.toLowerCase() === 'manifestation');
+        console.log('Special needs types for verify:', types.length, 'items');
+        console.log('Sample:', types[0]);
+        
+        // Get the primary key field name (could be 'id' or 'special_needs_type_id')
+        const pkField = types.length > 0 ? (types[0].id ? 'id' : 'special_needs_type_id') : 'special_needs_type_id';
+        console.log('Using PK field:', pkField);
+        
+        const diagnoses = types.filter(t => {
+            const category = t.category ? String(t.category).toLowerCase() : '';
+            return category === 'diagnosis' || category === '';
+        });
+        const manifestations = types.filter(t => {
+            const category = t.category ? String(t.category).toLowerCase() : '';
+            return category === 'manifestation';
+        });
+        
+        console.log('Diagnoses:', diagnoses.length, 'Manifestations:', manifestations.length);
 
         // Populate diagnosis checkboxes
         const diagnosisDiv = document.getElementById('diagnosisTypes');
@@ -147,12 +236,20 @@ async function loadSpecialNeedsTypesForVerify(enrollmentSpecialNeeds = []) {
                 const input = document.createElement('input');
                 input.type = 'checkbox';
                 input.name = 'special_needs_diagnosis[]';
-                input.value = d.id;
+                input.value = d[pkField];
                 input.style.cssText = 'width:14px; height:14px; accent-color:var(--brand); flex-shrink:0;';
                 // Check if this special need is in enrollment data
-                if (enrollmentSpecialNeeds.some(sn => String(sn.special_needs_type_id) === String(d.id))) {
+                if (enrollmentSpecialNeeds.some(sn => String(sn.special_needs_type_id) === String(d[pkField]))) {
                     input.checked = true;
                 }
+                // Attach change listener to hide manifestations when diagnosis is checked
+                input.addEventListener('change', () => {
+                    const diagnosisChecked = diagnosisDiv.querySelector('input[type="checkbox"]:checked');
+                    const manifestationDiv = document.getElementById('manifestationTypes');
+                    if (manifestationDiv && manifestationDiv.parentElement) {
+                        manifestationDiv.parentElement.style.display = diagnosisChecked ? 'none' : '';
+                    }
+                });
                 label.appendChild(input);
                 label.appendChild(document.createTextNode(d.name));
                 diagnosisDiv.appendChild(label);
@@ -169,16 +266,36 @@ async function loadSpecialNeedsTypesForVerify(enrollmentSpecialNeeds = []) {
                 const input = document.createElement('input');
                 input.type = 'checkbox';
                 input.name = 'special_needs_manifestation[]';
-                input.value = m.id;
+                input.value = m[pkField];
                 input.style.cssText = 'width:14px; height:14px; accent-color:var(--brand); flex-shrink:0;';
                 // Check if this special need is in enrollment data
-                if (enrollmentSpecialNeeds.some(sn => String(sn.special_needs_type_id) === String(m.id))) {
+                if (enrollmentSpecialNeeds.some(sn => String(sn.special_needs_type_id) === String(m[pkField]))) {
                     input.checked = true;
                 }
+                // Attach change listener to hide diagnoses when manifestation is checked
+                input.addEventListener('change', () => {
+                    const manifestationChecked = manifestationDiv.querySelector('input[type="checkbox"]:checked');
+                    const diagnosisDiv = document.getElementById('diagnosisTypes');
+                    if (diagnosisDiv && diagnosisDiv.parentElement) {
+                        diagnosisDiv.parentElement.style.display = manifestationChecked ? 'none' : '';
+                    }
+                });
                 label.appendChild(input);
                 label.appendChild(document.createTextNode(m.name));
                 manifestationDiv.appendChild(label);
             });
+        }
+
+        // Initial toggle state based on which section has checked items
+        if (diagnosisDiv && manifestationDiv) {
+            const diagnosisChecked = diagnosisDiv.querySelector('input[type="checkbox"]:checked');
+            const manifestationChecked = manifestationDiv.querySelector('input[type="checkbox"]:checked');
+            if (manifestationDiv.parentElement) {
+                manifestationDiv.parentElement.style.display = diagnosisChecked ? 'none' : '';
+            }
+            if (diagnosisDiv.parentElement) {
+                diagnosisDiv.parentElement.style.display = manifestationChecked ? 'none' : '';
+            }
         }
     } catch (error) {
         console.error('Error loading special needs types for verify form:', error);
@@ -614,6 +731,10 @@ function applyEnrollmentToForm(data) {
         loadSpecialNeedsTypesForVerify(data.special_needs);
     }
 
+    // Attach uppercase transform and apply to all fields
+    attachUppercaseTransform();
+    uppercaseAllFormFields();
+
     // After populating, clear the dirty flag (populating the form fires change
     // events that would otherwise mark it dirty immediately)
     clearDirty();
@@ -636,6 +757,7 @@ async function saveEnrollmentUpdates() {
 
     try {
         const form    = document.getElementById('enrollmentForm');
+        uppercaseAllFormFields();
         const payload = serializeForm(form);
         payload.student_id    = parseInt(studentId, 10);
         payload.enrollment_id = parseInt(enrollmentId, 10);
@@ -948,6 +1070,8 @@ function initializeVerifyPage() {
     if (checkedSameAddr) sameAddr(checkedSameAddr.value === 'Yes');
 
     attachDirtyListeners();
+    attachUppercaseTransform();
+    uppercaseAllFormFields();
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', fetchPendingEnrollments);
