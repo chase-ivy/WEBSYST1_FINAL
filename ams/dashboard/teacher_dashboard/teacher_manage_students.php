@@ -548,6 +548,52 @@ async function openEnrollmentModal(studentId) {
                     </div>
                 </div>
 
+                <!-- Learning Classification & Early Program -->
+                <div class="form-section">
+                    <h4>Learning Classification & Early Program</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="learning_classification">Learning Classification</label>
+                            <select id="learning_classification" name="learning_classification">
+                                <option value="graded" ${(enrollment.learning_classification || 'graded') === 'graded' ? 'selected' : ''}>Graded</option>
+                                <option value="non-graded" ${enrollment.learning_classification === 'non-graded' ? 'selected' : ''}>Non-Graded</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="attended_early_learning_program">Attended Early Learning Program?</label>
+                            <select id="attended_early_learning_program" name="attended_early_learning_program">
+                                <option value="0" ${!enrollment.attended_early_learning_program ? 'selected' : ''}>No</option>
+                                <option value="1" ${enrollment.attended_early_learning_program == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="early_learning_program_name">Program Name</label>
+                            <input id="early_learning_program_name" name="early_learning_program_name" value="${escapeHtml(enrollment.early_learning_program_name || '')}" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Special Needs -->
+                <div class="form-section">
+                    <h4>Special Needs</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="has_special_needs">Has Special Needs?</label>
+                            <select id="has_special_needs" name="has_special_needs">
+                                <option value="0" ${!enrollment.has_special_needs ? 'selected' : ''}>No</option>
+                                <option value="1" ${enrollment.has_special_needs == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="has_pwd_id">Has PWD ID?</label>
+                            <select id="has_pwd_id" name="has_pwd_id">
+                                <option value="0" ${!enrollment.has_pwd_id ? 'selected' : ''}>No</option>
+                                <option value="1" ${enrollment.has_pwd_id == 1 ? 'selected' : ''}>Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Disabilities -->
                 <div class="form-section" id="disabilitySection" style="display: ${enrollment.is_learner_with_disability == 1 ? 'block' : 'none'};">
                     <h4>Disabilities</h4>

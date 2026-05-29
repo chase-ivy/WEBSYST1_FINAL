@@ -712,20 +712,19 @@ function cancelConfirmation() {
 }
 
 function loadSpecialNeedsTypes() {
-    const diagnosisContainer = document.getElementById('diagnosisTypes');
-    const manifestationContainer = document.getElementById('manifestationTypes');
+    const container = document.getElementById('specialNeedsTypesContainer');
     
-    if (!diagnosisContainer || !manifestationContainer) {
-        console.warn('Special needs containers not found');
+    if (!container) {
+        console.warn('Special needs container not found');
         return;
     }
 
     // Only load if not already loaded
-    if (diagnosisContainer.hasAttribute('data-loaded')) {
+    if (container.hasAttribute('data-loaded')) {
         console.log('Special needs types already loaded');
         return;
     }
-    diagnosisContainer.setAttribute('data-loaded', 'true');
+    container.setAttribute('data-loaded', 'true');
 
     API.special_needs_types.list().then(response => {
         const data = response.data || response || [];
@@ -734,41 +733,20 @@ function loadSpecialNeedsTypes() {
         console.log('Special needs types fetched:', types.length, 'items');
         console.log('Sample items:', types.slice(0, 3));
         
-        // Separate diagnoses and manifestations by category (case-insensitive comparison)
-        const diagnoses = types.filter(t => !t.category || t.category.toLowerCase() === 'diagnosis');
-        const manifestations = types.filter(t => t.category && t.category.toLowerCase() === 'manifestation');
-
-        console.log('Diagnoses found:', diagnoses.length);
-        console.log('Manifestations found:', manifestations.length);
-        console.log('Manifestation items:', manifestations);
-
-        // Render diagnoses
-        if (diagnoses.length === 0) {
-            diagnosisContainer.innerHTML = '<p style="color:var(--muted); font-size:13px;">No diagnoses available</p>';
+        // Combine diagnoses and manifestations
+        if (types.length === 0) {
+            container.innerHTML = '<p style="color:var(--muted); font-size:13px;">No special needs types available</p>';
         } else {
-            diagnosisContainer.innerHTML = diagnoses.map(type => `
+            container.innerHTML = types.map(type => `
                 <label style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:white; cursor:pointer; transition:all .2s ease;">
-                    <input type="checkbox" name="special_needs_diagnosis" value="${type.special_needs_type_id}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
-                    <span style="font-size:13px; color:var(--text);">${escapeHtml(type.name)}</span>
-                </label>
-            `).join('');
-        }
-
-        // Render manifestations
-        if (manifestations.length === 0) {
-            manifestationContainer.innerHTML = '<p style="color:var(--muted); font-size:13px;">No manifestations available</p>';
-        } else {
-            manifestationContainer.innerHTML = manifestations.map(type => `
-                <label style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:white; cursor:pointer; transition:all .2s ease;">
-                    <input type="checkbox" name="special_needs_manifestation" value="${type.special_needs_type_id}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
+                    <input type="checkbox" name="special_needs_types" value="${type.special_needs_type_id}" style="width:16px; height:16px; accent-color:var(--brand); flex-shrink:0; margin-top:2px;">
                     <span style="font-size:13px; color:var(--text);">${escapeHtml(type.name)}</span>
                 </label>
             `).join('');
         }
     }).catch(err => {
         console.error('Failed to load special needs types:', err);
-        diagnosisContainer.innerHTML = '<p style="color:var(--muted); font-size:13px;">Unable to load special needs types</p>';
-        manifestationContainer.innerHTML = '<p style="color:var(--muted); font-size:13px;">Unable to load special needs types</p>';
+        container.innerHTML = '<p style="color:var(--muted); font-size:13px;">Unable to load special needs types</p>';
     });
 }
 
@@ -786,16 +764,20 @@ async function confirmSubmission() {
     try {
         const payload = serializeForm(form);
         
-        // Merge diagnosis and manifestation arrays into special_needs_types
-        const diagnosisIds = Array.isArray(payload.special_needs_diagnosis) ? payload.special_needs_diagnosis : (payload.special_needs_diagnosis ? [payload.special_needs_diagnosis] : []);
-        const manifestationIds = Array.isArray(payload.special_needs_manifestation) ? payload.special_needs_manifestation : (payload.special_needs_manifestation ? [payload.special_needs_manifestation] : []);
-        payload.special_needs_types = [...diagnosisIds, ...manifestationIds];
-        delete payload.special_needs_diagnosis;
-        delete payload.special_needs_manifestation;
+        // Ensure special_needs_types is an array
+        if (payload.special_needs_types && !Array.isArray(payload.special_needs_types)) {
+            payload.special_needs_types = [payload.special_needs_types];
+        } else if (!payload.special_needs_types) {
+            payload.special_needs_types = [];
+        }
         
         // Validate required fields
         if (!payload.Learner_First_Name || !payload.Learner_Last_Name || !payload.Birth_Date) {
             throw new Error('Please fill in required learner information (First Name, Last Name, Date of Birth).');
+        }
+
+        if (!payload.learning_classification) {
+            throw new Error('Please select a Learning Classification (Graded or Non-Graded).');
         }
 
         // Create or update student record

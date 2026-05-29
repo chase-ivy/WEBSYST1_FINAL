@@ -188,6 +188,28 @@ async function loadStudentDashboard() {
                     <label>Grade Level</label>
                     <input type="text" value="${student.grade_level || '-'}" readonly>
                 </div>
+                <div class="form-grid" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <label>Learning Classification</label>
+                        <input type="text" value="${formatStatus(student.learning_classification) || '-'}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Attended Early Learning Program</label>
+                        <input type="text" value="${student.attended_early_learning_program == 1 ? 'Yes' : (student.attended_early_learning_program == 0 ? 'No' : '-') }" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Early Learning Program Name</label>
+                        <input type="text" value="${escapeHtml(student.early_learning_program_name || '-')}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Has Special Needs</label>
+                        <input type="text" value="${student.has_special_needs == 1 ? 'Yes' : (student.has_special_needs == 0 ? 'No' : '-') }" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Has PWD ID</label>
+                        <input type="text" value="${student.has_pwd_id == 1 ? 'Yes' : (student.has_pwd_id == 0 ? 'No' : '-') }" readonly>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>Sex</label>
                     <input type="text" value="${student.sex || '-'}" readonly>

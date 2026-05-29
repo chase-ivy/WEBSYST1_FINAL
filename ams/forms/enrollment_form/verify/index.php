@@ -28,7 +28,7 @@ try {
     $stmt->execute();
     $indigenousGroups = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    $stmt = $pdo->prepare('SELECT religion_id AS id, name FROM religions WHERE is_active = 1 ORDER BY name');
+    $stmt = $pdo->prepare('SELECT religion_id AS id, name FROM religions ORDER BY name');
     $stmt->execute();
     $religions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {

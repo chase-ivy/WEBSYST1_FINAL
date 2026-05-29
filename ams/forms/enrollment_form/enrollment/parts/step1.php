@@ -166,12 +166,6 @@
                     <label>Mother Tongue</label>
                     <select name="Mother_Tongue" id="Mother_Tongue" onchange="toggleMotherTongueOther()">
                         <option value="" hidden>Select mother tongue</option>
-                        <option value="Ilocano[1][]">Ilocano</option>
-                        <option value="Tagalog[2][]">Tagalog</option>
-                        <option value="Kapampangan[3][]">Kapampangan</option>
-                        <option value="Pangasinan[4][]">Pangasinan</option>
-                        <option value="Cebuano[5][]">Cebuano</option>
-                        <option value="English[6][]">English</option>
                     </select>
                     <input type="text" id="Mother_Tongue_Other" name="Mother_Tongue" placeholder="Please specify" style="display:none; margin-top:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'DM Sans',sans-serif;">
                 </div>

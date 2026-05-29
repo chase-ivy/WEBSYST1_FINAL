@@ -21,7 +21,7 @@
 // ============================================================
 
 $host = "localhost";
-$db   = "gems_db";
+$db   = "gem_db";
 $user = "root";
 $pass = "";
 $char = "utf8mb4";

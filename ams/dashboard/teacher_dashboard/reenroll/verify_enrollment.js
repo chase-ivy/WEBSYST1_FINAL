@@ -261,19 +261,19 @@ function buildReviewSummary() {
     )?.name || e.mother_tongue_id || null;
     add('Mother Tongue', mtName);
 
-    if (e.is_indigenous) {
+    if (parseInt(e.is_indigenous)) {
         const igName = (window.INDIGENOUS_GROUPS || []).find(
             g => String(g.id) === String(e.indigenous_group_id)
         )?.name || e.indigenous_group_id || null;
         add('Indigenous Group', igName);
     }
 
-    if (e.is_four_ps_beneficiary) {
+    if (parseInt(e.is_four_ps_beneficiary)) {
         add('4Ps Household ID', e.four_ps_household_id);
     }
 
-    add('Learner with Disability', e.is_learner_with_disability ? 'Yes' : 'No');
-    add('Returning Learner',       e.is_returning_learner       ? 'Yes' : 'No');
+    add('Learner with Disability', parseInt(e.is_learner_with_disability) ? 'Yes' : 'No');
+    add('Returning Learner',       parseInt(e.is_returning_learner)       ? 'Yes' : 'No');
 
     // Addresses
     const addresses = currentEnrollmentData.addresses || [];
@@ -384,9 +384,9 @@ function applyEnrollmentToForm(data) {
 
     setValue('Grade_Level',          enrollment.grade_level);
     setValue('Learner_Reference_No', enrollment.lrn);
-    setValue('with_lrn',             enrollment.with_lrn ? '1' : '0');
+    setValue('with_lrn',             parseInt(enrollment.with_lrn) ? '1' : '0');
     setValue('psa_bcn',              enrollment.psa_bcn);
-    setValue('returning',            enrollment.is_returning_learner ? '1' : '0');
+    setValue('returning',            parseInt(enrollment.is_returning_learner) ? '1' : '0');
 
     if (data.returning_learner) {
         setValue('Returning_Grade_Level',      data.returning_learner.last_grade_level_completed);
@@ -440,11 +440,12 @@ function applyEnrollmentToForm(data) {
     setValue('learning_classification', enrollment.learning_classification || 'graded');
 
     // Early Learning Program
-    setValue('attended_early_learning_program', enrollment.attended_early_learning_program ? '1' : '0');
+    const attendedELP = parseInt(enrollment.attended_early_learning_program) || 0;
+    setValue('attended_early_learning_program', attendedELP ? '1' : '0');
     setValue('early_learning_program_name', enrollment.early_learning_program_name || '');
-    toggle('earlyLearningBox', !!enrollment.attended_early_learning_program);
+    toggle('earlyLearningBox', !!attendedELP);
 
-    setValue('ip', enrollment.is_indigenous ? 'Yes' : 'No');
+    setValue('ip', parseInt(enrollment.is_indigenous) ? 'Yes' : 'No');
 
     // IP group dropdown
     if (window.INDIGENOUS_GROUPS && Array.isArray(window.INDIGENOUS_GROUPS)) {
@@ -462,14 +463,14 @@ function applyEnrollmentToForm(data) {
     }
     setValue('IP_Group', enrollment.indigenous_group_id);
 
-    setValue('fourps',         enrollment.is_four_ps_beneficiary ? 'Yes' : 'No');
+    setValue('fourps',         parseInt(enrollment.is_four_ps_beneficiary) ? 'Yes' : 'No');
     setValue('FourPs_Specify', enrollment.four_ps_household_id);
-    setValue('disability',     enrollment.is_learner_with_disability ? 'Yes' : 'No');
+    setValue('disability',     parseInt(enrollment.is_learner_with_disability) ? 'Yes' : 'No');
 
-    toggle('returningBox',  !!enrollment.is_returning_learner);
-    toggle('ipBox',         !!enrollment.is_indigenous);
-    toggle('fourpsBox',     !!enrollment.is_four_ps_beneficiary);
-    toggle('disabilityBox', !!enrollment.is_learner_with_disability);
+    toggle('returningBox',  !!parseInt(enrollment.is_returning_learner));
+    toggle('ipBox',         !!parseInt(enrollment.is_indigenous));
+    toggle('fourpsBox',     !!parseInt(enrollment.is_four_ps_beneficiary));
+    toggle('disabilityBox', !!parseInt(enrollment.is_learner_with_disability));
 
     (data.disabilities || []).forEach(d => {
         const cb = document.querySelector(`[name="disabilityDetails[${d.disability_type_id}][]"]`);
@@ -615,14 +616,16 @@ function applyEnrollmentToForm(data) {
     if (enrollment.grade_level) filterSectionsByGradeLevel(enrollment.grade_level);
 
     // Special needs
-    setValue('has_special_needs', enrollment.has_special_needs ? '1' : '0');
-    setValue('has_pwd_id', enrollment.has_pwd_id ? '1' : '0');
+    const hasSN = parseInt(enrollment.has_special_needs) ? 1 : 0;
+    const hasPwd = parseInt(enrollment.has_pwd_id) ? 1 : 0;
+    setValue('has_special_needs', hasSN ? '1' : '0');
+    setValue('has_pwd_id', hasPwd ? '1' : '0');
     setValue('pwd_id_number', enrollment.pwd_id_number || '');
-    toggle('specialNeedsDetails', !!enrollment.has_special_needs);
-    toggle('pwdIdBox', !!enrollment.has_pwd_id);
+    toggle('specialNeedsDetails', !!hasSN);
+    toggle('pwdIdBox', !!hasPwd);
 
     // Load special needs types and populate checkboxes
-    if (enrollment.has_special_needs && (data.special_needs || []).length > 0) {
+    if (hasSN && (data.special_needs || []).length > 0) {
         loadSpecialNeedsTypesForVerify(data.special_needs);
     }
 

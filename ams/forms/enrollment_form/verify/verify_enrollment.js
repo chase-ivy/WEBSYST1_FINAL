@@ -106,7 +106,33 @@ function setValue(name, value) {
         return;
     }
 
-    field.value = value ?? '';
+    const normalized = value === null || value === undefined ? '' : String(value).trim();
+
+    if (field.type === 'number' || field.type === 'range') {
+        const safeValue = normalized === '' || isNaN(Number(normalized)) ? '' : normalized;
+        try {
+            field.value = safeValue;
+        } catch (err) {
+            field.value = '';
+        }
+        return;
+    }
+
+    if (field.type === 'date') {
+        const safeValue = /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : '';
+        try {
+            field.value = safeValue;
+        } catch (err) {
+            field.value = '';
+        }
+        return;
+    }
+
+    try {
+        field.value = normalized;
+    } catch (err) {
+        field.value = '';
+    }
 }
 
 function getAddressByType(addresses, type) {
@@ -118,68 +144,92 @@ function getAddressByType(addresses, type) {
 
 function goToAndReview(n) {
     goTo(n);
-    if (n === 5) loadSpecialNeedsTypesForVerify(currentEnrollmentData?.special_needs || []);
+    if (n === 5) {
+        const hasNeeds = parseInt(currentEnrollmentData?.special_needs?.has_special_needs) ? true : false;
+        loadSpecialNeedsTypesForVerify(currentEnrollmentData?.special_needs || [], hasNeeds);
+    }
     if (n === 6) buildReviewSummary();
+}
+
+// Ensure lookup arrays (mother tongues, religions, indigenous groups)
+// are available on `window` — fall back to API fetch when not injected.
+async function ensureVerifyLookups() {
+    try {
+        const promises = [];
+        if (!window.MOTHER_TONGUES || !Array.isArray(window.MOTHER_TONGUES)) {
+            if (API?.mother_tongues) promises.push(API.mother_tongues.list().then(r => { 
+                const data = (r?.data || r || []);
+                window.MOTHER_TONGUES = Array.isArray(data) ? data : [];
+            }));
+        }
+        if (!window.RELIGIONS || !Array.isArray(window.RELIGIONS)) {
+            if (API?.religions) promises.push(API.religions.list().then(r => { 
+                const data = (r?.data || r || []);
+                window.RELIGIONS = Array.isArray(data) ? data : [];
+            }));
+        }
+        if (!window.INDIGENOUS_GROUPS || !Array.isArray(window.INDIGENOUS_GROUPS)) {
+            if (API?.indigenous_groups) promises.push(API.indigenous_groups.list().then(r => { 
+                const data = (r?.data || r || []);
+                window.INDIGENOUS_GROUPS = Array.isArray(data) ? data : [];
+            }));
+        }
+        if (promises.length > 0) await Promise.all(promises);
+    } catch (err) {
+        console.warn('ensureVerifyLookups failed:', err);
+    }
 }
 
 // ── Load special needs types ──────────────────────────────────
 
-async function loadSpecialNeedsTypesForVerify(enrollmentSpecialNeeds = []) {
+async function loadSpecialNeedsTypesForVerify(enrollmentSpecialNeeds = [], openCollapse = false) {
     try {
         // Fetch all special needs types
         const response = await API.special_needs_types.list();
-        if (!response.success || !response.data) {
-            console.warn('Failed to load special needs types for verify form');
+        const data = response.data || response || [];
+        const types = Array.isArray(data) ? data : [];
+        
+        if (types.length === 0) {
+            console.warn('No special needs types available');
+        }
+
+        const selectedTypes = Array.isArray(enrollmentSpecialNeeds)
+            ? enrollmentSpecialNeeds
+            : Array.isArray(enrollmentSpecialNeeds?.types)
+                ? enrollmentSpecialNeeds.types
+                : [];
+
+        const selectedIds = new Set(selectedTypes.map(sn => String(sn.special_needs_type_id ?? sn.id ?? '')));
+
+        const container = document.getElementById('specialNeedsTypesContainer');
+        if (!container) {
+            console.warn('specialNeedsTypesContainer not found');
             return;
         }
 
-        const types = response.data;
-        const diagnoses = types.filter(t => !t.category || t.category.toLowerCase() === 'diagnosis');
-        const manifestations = types.filter(t => t.category && t.category.toLowerCase() === 'manifestation');
+        container.innerHTML = '';
+        types.forEach(t => {
+            const typeId = t.special_needs_type_id ?? t.id;
+            const typeName = t.name || t.special_needs_name || '';
+            const label = document.createElement('label');
+            label.style.cssText = 'display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text); cursor:pointer; padding:6px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); transition:background .15s ease, border-color .15s ease;';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.name = 'special_needs_types';
+            input.value = String(typeId ?? '');
+            input.style.cssText = 'width:14px; height:14px; accent-color:var(--brand); flex-shrink:0;';
+            if (typeId !== undefined && selectedIds.has(String(typeId))) {
+                input.checked = true;
+            }
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(typeName));
+            container.appendChild(label);
+        });
 
-        // Populate diagnosis checkboxes
-        const diagnosisDiv = document.getElementById('diagnosisTypes');
-        if (diagnosisDiv) {
-            diagnosisDiv.innerHTML = '';
-            diagnoses.forEach(d => {
-                const label = document.createElement('label');
-                label.style.cssText = 'display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text); cursor:pointer; padding:6px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); transition:background .15s ease, border-color .15s ease;';
-                const input = document.createElement('input');
-                input.type = 'checkbox';
-                input.name = 'special_needs_diagnosis[]';
-                input.value = d.id;
-                input.style.cssText = 'width:14px; height:14px; accent-color:var(--brand); flex-shrink:0;';
-                // Check if this special need is in enrollment data
-                if (enrollmentSpecialNeeds.some(sn => String(sn.special_needs_type_id) === String(d.id))) {
-                    input.checked = true;
-                }
-                label.appendChild(input);
-                label.appendChild(document.createTextNode(d.name));
-                diagnosisDiv.appendChild(label);
-            });
-        }
+        // Open or close the collapse AFTER checkboxes are in the DOM,
+        // so the container already has its full height when it becomes visible.
+        toggle('specialNeedsDetails', openCollapse);
 
-        // Populate manifestation checkboxes
-        const manifestationDiv = document.getElementById('manifestationTypes');
-        if (manifestationDiv) {
-            manifestationDiv.innerHTML = '';
-            manifestations.forEach(m => {
-                const label = document.createElement('label');
-                label.style.cssText = 'display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text); cursor:pointer; padding:6px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); transition:background .15s ease, border-color .15s ease;';
-                const input = document.createElement('input');
-                input.type = 'checkbox';
-                input.name = 'special_needs_manifestation[]';
-                input.value = m.id;
-                input.style.cssText = 'width:14px; height:14px; accent-color:var(--brand); flex-shrink:0;';
-                // Check if this special need is in enrollment data
-                if (enrollmentSpecialNeeds.some(sn => String(sn.special_needs_type_id) === String(m.id))) {
-                    input.checked = true;
-                }
-                label.appendChild(input);
-                label.appendChild(document.createTextNode(m.name));
-                manifestationDiv.appendChild(label);
-            });
-        }
     } catch (error) {
         console.error('Error loading special needs types for verify form:', error);
     }
@@ -243,25 +293,55 @@ function buildReviewSummary() {
     add('Sex',              e.sex);
     add('Place of Birth',   e.place_of_birth);
 
-    // Resolve readable names from the lookup arrays injected by PHP
-    const mtName = (window.MOTHER_TONGUES || []).find(
-        m => String(m.id) === String(e.mother_tongue_id)
-    )?.name || e.mother_tongue_id || null;
+    // Use resolved names from API if available, fall back to lookup arrays
+    const mtName = e.mother_tongue || (
+        (window.MOTHER_TONGUES || []).find(
+            m => String(m.id) === String(e.mother_tongue_id)
+        )?.name || e.mother_tongue_id
+    ) || null;
     add('Mother Tongue', mtName);
 
-    if (e.is_indigenous) {
-        const igName = (window.INDIGENOUS_GROUPS || []).find(
-            g => String(g.id) === String(e.indigenous_group_id)
-        )?.name || e.indigenous_group_id || null;
+    const religionName = e.religion || (
+        (window.RELIGIONS || []).find(
+            r => String(r.id) === String(e.religion_id)
+        )?.name || e.religion_id
+    ) || null;
+    add('Religion', religionName);
+
+    if (parseInt(e.is_indigenous)) {
+        const igName = e.indigenous_group || (
+            (window.INDIGENOUS_GROUPS || []).find(
+                g => String(g.id) === String(e.indigenous_group_id)
+            )?.name || e.indigenous_group_id
+        ) || null;
         add('Indigenous Group', igName);
     }
 
-    if (e.is_four_ps_beneficiary) {
+    if (parseInt(e.is_four_ps_beneficiary)) {
         add('4Ps Household ID', e.four_ps_household_id);
     }
 
-    add('Learner with Disability', e.is_learner_with_disability ? 'Yes' : 'No');
-    add('Returning Learner',       e.is_returning_learner       ? 'Yes' : 'No');
+    add('Learner with Disability', parseInt(e.is_learner_with_disability) ? 'Yes' : 'No');
+    add('Returning Learner',       parseInt(e.is_returning_learner)       ? 'Yes' : 'No');
+
+    const sn = currentEnrollmentData.special_needs || {};
+    if (parseInt(sn.has_special_needs)) {
+        const specialNeedsTypes = sn.types || [];
+        add('Special Needs Program', 'Yes');
+        if (specialNeedsTypes.length) {
+            const names = specialNeedsTypes.map(t => t.special_needs_name || t.name || t.special_needs_type_id).filter(Boolean);
+            add('Special Needs Details', names.join(', '));
+        }
+        if (parseInt(sn.has_pwd_id)) {
+            add('PWD ID Number', sn.pwd_id_number);
+        }
+    }
+
+    const distanceLearning = currentEnrollmentData.distance_learning_modalities || [];
+    if (distanceLearning.length) {
+        const names = distanceLearning.map(m => m.modality_name || m.modality_id).filter(Boolean);
+        add('Distance Learning Modalities', names.join(', '));
+    }
 
     // Addresses
     const addresses = currentEnrollmentData.addresses || [];
@@ -372,9 +452,9 @@ function applyEnrollmentToForm(data) {
 
     setValue('Grade_Level',          enrollment.grade_level);
     setValue('Learner_Reference_No', enrollment.lrn);
-    setValue('with_lrn',             enrollment.with_lrn ? '1' : '0');
+    setValue('with_lrn',             parseInt(enrollment.with_lrn) ? '1' : '0');
     setValue('psa_bcn',              enrollment.psa_bcn);
-    setValue('returning',            enrollment.is_returning_learner ? '1' : '0');
+    setValue('returning',            parseInt(enrollment.is_returning_learner) ? '1' : '0');
 
     if (data.returning_learner) {
         setValue('Returning_Grade_Level',      data.returning_learner.last_grade_level_completed);
@@ -392,7 +472,7 @@ function applyEnrollmentToForm(data) {
     setValue('sex',                    enrollment.sex);
     setValue('Place_of_Birth',         enrollment.place_of_birth);
 
-    // Mother tongue dropdown
+    // Mother tongue dropdown — use resolved name if available from API
     if (window.MOTHER_TONGUES && Array.isArray(window.MOTHER_TONGUES)) {
         const mtSelect = document.getElementById('Mother_Tongue');
         if (mtSelect) {
@@ -408,7 +488,7 @@ function applyEnrollmentToForm(data) {
     }
     setValue('Mother_Tongue', enrollment.mother_tongue_id);
 
-    // Religion dropdown
+    // Religion dropdown — use resolved name if available from API
     if (window.RELIGIONS && Array.isArray(window.RELIGIONS)) {
         const relSelect = document.getElementById('religion_id');
         if (relSelect) {
@@ -428,13 +508,14 @@ function applyEnrollmentToForm(data) {
     setValue('learning_classification', enrollment.learning_classification || 'graded');
 
     // Early Learning Program
-    setValue('attended_early_learning_program', enrollment.attended_early_learning_program ? '1' : '0');
+    const attendedELP = parseInt(enrollment.attended_early_learning_program) || 0;
+    setValue('attended_early_learning_program', attendedELP ? '1' : '0');
     setValue('early_learning_program_name', enrollment.early_learning_program_name || '');
-    toggle('earlyLearningBox', !!enrollment.attended_early_learning_program);
+    toggle('earlyLearningBox', !!attendedELP);
 
-    setValue('ip', enrollment.is_indigenous ? 'Yes' : 'No');
+    setValue('ip', parseInt(enrollment.is_indigenous) ? 'Yes' : 'No');
 
-    // IP group dropdown
+    // IP group dropdown — use resolved name if available from API
     if (window.INDIGENOUS_GROUPS && Array.isArray(window.INDIGENOUS_GROUPS)) {
         const igSelect = document.getElementById('IP_Group');
         if (igSelect) {
@@ -450,14 +531,14 @@ function applyEnrollmentToForm(data) {
     }
     setValue('IP_Group', enrollment.indigenous_group_id);
 
-    setValue('fourps',         enrollment.is_four_ps_beneficiary ? 'Yes' : 'No');
+    setValue('fourps',         parseInt(enrollment.is_four_ps_beneficiary) ? 'Yes' : 'No');
     setValue('FourPs_Specify', enrollment.four_ps_household_id);
-    setValue('disability',     enrollment.is_learner_with_disability ? 'Yes' : 'No');
+    setValue('disability',     parseInt(enrollment.is_learner_with_disability) ? 'Yes' : 'No');
 
-    toggle('returningBox',  !!enrollment.is_returning_learner);
-    toggle('ipBox',         !!enrollment.is_indigenous);
-    toggle('fourpsBox',     !!enrollment.is_four_ps_beneficiary);
-    toggle('disabilityBox', !!enrollment.is_learner_with_disability);
+    toggle('returningBox',  !!parseInt(enrollment.is_returning_learner));
+    toggle('ipBox',         !!parseInt(enrollment.is_indigenous));
+    toggle('fourpsBox',     !!parseInt(enrollment.is_four_ps_beneficiary));
+    toggle('disabilityBox', !!parseInt(enrollment.is_learner_with_disability));
 
     (data.disabilities || []).forEach(d => {
         const cb = document.querySelector(`[name="disabilityDetails[${d.disability_type_id}][]"]`);
@@ -602,17 +683,28 @@ function applyEnrollmentToForm(data) {
 
     if (enrollment.grade_level) filterSectionsByGradeLevel(enrollment.grade_level);
 
-    // Special needs
-    setValue('has_special_needs', enrollment.has_special_needs ? '1' : '0');
-    setValue('has_pwd_id', enrollment.has_pwd_id ? '1' : '0');
-    setValue('pwd_id_number', enrollment.pwd_id_number || '');
-    toggle('specialNeedsDetails', !!enrollment.has_special_needs);
-    toggle('pwdIdBox', !!enrollment.has_pwd_id);
+    // Special needs — has_special_needs / has_pwd_id live in enrollment_special_needs,
+    // NOT in the enrollments row, so read from data.special_needs (the joined row).
+    const specialNeedsRow  = data.special_needs || {};
+    const hasSpecialNeeds  = parseInt(specialNeedsRow.has_special_needs) ? true : false;
+    const hasPwdId         = parseInt(specialNeedsRow.has_pwd_id) ? true : false;
 
-    // Load special needs types and populate checkboxes
-    if (enrollment.has_special_needs && (data.special_needs || []).length > 0) {
-        loadSpecialNeedsTypesForVerify(data.special_needs);
-    }
+    setValue('has_special_needs', hasSpecialNeeds ? '1' : '0');
+    setValue('has_pwd_id',        hasPwdId        ? '1' : '0');
+    setValue('pwd_id_number',     specialNeedsRow.pwd_id_number || '');
+    // pwdIdBox toggled immediately (it has no dynamic content to wait for)
+    toggle('pwdIdBox', hasPwdId);
+
+    // Load special needs types and populate checkboxes, then open the collapse if needed.
+    // specialNeedsDetails is opened INSIDE loadSpecialNeedsTypesForVerify, after checkboxes
+    // are injected, so the collapse never clips dynamically-added content.
+    const specialNeedsItems = Array.isArray(specialNeedsRow.types)
+        ? specialNeedsRow.types
+        : [];
+
+    // Pass openCollapse=true when the learner has special needs so the section
+    // is revealed only after all checkboxes are already in the DOM.
+    loadSpecialNeedsTypesForVerify(specialNeedsItems, hasSpecialNeeds);
 
     // After populating, clear the dirty flag (populating the form fires change
     // events that would otherwise mark it dirty immediately)
@@ -639,6 +731,13 @@ async function saveEnrollmentUpdates() {
         const payload = serializeForm(form);
         payload.student_id    = parseInt(studentId, 10);
         payload.enrollment_id = parseInt(enrollmentId, 10);
+
+        // Ensure special_needs_types is an array
+        if (payload.special_needs_types && !Array.isArray(payload.special_needs_types)) {
+            payload.special_needs_types = [payload.special_needs_types];
+        } else if (!payload.special_needs_types) {
+            payload.special_needs_types = [];
+        }
 
         const response = await API.enrollment.update(parseInt(enrollmentId, 10), payload);
         if (!response.success) throw new Error(response.error || 'Unable to save enrollment updates');
@@ -949,10 +1048,12 @@ function initializeVerifyPage() {
 
     attachDirtyListeners();
 
+    // Ensure lookups are available before loading the queue so selects
+    // and review rendering can resolve readable names.
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', fetchPendingEnrollments);
+        document.addEventListener('DOMContentLoaded', () => ensureVerifyLookups().then(fetchPendingEnrollments));
     } else {
-        fetchPendingEnrollments();
+        ensureVerifyLookups().then(fetchPendingEnrollments);
     }
 }
 

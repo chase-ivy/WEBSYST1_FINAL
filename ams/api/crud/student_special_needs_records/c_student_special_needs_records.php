@@ -1,3 +1,0 @@
-<?php
-require_once __DIR__ . "/../../crud_base.php";
-handleCreate($pdo, 'student_special_needs_records');

@@ -24,21 +24,13 @@
                 </div>
             </div>
 
-            <!-- Special Needs Details (collapsible) -->
-            <div class="collapse" id="specialNeedsDetails" style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background: var(--canvas);">
+            <!-- Special Needs Details (collapsible) — max-height:none so dynamically-injected checkboxes never get clipped -->
+            <div class="collapse" id="specialNeedsDetails" style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background: var(--canvas); max-height: none; overflow: visible; transition: none;">
                 
-                <!-- a1. With Diagnosis from Licensed Medical Specialist -->
-                <div style="margin-bottom: 24px;">
-                    <label style="font-size: 13px; font-weight: 700; color: var(--text); display: block; margin-bottom: 12px;">a1. With Diagnosis from Licensed Medical Specialist:</label>
-                    <div id="diagnosisTypes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
-
-                <!-- a2. With Manifestations -->
+                <!-- a1. With Diagnosis & Manifestations -->
                 <div style="margin-bottom: 20px;">
-                    <label style="font-size: 13px; font-weight: 700; color: var(--text); display: block; margin-bottom: 12px;">a2. With Manifestations:</label>
-                    <div id="manifestationTypes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <label style="font-size: 13px; font-weight: 700; color: var(--text); display: block; margin-bottom: 12px;">a1. Special Needs Types:</label>
+                    <div id="specialNeedsTypesContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
                         <!-- Populated dynamically -->
                     </div>
                 </div>
